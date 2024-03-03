@@ -1,0 +1,7 @@
+# Global seed
+seed: 0
+
+model_format: "ckpt" # onnx/ckpt/safetensors
+run_name: version_0
+num_images: 16
+best_models_dir: "./_best_models/vae"

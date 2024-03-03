@@ -1,0 +1,5 @@
+module_name,inference_time,bytes
+wiskers.common.modules.cbam,0.04,2440
+wiskers.common.modules.squeeze-and-excitation,0.01,2208
+wiskers.common.modules.multi_head(8),0.02,16896
+wiskers.common.modules.scaled_dot,0.03,12928
