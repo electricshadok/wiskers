@@ -1,6 +1,6 @@
 # Wiskers: DL and  Generative AI Study
 
-This repository serves as a learning platform for experimenting with foundational deep learning (DL) architectures and Generative AI. Currently, I am exploring a variety of deep learning techniques, including diffusion models and VAEs, with plans to expand into even more areas. The primary goal of this repo is to consolidate my knowledge in deep learning and provide a platform to generate images, videos, audio, and animations into a single, cohesive resource. My interest also extends to good engineering practices, ensuring that this repository remains a straightforward and accessible hub.
+This repository serves as a learning hub for experimenting with foundational deep learning (DL) architectures and Generative AI. Currently, I am exploring a variety of deep learning techniques (diffusion models, VAEs) to generate images, videos, audio, and animations into a single, cohesive resource. Expect this repo to continuously evolve.
 
 Fair warning: My curiosity may lead this repo down multiple paths, but fear not—a windy journey is just another step towards clarity. Let’s have fun!
 

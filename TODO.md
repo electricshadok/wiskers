@@ -13,7 +13,8 @@ Evaluate different attention mechanisms to improve quality or performance. ([Vis
 - [ ] add AttentionUnet ([arxiv](https://arxiv.org/pdf/1804.03999.pdf))
 - [ ] add PixelShuffle/PixelUnshuffle for super resolution
 - [ ] add BAM (bottleneck attention module)
-- [ ] remove skip_x in AttnUpBlock2D and UpBlock2D from common (should be usable for )
+- [ ] remove skip_x in AttnUpBlock2D and UpBlock2D from common (should be usable between unet/ae)
+- [ ] add the differents modes in non-local-block
 
 
 ## Training improvement
