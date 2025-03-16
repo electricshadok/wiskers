@@ -43,7 +43,7 @@ Experiment with Transformer-based model.
 
 ## Sequence modeling 
 - [ ] Add CausalConv3d
-- [ ] Add TCN
+- [ ] Add TCN (use already implemented CausalConvXd)
 
 
 ## Variational Auto-Encoder

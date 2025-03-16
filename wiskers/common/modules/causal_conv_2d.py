@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class CausalConv2d(nn.Module):
     """
-    Implements a causal convolution in 2D.
+    Implementation of a causal convolution in 2D.
     Ensures that the output at (i, j) depends only on input elements from (i, j) and earlier.
 
     Shape:
