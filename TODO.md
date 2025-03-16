@@ -42,7 +42,6 @@ Experiment with Transformer-based model.
 
 
 ## Sequence modeling 
-- [ ] Add CausalConv2d
 - [ ] Add CausalConv3d
 - [ ] Add TCN
 

@@ -4,7 +4,7 @@ import torch.nn as nn
 class CausalConv1d(nn.Module):
     """
     Implements a causal convolution in 1D
-    Meaning the output at time t is only dependent on elements from time t and earlier in the input sequence.
+    Ensures that the output at time t depends only on input elements from time t and earlier.
 
     Shape:
         Input: (N, in_channels, seq_length)
@@ -28,11 +28,11 @@ class CausalConv1d(nn.Module):
             kernel_size=kernel_size,
             stride=stride,
             padding=self.padding,
-            padding_mode="replicate",
+            padding_mode="zeros",
             dilation=dilation,
             bias=bias,
         )
 
     def forward(self, x):
         x = self.conv1d(x)
-        return x[:, :, : -self.padding]
+        return x[:, :, : -self.padding] # Remove future pixels
