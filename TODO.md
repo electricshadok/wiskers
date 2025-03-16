@@ -14,6 +14,7 @@ Evaluate different attention mechanisms to improve quality or performance. ([Vis
 - [ ] add PixelShuffle/PixelUnshuffle for super resolution
 - [ ] add BAM (bottleneck attention module)
 - [ ] remove skip_x in AttnUpBlock2D and UpBlock2D from common (should be usable between unet/ae)
+- [ ] add spatial transformer networks tutorial
 - [ ] add the differents modes in non-local-block
 
 
@@ -36,7 +37,7 @@ Evaluate different attention mechanisms to improve quality or performance. ([Vis
 ## Transformer-Based diffusion
 Experiment with Transformer-based model.
 - [ ] develop a patch embedding (Read dino code [code example](https://github.com/yenchenlin/dinov2-adaLN/blob/main/dinov2/layers/))
-- [ ] add simple transformer-based diffusion model
+- [ ] Scalable Diffusion Models with Transformers (DiT)
 - [ ] implement wiskers/common/models/vit_2d.py
 
 
