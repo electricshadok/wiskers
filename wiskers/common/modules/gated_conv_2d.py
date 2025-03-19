@@ -8,10 +8,10 @@ class GatedConv2d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: int,
-        stride=1,
-        padding=1,
-        dilation=1,
+        kernel_size: int | tuple,
+        stride: int | tuple = 1,
+        padding: int | tuple = 1,
+        dilation: int | tuple = 1,
         activation=F.relu,
     ):
         """
@@ -21,7 +21,10 @@ class GatedConv2d(nn.Module):
 
         Shape:
             Input: (N, in_channels, H, W)
-            Output: (N, out_channels, H, W)
+            Output: (N, out_channels, H_out, W_out), where:
+                - H_out = (H + 2P - D(K-1) -1) / S + 1
+                - W_out = (W + 2P - D(K-1) -1) / S + 1
+                - P = padding, K = kernel size, D = dilation, S = stride.
         """
         super().__init__()
 
@@ -32,6 +35,9 @@ class GatedConv2d(nn.Module):
 
         # Gating convolution to control information flow
         self.gate_conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation)
+
+        # Initialize gating convolution for stability
+        nn.init.constant_(self.gate_conv.bias, 0.0)
 
     def forward(self, x):
         # Compute feature map
