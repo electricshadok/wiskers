@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.gated_conv_2d import GatedConv2d  # Adjust the import based on your module structure
+from wiskers.common.modules.gated_conv_2d import GatedConv2d
 
 
 @pytest.mark.parametrize(
