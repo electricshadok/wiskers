@@ -48,3 +48,62 @@ class GatedConv2d(nn.Module):
 
         # Element-wise multiplication (gating mechanism)
         return feature_map * gate
+
+
+class GatedConvTranspose2d(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int | tuple,
+        stride: int | tuple = 1,
+        padding: int | tuple = 0,
+        output_padding: int | tuple = 0,
+        dilation: int | tuple = 1,
+        activation=F.relu,
+    ):
+        """
+        Implementation of a Gated Transposed Convolution in 2D.
+        This is an adaptation of the gating mechanism introduced in:
+        "Free-Form Image Inpainting with Gated Convolution", 2019.
+
+        Shape:
+            Input: (N, in_channels, H, W)
+            Output: (N, out_channels, H_out, W_out), where:
+                - H_out = (H - 1) * S - 2P + D(K - 1) + OP + 1
+                - W_out = (W - 1) * S - 2P + D(K - 1) + OP + 1
+                - P = padding, K = kernel size, D = dilation, S = stride, OP = output_padding.
+        """
+        super().__init__()
+
+        self.activation = activation
+
+        # Feature transposed convolution
+        self.feature_conv = nn.ConvTranspose2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride,
+            padding,
+            output_padding,
+            dilation=dilation,
+        )
+
+        # Gating transposed convolution
+        self.gate_conv = nn.ConvTranspose2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride,
+            padding,
+            output_padding,
+            dilation=dilation,
+        )
+
+        # Initialize gating bias to zero
+        nn.init.constant_(self.gate_conv.bias, 0.0)
+
+    def forward(self, x):
+        feature_map = self.activation(self.feature_conv(x))
+        gate = torch.sigmoid(self.gate_conv(x))
+        return feature_map * gate
