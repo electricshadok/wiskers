@@ -14,7 +14,12 @@ from wiskers.common.modules.gated_conv_3d import GatedConv3d
 def test_gated_conv_3d(batch_size, depth, height, width, in_channels):
     out_channels = 3
     kernel_size = 3
-    net = GatedConv3d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size)
+    net = GatedConv3d(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=kernel_size,
+        padding=1,
+    )
 
     # Input tensor (N, C, D, H, W)
     x = torch.randn(batch_size, in_channels, depth, height, width)

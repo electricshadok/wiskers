@@ -10,7 +10,7 @@ class GatedConv3d(nn.Module):
         out_channels: int,
         kernel_size: int | tuple,
         stride: int | tuple = 1,
-        padding: int | tuple = 1,
+        padding: int | tuple = 0,
         dilation: int | tuple = 1,
         activation=F.relu,
     ):
