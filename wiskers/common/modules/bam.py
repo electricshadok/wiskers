@@ -57,7 +57,7 @@ class SpatialAttention(nn.Module):
         self.bn = nn.BatchNorm2d(1)
 
     def forward(self, x):
-        out = self.spatial_atts(x)
+        out = self.spatial_att(x)
         out = self.bn(out)
         return out
 
