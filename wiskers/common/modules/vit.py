@@ -23,6 +23,4 @@ class PatchEmbedding(nn.Module):
         self.conv = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
 
     def forward(self, x):
-        # TODO
-        # Output shape: (B, P, no. of channels)
         return self.conv(x).flatten(start_dim=2).transpose(1, 2)
