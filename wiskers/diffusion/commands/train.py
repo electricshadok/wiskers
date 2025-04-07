@@ -32,7 +32,7 @@ class TrainCLI:
             config_path (str): Path to the configuration file.
         """
         # Load the configuration
-        self.config = load_config(config_path, os.path.dirname(__file__))
+        self.config = load_config(config_path)
 
         # Initialize random number generators
         L.seed_everything(seed=self.config.seed, workers=True)

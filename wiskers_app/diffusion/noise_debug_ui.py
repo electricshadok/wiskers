@@ -9,7 +9,7 @@ from wiskers_app.diffusion.utils import get_dataset, get_diffuser_module
 
 
 def noise_debug_ui(config_path: str):
-    config = load_config(config_path, os.path.join("wiskers", "diffusion", "commands"))
+    config = load_config(config_path)
 
     st.write("### Variance Scheduler")
 
