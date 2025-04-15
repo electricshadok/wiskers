@@ -1,0 +1,19 @@
+name: whiskers_dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy
+  - streamlit
+  - omegaconf
+  - pytest
+  - lightning
+  - scikit-learn
+  - matplotlib
+  - onnx
+  - onnxruntime
+  - pip
+  - pip:
+      - torch==2.6.0
+      - torchvision==0.21.0
+      - torchaudio==2.6.0

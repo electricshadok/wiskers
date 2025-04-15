@@ -4,6 +4,71 @@ This repository serves as a learning hub for experimenting with foundational dee
 
 Fair warning: My curiosity may lead this repo down multiple paths, but fear not—a windy journey is just another step towards clarity. Let’s have fun!
 
+## Installation
+
+Create and activate your environment.
+```
+mamba env create -f environment.yml
+```
+
+```
+mamba activate whiskers_dev
+```
+
+## Tests
+
+Run unit tests
+
+```
+pytest tests
+```
+
+Run a quick training process.
+
+```
+# Diffusion
+python wiskers/diffusion/commands/train.py --config configs/diffusion/train_debug.yaml
+
+# VAE
+python wiskers/vae/commands/train.py --config configs/vae/train_debug.yaml
+```
+
+## Training
+
+Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
+
+```
+# Diffusion
+python wiskers/diffusion/commands/train.py --config configs/diffusion/train.yaml
+
+# VAE
+python wiskers/vae/commands/train.py --config configs/vae/train.yaml
+```
+
+## Generate Samples
+
+Use trained model to generate samples. This command triggers the sample generation proces with the configuration *generate.yaml*.
+
+```
+# Diffusion
+python wiskers/diffusion/commands/generate.py --config configs/diffusion/default/generate.yaml
+
+# VAE
+python wiskers/vae/commands/generate.py --config configs/vae/default/generate.yaml
+```
+
+## Streamlit Development App
+
+Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.
+
+```
+streamlit run wiskers_app/main.py
+```
+
+<details>
+<summary>Screenshot</summary>
+<p align="center"><img src="docs/app.png?raw=true"></p>
+</details>
 
 ## Features
 
@@ -32,89 +97,9 @@ Fair warning: My curiosity may lead this repo down multiple paths, but fear not�
 
 More details on future developments on the [TODO](https://github.com/vincentbonnetai/wiskers/blob/main/TODO.md) list.
 
-## Training
-
-Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
-
-<details>
-<summary>Examples</summary>
-
-**Diffusion**
-```
-python wiskers/diffusion/commands/train.py --config configs/diffusion/train.yaml
-```
-
-**VAE**
-```
-python wiskers/vae/commands/train.py --config configs/vae/train.yaml
-```
-
-</details>
-
-## Generate Samples
-
-Use trained model to generate samples. This command triggers the sample generation proces with the configuration *generate.yaml*.
-
-<details>
-<summary>Examples</summary>
-
-**Diffusion**
-```
-python wiskers/diffusion/commands/generate.py --config configs/diffusion/default/generate.yaml
-```
-
-**VAE**
-```
-python wiskers/vae/commands/generate.py --config configs/vae/default/generate.yaml
-```
-</details>
-
-## Streamlit Development App
-
-Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.
-
-```
-streamlit run wiskers_app/main.py
-```
-
-<details>
-<summary>Screenshot</summary>
-<p align="center"><img src="docs/app.png?raw=true"></p>
-</details>
-
 ## Benchmark
 
 More about benchmarks [HERE](https://github.com/vincentbonnetai/wiskers/blob/main/benchmarks/README.md) 
-
-## Tests
-
-Wiskers includes a suite of tests and a debug pipeline for this purpose.
-
-### run debugging pipeline
-
-Ideal for developmental checks, the debug pipeline runs a condensed version of the training process. Use the configuration in *train_debug.yaml* for this purpose.
-
-<details>
-<summary>Examples</summary>
-
-**Diffusion**
-```
-python wiskers/diffusion/commands/train.py --config configs/diffusion/train_debug.yaml
-```
-
-**VAE**
-```
-python wiskers/vae/commands/train.py --config configs/vae/train_debug.yaml
-```
-</details>
-
-### run tests
-
-To maintain code quality and functionality, run the provided tests using pytest.
-
-```
-pytest tests
-```
 
 
 ## Docker
