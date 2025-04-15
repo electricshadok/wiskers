@@ -9,9 +9,8 @@ from wiskers_app.vae.utils import get_dataset
 
 def get_config_files() -> List[str]:
     return [
-        os.path.join("configs", "vae", "default", "train.yaml"),
-        os.path.join("configs", "vae", "debug", "train.yaml"),
-        os.path.join("wiskers", "vae", "commands", "train.yaml"),
+        os.path.join("configs", "vae", "train.yaml"),
+        os.path.join("configs", "vae", "train_debug.yaml"),
     ]
 
 

@@ -41,12 +41,12 @@ Use the following command to begin the training process. The configuration is de
 
 **Diffusion**
 ```
-python wiskers/diffusion/commands/train.py --config configs/diffusion/default/train.yaml
+python wiskers/diffusion/commands/train.py --config configs/diffusion/train.yaml
 ```
 
 **VAE**
 ```
-python wiskers/vae/commands/train.py --config configs/vae/default/train.yaml
+python wiskers/vae/commands/train.py --config configs/vae/train.yaml
 ```
 
 </details>
@@ -92,19 +92,19 @@ Wiskers includes a suite of tests and a debug pipeline for this purpose.
 
 ### run debugging pipeline
 
-Ideal for developmental checks, the debug pipeline runs a condensed version of the training process. Use the configuration in *debug/train.yaml* for this purpose.
+Ideal for developmental checks, the debug pipeline runs a condensed version of the training process. Use the configuration in *train_debug.yaml* for this purpose.
 
 <details>
 <summary>Examples</summary>
 
 **Diffusion**
 ```
-python wiskers/diffusion/commands/train.py --config configs/diffusion/debug/train.yaml
+python wiskers/diffusion/commands/train.py --config configs/diffusion/train_debug.yaml
 ```
 
 **VAE**
 ```
-python wiskers/vae/commands/train.py --config configs/vae/debug/train.yaml
+python wiskers/vae/commands/train.py --config configs/vae/train_debug.yaml
 ```
 </details>
 
@@ -133,6 +133,14 @@ Once the build is complete, you can start the Docker container with all necessar
 ```
 docker run --rm -it diffusion:1.0
 ```
+
+## Code Formatter
+Use code formatter with ruff (see pyproject.toml)
+
+```
+ruff check
+```
+
 
 ## License
 

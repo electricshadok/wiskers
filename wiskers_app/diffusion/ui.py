@@ -10,9 +10,8 @@ from wiskers_app.diffusion.utils import get_dataset
 
 def get_config_files() -> List[str]:
     return [
-        os.path.join("configs", "diffusion", "default", "train.yaml"),
-        os.path.join("configs", "diffusion", "debug", "train.yaml"),
-        os.path.join("wiskers", "diffusion", "commands", "train.yaml"),
+        os.path.join("configs", "diffusion", "train.yaml"),
+        os.path.join("configs", "diffusion", "train_debug.yaml"),
     ]
 
 
