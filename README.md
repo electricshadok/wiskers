@@ -51,10 +51,10 @@ Use trained model to generate samples. This command triggers the sample generati
 
 ```
 # Diffusion
-python wiskers/diffusion/commands/generate.py --config configs/diffusion/default/generate.yaml
+python wiskers/diffusion/commands/generate.py --config configs/diffusion/generate.yaml
 
 # VAE
-python wiskers/vae/commands/generate.py --config configs/vae/default/generate.yaml
+python wiskers/vae/commands/generate.py --config configs/vae/generate.yaml
 ```
 
 ## Streamlit Development App
@@ -70,37 +70,6 @@ streamlit run wiskers_app/main.py
 <p align="center"><img src="docs/app.png?raw=true"></p>
 </details>
 
-## Features
-
-**Common**
-- [x] Attention mechanisms 
-    - for audio/sequences (1D): multihead, scaled-dot-product 
-    - for images (2D): CBAM, squeeze-and-excitation, self-multihead, self-scaled-dot-product
-    - for videos (3D): non-local-block
-- [x] Convolution Blocks
-    - for audio/sequences (1D): causal convolution
-    - for images (2D): separable convolution, residual block, spatial downsampling/usampling block
-- [x] Sinusoidal position embedding
-- [x] AdaIN normalization
-- [x] CIFAR10 dataset
-- [x] Support model formats (checkpoint, safetensor, onnx)
-
-**Diffusion**
-- [x] Lightning module and logging to track loss and noise stats.
-- [x] DDPIM scheduler
-- [x] Beta schedulers (linear, cosine, quadratic, sigmoid)
-
-**VAE**
-- [x] Lightning module and logging to track loss
-- [x] Autoencoder and VAE
-
-
-More details on future developments on the [TODO](https://github.com/vincentbonnetai/wiskers/blob/main/TODO.md) list.
-
-## Benchmark
-
-More about benchmarks [HERE](https://github.com/vincentbonnetai/wiskers/blob/main/benchmarks/README.md) 
-
 
 ## Docker
 
@@ -109,7 +78,7 @@ More about benchmarks [HERE](https://github.com/vincentbonnetai/wiskers/blob/mai
 Docker ensures a consistent environment Docker. Simply run the command to build the Docker container:
 
 ```
-./build.sh
+./build_docker.sh
 ```
 
 ### start docker container
