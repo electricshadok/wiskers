@@ -27,10 +27,10 @@ Run a quick training process.
 
 ```
 # Diffusion
-python wiskers/diffusion/commands/train.py --config configs/diffusion/train_debug.yaml
+python wiskers/diffusion/commands/train.py --config tests/configs/diffusion/train.yaml
 
 # VAE
-python wiskers/vae/commands/train.py --config configs/vae/train_debug.yaml
+python wiskers/vae/commands/train.py --config tests/configs/vae/train.yaml
 ```
 
 ## Training
