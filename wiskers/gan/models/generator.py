@@ -13,12 +13,12 @@ class Generator(nn.Module):
 
     def __init__(
         self,
-        img_size=32,
-        num_classes=10,
-        image_embedding=100,
-        class_embedding=16,
-        filters=[32, 16, 8, 3],
-        activations=[nn.ReLU(True), nn.ReLU(True), nn.Tanh()],
+        img_size: int = 32,
+        num_classes: int = 10,
+        image_embedding: int = 100,
+        class_embedding: int = 16,
+        filters: list[int] = [32, 16, 8, 3],
+        activations: list = [nn.ReLU(True), nn.ReLU(True), nn.Tanh()],
     ):
         super().__init__()
 

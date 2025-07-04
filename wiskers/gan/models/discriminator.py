@@ -13,11 +13,11 @@ class Discriminator(nn.Module):
 
     def __init__(
         self,
-        img_size=32,
-        num_classes=10,
-        class_embedding=16,
-        filters=[3, 8, 16, 32],
-        activations=[nn.ReLU(True), nn.ReLU(True), nn.LeakyReLU(0.2, True)],
+        img_size: int = 32,
+        num_classes: int = 10,
+        class_embedding: int = 16,
+        filters: list[int] = [3, 8, 16, 32],
+        activations: list = [nn.ReLU(True), nn.ReLU(True), nn.LeakyReLU(0.2, True)],
     ):
         super().__init__()
 
