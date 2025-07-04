@@ -43,6 +43,9 @@ python wiskers/diffusion/commands/train.py --config configs/diffusion/train.yaml
 
 # VAE
 python wiskers/vae/commands/train.py --config configs/vae/train.yaml
+
+# GAN
+python wiskers/gan/commands/train.py --config configs/gan/train.yaml
 ```
 
 ## Generate Samples
