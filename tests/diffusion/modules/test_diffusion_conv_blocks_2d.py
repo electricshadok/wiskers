@@ -22,7 +22,6 @@ def test_down_block_2d(batch_size, in_channels, out_channels, height, width, tim
     te = torch.randn(batch_size, time_dim)
     out_x = net(x, te)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -45,7 +44,6 @@ def test_attn_down_block_2d(batch_size, in_channels, out_channels, height, width
     te = torch.randn(batch_size, time_dim)
     out_x = net(x, te)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
