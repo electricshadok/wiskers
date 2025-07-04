@@ -17,7 +17,7 @@ def test_AdaIN(batch_size, in_channels, height, width):
     y = torch.randn(batch_size, in_channels, height, width)
 
     out_x = net(x, y)
-    assert isinstance(out_x, torch.Tensor)
+
     assert out_x.shape == x.shape
     assert out_x.dtype == x.dtype
 
@@ -36,8 +36,6 @@ def test_DyT_element_wise(batch_size, in_channels, height, width):
 
     out_x = net(x)
 
-    # Assertions
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == x.shape
     assert out_x.dtype == x.dtype
 
@@ -56,7 +54,5 @@ def test_DyT_channel_wise(batch_size, in_channels, height, width):
 
     out_x = net(x)
 
-    # Assertions
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == x.shape
     assert out_x.dtype == x.dtype

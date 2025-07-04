@@ -15,6 +15,5 @@ def test_non_local_block(batch_size, in_channels, length, height, width):
     net = NonLocalBlock(in_channels, "embedded_gaussian")
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == x.shape
     assert out_x.dtype == x.dtype

@@ -25,8 +25,6 @@ def test_gated_conv_2d(batch_size, height, width, in_channels):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    # Assertions
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, out_channels, height, width)
     assert out_x.dtype == x.dtype
     assert torch.all(out_x >= 0)

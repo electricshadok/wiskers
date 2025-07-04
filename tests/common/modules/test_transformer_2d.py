@@ -17,6 +17,6 @@ def test_transformer_attention_2d(batch_size, in_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
 
     out_x = self_attention(x)
-    assert isinstance(out_x, torch.Tensor)
+
     assert out_x.shape == x.shape
-    assert out_x.dtype == torch.float32
+    assert out_x.dtype == x.dtype

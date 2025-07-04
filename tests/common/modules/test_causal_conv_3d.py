@@ -20,6 +20,5 @@ def test_causal_conv_3d(batch_size, depth, height, width, in_channels):
     x = torch.randn(batch_size, in_channels, depth, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, out_channels, depth, height, width)
     assert out_x.dtype == x.dtype

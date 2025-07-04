@@ -12,6 +12,5 @@ def test_time_encoding(batch_size, time_dim):
     pe = SinusoidalPositionEmbedding(time_dim)
     te = pe(t)  # (B, time_dim)
 
-    assert isinstance(te, torch.Tensor)
     assert te.shape == (batch_size, time_dim)
     assert te.dtype == torch.float32

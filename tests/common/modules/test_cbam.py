@@ -16,7 +16,6 @@ def test_channel_attention(batch_size, in_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, in_channels, 1, 1)
     assert out_x.dtype == x.dtype
 
@@ -33,7 +32,6 @@ def test_spatial_attention(batch_size, in_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, 1, height, width)
     assert out_x.dtype == x.dtype
 
@@ -50,6 +48,5 @@ def test_cbam(batch_size, in_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, in_channels, height, width)
     assert out_x.dtype == x.dtype

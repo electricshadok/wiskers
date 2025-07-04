@@ -25,7 +25,6 @@ def test_gated_conv_1d(batch_size, length, in_channels):
     out_x = net(x)
 
     # Assertions
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, out_channels, length)
     assert out_x.dtype == x.dtype
     assert torch.all(out_x >= 0)
@@ -53,7 +52,6 @@ def test_gated_conv_transpose_1d(batch_size, length, in_channels):
     x = torch.randn(batch_size, in_channels, length)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (batch_size, out_channels, length * 2)
     assert out_x.dtype == x.dtype
     assert torch.all(out_x >= 0)

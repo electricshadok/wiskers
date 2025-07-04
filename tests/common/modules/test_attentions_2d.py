@@ -16,9 +16,8 @@ def test_self_multihead_attention(batch_size, in_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
 
     out_x = mha(x)
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == x.shape
-    assert out_x.dtype == torch.float32
+    assert out_x.dtype == x.dtype
 
 
 @pytest.mark.parametrize(
@@ -33,6 +32,5 @@ def test_self_scaled_dot_product_attention_2d(batch_size, in_channels, height, w
     x = torch.randn(batch_size, in_channels, height, width)
 
     out_x = self_attention(x)
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == x.shape
-    assert out_x.dtype == torch.float32
+    assert out_x.dtype == x.dtype

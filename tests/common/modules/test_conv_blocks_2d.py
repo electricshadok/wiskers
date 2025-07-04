@@ -24,7 +24,6 @@ def test_attn_down_block_2d(batch_size, in_channels, out_channels, height, width
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -47,7 +46,6 @@ def test_attn_up_block_2d(batch_size, in_channels, out_channels, height, width):
     skip_x = torch.randn(batch_size, in_channels, height * 2, width * 2)
     out_x = net(x, skip_x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -66,7 +64,6 @@ def test_double_conv_2d(batch_size, in_channels, out_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -88,7 +85,6 @@ def test_down_block_2d(batch_size, in_channels, out_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -107,7 +103,6 @@ def test_residual_double_conv_2d(batch_size, channels, height, width):
     x = torch.randn(batch_size, channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         channels,
@@ -125,7 +120,7 @@ def test_separable_conv2d(batch_size, in_channels, out_channels, height, width):
     net = SeparableConv2d(in_channels, out_channels, kernel_size=3)
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
-    assert isinstance(out_x, torch.Tensor)
+
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -148,7 +143,6 @@ def test_up_block_2d(batch_size, in_channels, out_channels, height, width):
     skip_x = torch.randn(batch_size, in_channels, height * 2, width * 2)
     out_x = net(x, skip_x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,

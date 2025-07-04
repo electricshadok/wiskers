@@ -21,3 +21,4 @@ def test_transformer_attention_2d(batch_size, in_channels, height, width):
 
     num_patches = (height / patch_size) * (width / patch_size)
     assert out_x.shape == (batch_size, num_patches, embed_dim)
+    assert out_x.dtype == x.dtype
