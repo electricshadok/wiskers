@@ -12,6 +12,7 @@ dependencies:
   - matplotlib
   - onnx
   - onnxruntime
+  - ruff
   - pip
   - pip:
       - torch==2.6.0

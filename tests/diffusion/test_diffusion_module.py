@@ -1,5 +1,7 @@
 import pytest
 import torch
+from lightning.pytorch import Trainer
+from torch.utils.data import DataLoader, TensorDataset
 
 from wiskers.diffusion.diffuser_module import DiffuserModule
 
@@ -30,12 +32,15 @@ def test_training_diffuser_module(config_module):
 
     in_channels = config_module["in_channels"]
     image_size = config_module["image_size"]
-    batch_size = 16
-    img_data = torch.randn(batch_size, in_channels, image_size, image_size)
+    batch_size = 8
+
+    images = torch.randn(batch_size, in_channels, image_size, image_size)
     labels = torch.zeros(batch_size, dtype=torch.long)
-    batch = (img_data, labels)
-    batch_idx = 0
-    diffuser.training_step(batch, batch_idx)
+    dataset = TensorDataset(images, labels)
+    loader = DataLoader(dataset, batch_size=batch_size)
+
+    trainer = Trainer(fast_dev_run=True)
+    trainer.fit(diffuser, loader)
 
 
 def test_sample_generation(config_module):
