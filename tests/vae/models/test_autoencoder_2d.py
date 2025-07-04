@@ -20,14 +20,13 @@ def test_autoencoder2D(batch_size, in_channels, out_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
         height,
         width,
     )
-    assert out_x.dtype == torch.float32
+    assert out_x.dtype == x.dtype
 
 
 @pytest.mark.parametrize(

@@ -20,14 +20,13 @@ def test_vae2D(batch_size, in_channels, out_channels, height, width):
     x = torch.randn(batch_size, in_channels, height, width)
     out_x, mu, logvar = net(x)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
         height,
         width,
     )
-    assert out_x.dtype == torch.float32
+    assert out_x.dtype == x.dtype
 
     assert mu.shape == (batch_size, z_dim)
     assert logvar.shape == (batch_size, z_dim)

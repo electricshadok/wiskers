@@ -69,7 +69,6 @@ def test_up_block_2d(batch_size, in_channels, out_channels, height, width, time_
     skip_x = torch.randn(batch_size, in_channels, height * 2, width * 2)
     out_x = net(x, skip_x, te)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,
@@ -93,7 +92,6 @@ def test_attn_up_block_2d(batch_size, in_channels, out_channels, height, width, 
     skip_x = torch.randn(batch_size, in_channels, height * 2, width * 2)
     out_x = net(x, skip_x, te)
 
-    assert isinstance(out_x, torch.Tensor)
     assert out_x.shape == (
         batch_size,
         out_channels,

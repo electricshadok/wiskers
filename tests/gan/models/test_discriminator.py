@@ -19,3 +19,4 @@ def test_gan_discriminator(batch_size, in_channels, img_size, num_classes, class
     out = net(img, labels)
 
     assert out.shape == (batch_size, 1)
+    assert out.dtype == img.dtype

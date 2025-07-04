@@ -21,3 +21,4 @@ def test_gan_generator(batch_size, n_channels, img_size, num_classes, image_embe
     out = net(noise, labels)
 
     assert out.shape == (batch_size, n_channels, img_size, img_size)
+    assert out.dtype == noise.dtype
