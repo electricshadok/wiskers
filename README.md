@@ -1,6 +1,13 @@
-# Wiskers: DL and  Generative AI Study
 
-This repository serves as a learning hub for experimenting with foundational deep learning (DL) architectures and Generative AI. Currently, I am exploring a variety of deep learning techniques (diffusion models, VAEs) to generate images, videos, audio, and animations into a single, cohesive resource. Expect this repo to continuously evolve.
+![PyTorch Logo](https://raw.githubusercontent.com/electricshadok/wiskers/refs/heads/main/docs/wiskers_logo.png)
+
+--------------------------------------------------------------------------------
+
+
+**Wiskers: DL and  Generative AI Study**
+
+
+This repository serves as a learning hub for experimenting with foundational deep learning (DL) architectures and Generative AI. Currently, I am exploring a variety of deep learning techniques (diffusion models, VAEs, GANs) to generate images, videos, audio, and animations into a single, cohesive resource. Expect this repo to continuously evolve.
 
 Fair warning: My curiosity may lead this repo down multiple paths, but fear not—a windy journey is just another step towards clarity. Let’s have fun!
 
