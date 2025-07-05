@@ -55,7 +55,7 @@ python wiskers/vae/commands/train.py --config configs/vae/train.yaml
 python wiskers/gan/commands/train.py --config configs/gan/train.yaml
 ```
 
-## Generate Samples
+## Inference
 
 Use trained model to generate samples. This command triggers the sample generation proces with the configuration *generate.yaml*.
 
@@ -67,12 +67,12 @@ python wiskers/diffusion/commands/generate.py --config configs/diffusion/generat
 python wiskers/vae/commands/generate.py --config configs/vae/generate.yaml
 ```
 
-## Streamlit Development App
+## Streamlit
 
 Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.
 
 ```
-streamlit run wiskers_app/main.py
+streamlit run streamlit/main.py
 ```
 
 <details>

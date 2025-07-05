@@ -2,9 +2,8 @@ import os
 from typing import List
 
 import streamlit as st
-
-from wiskers_app.common.dataset_ui import dataset_ui
-from wiskers_app.vae.utils import get_dataset
+from streamlit.common.dataset_ui import dataset_ui
+from streamlit.vae.utils import get_dataset
 
 
 def get_config_files() -> List[str]:

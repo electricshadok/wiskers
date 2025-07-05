@@ -1,7 +1,6 @@
 import streamlit as st
-
-import wiskers_app.diffusion.ui as diffusion_ui
-import wiskers_app.vae.ui as vae_ui
+import streamlit.diffusion.ui as diffusion_ui
+import streamlit.vae.ui as vae_ui
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
-import streamlit as st
 import torch
 import torchvision
 
+import streamlit as st
+from streamlit.diffusion.utils import get_dataset, get_diffuser_module
 from wiskers.common.commands.utils import load_config
-from wiskers_app.diffusion.utils import get_dataset, get_diffuser_module
 
 
 def noise_debug_ui(config_path: str):

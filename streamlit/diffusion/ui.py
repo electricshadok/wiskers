@@ -2,10 +2,9 @@ import os
 from typing import List
 
 import streamlit as st
-
-from wiskers_app.common.dataset_ui import dataset_ui
-from wiskers_app.diffusion.noise_debug_ui import noise_debug_ui
-from wiskers_app.diffusion.utils import get_dataset
+from streamlit.common.dataset_ui import dataset_ui
+from streamlit.diffusion.noise_debug_ui import noise_debug_ui
+from streamlit.diffusion.utils import get_dataset
 
 
 def get_config_files() -> List[str]:
