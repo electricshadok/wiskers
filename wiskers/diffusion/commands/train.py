@@ -11,9 +11,8 @@ from lightning.pytorch.profilers import PyTorchProfiler
 from safetensors.torch import save_model
 
 from wiskers.common.commands.utils import load_config
-from wiskers.common.datasets.cifar10 import CIFAR10
-from wiskers.common.datasets.cifar10_subset import CIFAR10Subset
 from wiskers.diffusion.diffuser_module import DiffuserModule
+from wiskers.utils import get_data_module
 
 
 class TrainCLI:
@@ -62,13 +61,11 @@ class TrainCLI:
             **self.config.module.scheduler,
             **self.config.module.optimizer,
         )
-        if self.config.data_module_type == "cifar10":
-            self.datamodule = CIFAR10(**self.config.data_module)
-        elif self.config.data_module_type.startswith("cifar10:"):
-            category_name = self.config.data_module_type.split(":")[1]
-            self.datamodule = CIFAR10Subset(**self.config.data_module, category_name=category_name)
-        else:
-            raise ValueError(f"Unsupported data_module_type: {self.config.data_module_type}")
+
+        self.datamodule = get_data_module(
+            self.config.data_module_type,
+            self.config.data_module,
+        )
 
     def run(self):
         """

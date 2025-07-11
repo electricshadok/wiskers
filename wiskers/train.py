@@ -7,11 +7,11 @@ import lightning as L
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.profilers import PyTorchProfiler
 from safetensors.torch import save_model
 
 from wiskers.common.commands.utils import load_config
-from wiskers.common.datasets.cifar10 import CIFAR10
-from wiskers.common.datasets.cifar10_subset import CIFAR10Subset
+from wiskers.utils import get_data_module
 from wiskers.vae.vae_module import VAEModule
 
 
@@ -60,20 +60,23 @@ class TrainCLI:
             **self.config.module.model,
             **self.config.module.optimizer,
         )
-        if self.config.data_module_type == "cifar10":
-            self.datamodule = CIFAR10(**self.config.data_module)
-        elif self.config.data_module_type.startswith("cifar10:"):
-            category_name = self.config.data_module_type.split(":")[1]
-            self.datamodule = CIFAR10Subset(**self.config.data_module, category_name=category_name)
-        else:
-            raise ValueError(f"Unsupported data_module_type: {self.config.data_module_type}")
+
+        self.datamodule = get_data_module(
+            self.config.data_module_type,
+            self.config.data_module,
+        )
 
     def run(self):
         """
         Runs the training and testing of the model using the user settings.
         """
         # Train the model
-        trainer = L.Trainer(logger=self.logger, callbacks=self.callbacks, **self.config.trainer)
+        trainer = L.Trainer(
+            logger=self.logger,
+            callbacks=self.callbacks,
+            profiler=PyTorchProfiler(),
+            **self.config.trainer,
+        )
         trainer.fit(model=self.model, datamodule=self.datamodule)
 
         if hasattr(self.config.trainer, "fast_dev_run"):

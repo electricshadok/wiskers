@@ -3,10 +3,37 @@ import glob
 import os
 
 import lightning as L
+import onnxruntime
 import torchvision
 
 from wiskers.common.commands.utils import load_config
 from wiskers.vae.vae_module import VAEModule
+
+
+class ONNXInference:
+    format = "onnx"
+
+    def __init__(self, filepath: str):
+        self.model = onnxruntime.InferenceSession(filepath)
+
+    def __call__(self, num_samples: int, num_inference_steps: int):
+        # TODO - add implementation for ONNXInference
+        # inputs = {self.model.get_inputs()[0].name: x}
+        # outputs = self.model.run(None, inputs)
+        # return outputs[0]
+        raise NotImplementedError("ONNXInference._call() not implemented")
+
+
+class SafeTensorInference:
+    format = "safetensors"
+
+    def __init__(self, filepath: str):
+        # from safetensors.torch import load_model
+        self.model = None
+
+    def __call__(self, num_samples: int, num_inference_steps: int):
+        # TODO - add implementation for SafeTensorInference
+        raise NotImplementedError("SafeTensorInference._call() not implemented")
 
 
 class CheckpointInference:
@@ -50,7 +77,7 @@ class GenerateCLI:
             raise FileNotFoundError(f"No '.{self.config.model_format}' files found in the directory.")
 
         model_filepath = model_filepaths[0]
-        inference_types = [CheckpointInference]
+        inference_types = [ONNXInference, CheckpointInference, SafeTensorInference]
         inference_formats = [cls.format for cls in inference_types]
         inference_idx = inference_formats.index(self.config.model_format)
         self.inference = inference_types[inference_idx](model_filepath)

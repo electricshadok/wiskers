@@ -1,6 +1,7 @@
 # Global seed
 seed: 0
 
+module_type: "diffusion"
 model_format: "ckpt" # onnx/ckpt/safetensors
 run_name: version_0
 num_images: 16

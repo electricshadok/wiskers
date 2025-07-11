@@ -26,6 +26,7 @@ export_safetensors: True
 
 
 # Module Config (model, scheduler and optimizer)
+module_type: "gan"
 module:
   model:
     image_size: ${data_module.image_size}  # Use a reference to data_module.image_size

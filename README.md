@@ -34,10 +34,10 @@ Run a quick training process.
 
 ```
 # Diffusion
-python wiskers/diffusion/commands/train.py --config tests/configs/diffusion/train.yaml
+python wiskers/train.py --config tests/configs/diffusion/train.yaml
 
 # VAE
-python wiskers/vae/commands/train.py --config tests/configs/vae/train.yaml
+python wiskers/train.py --config tests/configs/vae/train.yaml
 ```
 
 ## Training
@@ -46,13 +46,13 @@ Use the following command to begin the training process. The configuration is de
 
 ```
 # Diffusion
-python wiskers/diffusion/commands/train.py --config configs/diffusion/train.yaml
+python wiskers/train.py --config configs/diffusion/train.yaml
 
 # VAE
-python wiskers/vae/commands/train.py --config configs/vae/train.yaml
+python wiskers/train.py --config configs/vae/train.yaml
 
 # GAN
-python wiskers/gan/commands/train.py --config configs/gan/train.yaml
+python wiskers/train.py --config configs/gan/train.yaml
 ```
 
 ## Inference
@@ -61,10 +61,13 @@ Use trained model to generate samples. This command triggers the sample generati
 
 ```
 # Diffusion
-python wiskers/diffusion/commands/generate.py --config configs/diffusion/generate.yaml
+python wiskers/generate.py --config configs/diffusion/generate.yaml
 
 # VAE
-python wiskers/vae/commands/generate.py --config configs/vae/generate.yaml
+python wiskers/generate.py --config configs/vae/generate.yaml
+
+# GAN
+python wiskers/generate.py --config configs/gan/generate.yaml
 ```
 
 ## Streamlit

@@ -25,6 +25,7 @@ export_onnx: True
 export_safetensors: True
 
 # Module Config (model, scheduler and optimizer)
+module_type: "diffusion"
 module:
   model:
     in_channels: 3
