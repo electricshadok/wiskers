@@ -11,8 +11,7 @@ from lightning.pytorch.profilers import PyTorchProfiler
 from safetensors.torch import save_model
 
 from wiskers.common.commands.utils import load_config
-from wiskers.utils import get_data_module
-from wiskers.vae.vae_module import VAEModule
+from wiskers.utils import get_data_module, get_model
 
 
 class TrainCLI:
@@ -56,10 +55,19 @@ class TrainCLI:
         if self.config.earlystopping:
             self.callbacks.append(EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5))
 
-        self.model = VAEModule(
+        self.model = get_model(
+            self.config.module_type,
             **self.config.module.model,
             **self.config.module.optimizer,
         )
+        """
+        TODO: the diffusion is missing the scheduler
+        DiffuserModule(
+-            **self.config.module.model,
+-            **self.config.module.scheduler,
+-            **self.config.module.optimizer,
+-        )
+        """
 
         self.datamodule = get_data_module(
             self.config.data_module_type,
