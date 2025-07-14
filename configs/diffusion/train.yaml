@@ -28,6 +28,7 @@ export_safetensors: True
 module_type: "diffusion"
 module:
   model:
+    # Model Configurations
     in_channels: 3
     out_channels: 3
     time_dim: 256
@@ -37,7 +38,7 @@ module:
     image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
     activation: "relu"
 
-  scheduler:
+    # Scheduler Configurations
     scheduler_type: "ddpm"
     num_steps: 1000
     beta_start: 1e-4
@@ -53,6 +54,7 @@ earlystopping: False
 
 # lightning.Trainer Config
 trainer:
+  # fast_dev_run: 1
   limit_train_batches: 1.0
   limit_test_batches: 1.0
   limit_val_batches: 1.0

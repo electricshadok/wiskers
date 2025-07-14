@@ -71,7 +71,7 @@ class TrainCLI:
 
         self.datamodule = get_data_module(
             self.config.data_module_type,
-            self.config.data_module,
+            **self.config.data_module,
         )
 
     def run(self):
