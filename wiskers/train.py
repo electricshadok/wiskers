@@ -60,21 +60,13 @@ class TrainCLI:
             **self.config.module.model,
             **self.config.module.optimizer,
         )
-        """
-        TODO: the diffusion is missing the scheduler
-        DiffuserModule(
--            **self.config.module.model,
--            **self.config.module.scheduler,
--            **self.config.module.optimizer,
--        )
-        """
 
         self.datamodule = get_data_module(
             self.config.data_module_type,
             **self.config.data_module,
         )
 
-    def run(self):
+    def run(self, fast_dev_run=False):
         """
         Runs the training and testing of the model using the user settings.
         """
@@ -83,11 +75,12 @@ class TrainCLI:
             logger=self.logger,
             callbacks=self.callbacks,
             profiler=PyTorchProfiler(),
+            fast_dev_run=fast_dev_run,
             **self.config.trainer,
         )
         trainer.fit(model=self.model, datamodule=self.datamodule)
 
-        if hasattr(self.config.trainer, "fast_dev_run"):
+        if fast_dev_run:
             # Early exit in development mode
             return
 
@@ -112,6 +105,7 @@ class TrainCLI:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the training script with a given configuration file.")
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
+    parser.add_argument("--fast_dev_run", action="store_true", help="Run a single batch to test configuration")
     args = parser.parse_args()
     cmd = TrainCLI(args.config)
-    cmd.run()
+    cmd.run(fast_dev_run=args.fast_dev_run)

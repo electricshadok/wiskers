@@ -34,25 +34,33 @@ Run a quick training process.
 
 ```
 # Diffusion
-python wiskers/train.py --config tests/configs/diffusion/train.yaml
+python wiskers/train.py --config configs/diffusion/train.yaml --fast_dev_run
 
 # VAE
-python wiskers/train.py --config tests/configs/vae/train.yaml
+python wiskers/train.py --config configs/vae/train.yaml --fast_dev_run
+
+# GAN
+python wiskers/train.py --config configs/gan/train.yaml --fast_dev_run
 ```
 
 ## Training
 
 Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
 
+--quick_run : Run a single batch an single epoch
+
 ```
 # Diffusion
 python wiskers/train.py --config configs/diffusion/train.yaml
+python wiskers/train.py --config configs/diffusion/train.yaml --quick_run
 
 # VAE
 python wiskers/train.py --config configs/vae/train.yaml
+python wiskers/train.py --config configs/vae/train.yaml --quick_run
 
 # GAN
 python wiskers/train.py --config configs/gan/train.yaml
+python wiskers/train.py --config configs/gan/train.yaml --quick_run
 ```
 
 ## Inference
