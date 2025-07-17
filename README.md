@@ -106,7 +106,7 @@ Docker ensures a consistent environment Docker. Simply run the command to build 
 Once the build is complete, you can start the Docker container with all necessary dependencies installed:
 
 ```
-docker run --rm -it diffusion:1.0
+docker run --rm -it wiskers:1.0
 ```
 
 ## Code Formatter

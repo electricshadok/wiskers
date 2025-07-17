@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-IMAGE_NAME="diffusion"
+IMAGE_NAME="wiskers"
 TAG="1.0"
 DOCKERFILE_PATH="./Dockerfile"
 

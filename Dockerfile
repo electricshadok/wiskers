@@ -4,7 +4,7 @@ FROM nvidia/cuda:12.3.1-runtime-ubuntu20.04
 # Set metadata labels for the image
 LABEL maintainer="Vincent Bonnet"
 LABEL version="1.0"
-LABEL description="This is a custom Docker image"
+LABEL description="Docker image for Wiskers"
 
 # Set the working directory in the container
 WORKDIR /app
