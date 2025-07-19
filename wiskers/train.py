@@ -66,17 +66,30 @@ class TrainCLI:
             **self.config.data_module,
         )
 
-    def run(self, fast_dev_run=False):
+    def run(self, fast_dev_run=False, quick_run=False):
         """
         Runs the training and testing of the model using the user settings.
         """
+        trainer_args = dict(self.config.trainer)
+
+        if quick_run:
+            # override to run a few quick batches/epochs
+            trainer_args.update(
+                {
+                    "max_epochs": 1,
+                    "limit_train_batches": 10,
+                    "limit_val_batches": 5,
+                    "limit_test_batches": 5,
+                }
+            )
+
         # Train the model
         trainer = L.Trainer(
             logger=self.logger,
             callbacks=self.callbacks,
             profiler=PyTorchProfiler(),
             fast_dev_run=fast_dev_run,
-            **self.config.trainer,
+            **trainer_args,
         )
         trainer.fit(model=self.model, datamodule=self.datamodule)
 
@@ -106,6 +119,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the training script with a given configuration file.")
     parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
     parser.add_argument("--fast_dev_run", action="store_true", help="Run a single batch to test configuration")
+    parser.add_argument("--quick_run", action="store_true", help="Run a short real training + test + export")
     args = parser.parse_args()
     cmd = TrainCLI(args.config)
-    cmd.run(fast_dev_run=args.fast_dev_run)
+    cmd.run(fast_dev_run=args.fast_dev_run, quick_run=args.quick_run)
