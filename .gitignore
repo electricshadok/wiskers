@@ -1,7 +1,6 @@
 # Ignore generate directories for diffusion projects
-_best_models/
-_datasets/
-_logging/
+experiments/
+datasets/
 
 # Ignore Desktop Services Store (only Mac)
 .DS_Store

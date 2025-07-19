@@ -6,7 +6,7 @@ data_module_type: "cifar10:cat"
 # syntax: data_module_type: "cifar" - load the all dataset
 # syntax data_module_type: "cifar10:cat" - load dataset with specific category
 data_module:
-  data_dir: "./_datasets/"
+  data_dir: "./datasets/"
   batch_size: 16
   num_workers: 2
   image_size: 32
@@ -15,12 +15,11 @@ data_module:
 
 # Logger Configs
 tensor_board_logger:
-  save_dir: "./_logging"
+  save_dir: "./experiments"
   name: "gan"
   version: null
 
-# Model storage
-best_models_dir: "./_best_models/gan"
+# Export model
 export_onnx: True
 export_safetensors: True
 

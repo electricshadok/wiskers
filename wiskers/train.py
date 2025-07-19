@@ -37,8 +37,7 @@ class TrainCLI:
 
         # Prepare callbacks, loggers, model and data loaders
         self.logger = TensorBoardLogger(**self.config.tensor_board_logger)
-        run_name = os.path.basename(self.logger.log_dir)
-        checkpoint_dir = os.path.join(self.config.best_models_dir, run_name)
+        checkpoint_dir = os.path.join(self.logger.log_dir, "checkpoints")
 
         if os.path.exists(checkpoint_dir):
             shutil.rmtree(checkpoint_dir)

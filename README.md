@@ -47,7 +47,7 @@ python wiskers/train.py --config configs/gan/train.yaml --fast_dev_run
 
 Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
 
---quick_run : Run a single batch an single epoch
+--quick_run : Run few batches an single epoch
 
 ```
 # Diffusion
@@ -91,6 +91,14 @@ streamlit run streamlit/main.py
 <p align="center"><img src="docs/app.png?raw=true"></p>
 </details>
 
+
+## Tensorboard
+
+Track ML experiments
+
+```
+tensorboard --logdir=experiments/ --port=6006
+```
 
 ## Docker
 
