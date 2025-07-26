@@ -1,6 +1,6 @@
 from torch.utils.data import Subset
 
-from wiskers.common.datasets.cifar10 import CIFAR10
+from wiskers.datasets.cifar10 import CIFAR10
 
 
 class CIFAR10Subset(CIFAR10):
