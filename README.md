@@ -78,6 +78,16 @@ python wiskers/generate.py --config configs/vae/generate.yaml
 python wiskers/generate.py --config configs/gan/generate.yaml
 ```
 
+## Inspect Datasets
+
+Inspect and test the dataloaders.
+
+```
+python wiskers/inspect_dataset.py --config configs/datasets/clevrer.yaml 
+python wiskers/inspect_dataset.py --config configs/datasets/cifar10.yaml
+python wiskers/inspect_dataset.py --config configs/vae/train.yaml
+```
+
 ## Streamlit
 
 Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.

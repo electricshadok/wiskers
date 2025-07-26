@@ -1,0 +1,13 @@
+seed: 0
+
+# Datamodule configuration to initialize a LightningDataModule
+data_module_type: "cifar10"
+# syntax: data_module_type: "cifar" - load the all dataset
+# syntax data_module_type: "cifar10:cat" - load dataset with specific category
+data_module:
+  data_dir: "./datasets/"
+  batch_size: 16
+  num_workers: 2
+  image_size: 32
+  # augmentations
+  random_horizontal_flip: true
