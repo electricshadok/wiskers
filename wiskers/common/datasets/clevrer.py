@@ -31,16 +31,16 @@ class CLEVRER(L.LightningDataModule):
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
-        
+
         # Downloading Question-Answer
         print("Downloading CLEVRER Question-Answer...")
-        qa_dir = os.path.join(self.data_dir, "qa")
+        qa_dir = os.path.join(self.data_dir, "question_answer")
         os.makedirs(qa_dir, exist_ok=True)
         for setname, url_n_local in self.QA_URLS.items():
             print(f"Downloading CLEVRER Question-Answer{setname}...")
             url_path, local_path = url_n_local
-            if os.path.exists(local_path):
-                local_path = os.path.join(self.qa_dir, "validation.json")
+            if url_path and local_path and not os.path.exists(local_path):
+                local_path = os.path.join(qa_dir, "validation.json")
                 urlretrieve(url_path, local_path)
 
 
