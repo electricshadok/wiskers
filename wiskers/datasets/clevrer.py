@@ -1,8 +1,17 @@
 import os
-from urllib.request import urlretrieve
+from urllib.request import Request, urlopen, urlretrieve
 
 import lightning as L
 
+
+def get_file_size(url):
+    request = Request(url, method='HEAD')
+    with urlopen(request) as response:
+        size = response.getheader('Content-Length')
+        if size is not None:
+            return int(size)
+        else:
+            return None
 
 class CLEVRER(L.LightningDataModule):
     """
@@ -22,7 +31,13 @@ class CLEVRER(L.LightningDataModule):
         "test": ("http://data.csail.mit.edu/clevrer/questions/test.json", "test.json"),
     }
 
-    VIDEO_URLS = {"train": (None, None), "valid": (None, None), "test": (None, None)}
+    VIDEO_URLS = {"train": ("http://data.csail.mit.edu/clevrer/videos/train/video_train.zip",
+                            "video_train.zip"),
+                  "valid": ("http://data.csail.mit.edu/clevrer/videos/validation/video_validation.zip",
+                            "video_validation.zip"),
+                  "test": ("http://data.csail.mit.edu/clevrer/videos/test/video_test.zip",
+                           "video_test.zip"),
+                  }
 
     def __init__(self, data_dir: str, batch_size: int, num_workers: int):
         self.data_dir = os.path.join(data_dir, "clevrer")
@@ -32,6 +47,7 @@ class CLEVRER(L.LightningDataModule):
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
 
+        # Download JSON Question_Answer
         qa_dir = os.path.join(self.data_dir, "question_answer")
         os.makedirs(qa_dir, exist_ok=True)
         for setname, url_n_local in self.QA_URLS.items():
@@ -39,23 +55,31 @@ class CLEVRER(L.LightningDataModule):
             if url_path and local_path:
                 local_path = os.path.join(qa_dir, local_path)
                 if not os.path.exists(local_path):
-                    print(f"Downloading CLEVRER Question-Answer ({setname}) to {local_path}...")
+                    size_mb = get_file_size(url_path) / (1024 * 1024)
+                    print(f"Downloading CLEVRER Question-Answer ({setname}) of size {size_mb:.2f} MB to {local_path}...")
                     urlretrieve(url_path, local_path)
                 else:
                     print(f"CLEVRER Question-Answer ({setname}) already downloaded.")
             else:
                 print(f"CLEVRER Question-Answer ({setname}) not specified...")
 
+        # Downlod Zip video
+        video_dir = os.path.join(self.data_dir, "videos")
+        os.makedirs(video_dir, exist_ok=True)
+        for setname, url_n_local in self.VIDEO_URLS.items():
+            url_path, local_path = url_n_local
+            if url_path and local_path:
+                local_path = os.path.join(video_dir, local_path)
+                if not os.path.exists(local_path):
+                    size_mb = get_file_size(url_path) / (1024 * 1024)
+                    print(f"Downloading CLEVRER Video ({setname}) of size {size_mb:.2f} MB to {local_path}...")
+                    urlretrieve(url_path, local_path)
+                else:
+                    print(f"CLEVRER Video ({setname}) already downloaded.")
+            else:
+                print(f"CLEVRER Video ({setname}) not specified...")
 
-        """
-        # Download and extract CLEVRER if not already present
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir, exist_ok=True)
-            zip_path = os.path.join(self.data_dir, "clevrer.zip")
-            print("Downloading CLEVRER...")
-            urlretrieve(CLEVRER_URL, zip_path)
-            print("Extracting...")
-            with ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(self.data_dir)
-            os.remove(zip_path)
-        """
+        # Unzip Videos
+        # TODO
+        #  with ZipFile(zip_path, 'r') as zip_ref:
+        #        zip_ref.extractall(self.data_dir)
