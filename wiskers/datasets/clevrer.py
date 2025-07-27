@@ -17,7 +17,7 @@ class CLEVRER(L.LightningDataModule):
     """
 
     QA_URLS = {
-        "train": (None, None),
+        "train": ("http://data.csail.mit.edu/clevrer/questions/train.json", "train.json"),
         "valid": ("http://data.csail.mit.edu/clevrer/questions/validation.json", "validation.json"),
         "test": (None, None),
     }
@@ -32,16 +32,19 @@ class CLEVRER(L.LightningDataModule):
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
 
-        # Downloading Question-Answer
-        print("Downloading CLEVRER Question-Answer...")
         qa_dir = os.path.join(self.data_dir, "question_answer")
         os.makedirs(qa_dir, exist_ok=True)
         for setname, url_n_local in self.QA_URLS.items():
-            print(f"Downloading CLEVRER Question-Answer{setname}...")
             url_path, local_path = url_n_local
-            if url_path and local_path and not os.path.exists(local_path):
-                local_path = os.path.join(qa_dir, "validation.json")
-                urlretrieve(url_path, local_path)
+            if url_path and local_path:
+                local_path = os.path.join(qa_dir, local_path)
+                if not os.path.exists(local_path):
+                    print(f"Downloading CLEVRER Question-Answer ({setname}) to {local_path}...")
+                    urlretrieve(url_path, local_path)
+                else:
+                    print(f"CLEVRER Question-Answer ({setname}) already downloaded.")
+            else:
+                print(f"CLEVRER Question-Answer ({setname}) not specified...")
 
 
         """
