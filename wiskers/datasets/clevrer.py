@@ -19,7 +19,7 @@ class CLEVRER(L.LightningDataModule):
     QA_URLS = {
         "train": ("http://data.csail.mit.edu/clevrer/questions/train.json", "train.json"),
         "valid": ("http://data.csail.mit.edu/clevrer/questions/validation.json", "validation.json"),
-        "test": (None, None),
+        "test": ("http://data.csail.mit.edu/clevrer/questions/test.json", "test.json"),
     }
 
     VIDEO_URLS = {"train": (None, None), "valid": (None, None), "test": (None, None)}
