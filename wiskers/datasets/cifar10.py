@@ -53,6 +53,10 @@ class CIFAR10(L.LightningDataModule):
         self.transform = transforms.Compose(transformations)
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.train_dataset = None
+        self.val_dataset = None
+        self.test_dataset = None
+        self.predict_dataset = None
 
     def prepare_data(self):
         """
@@ -65,15 +69,23 @@ class CIFAR10(L.LightningDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit":
             generator = torch.Generator().manual_seed(42)
-            train_full = dset.CIFAR10(self.data_dir, train=True, transform=self.transform)
-            self.train_dataset, self.val_dataset = random_split(train_full, [0.8, 0.2], generator)
+            train_full = dset.CIFAR10(
+                self.data_dir, train=True, transform=self.transform
+            )
+            self.train_dataset, self.val_dataset = random_split(
+                train_full, [0.8, 0.2], generator
+            )
 
         # Assign test dataset for use in dataloader(s)
         elif stage == "test":
-            self.test_dataset = dset.CIFAR10(self.data_dir, train=False, transform=self.transform)
+            self.test_dataset = dset.CIFAR10(
+                self.data_dir, train=False, transform=self.transform
+            )
 
         elif stage == "predict":
-            self.predict_dataset = dset.CIFAR10(self.data_dir, train=False, transform=self.transform)
+            self.predict_dataset = dset.CIFAR10(
+                self.data_dir, train=False, transform=self.transform
+            )
 
     def train_dataloader(self):
         return DataLoader(
