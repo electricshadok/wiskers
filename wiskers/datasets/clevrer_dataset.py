@@ -28,7 +28,7 @@ class Clevrer(Dataset):
         ),
         "valid": (
             "http://data.csail.mit.edu/clevrer/questions/validation.json",
-            "validation.json",
+            "valid.json",
         ),
         "test": ("http://data.csail.mit.edu/clevrer/questions/test.json", "test.json"),
     }
@@ -40,7 +40,7 @@ class Clevrer(Dataset):
         ),
         "valid": (
             "http://data.csail.mit.edu/clevrer/videos/validation/video_validation.zip",
-            "video_validation.zip",
+            "video_valid.zip",
         ),
         "test": (
             "http://data.csail.mit.edu/clevrer/videos/test/video_test.zip",
