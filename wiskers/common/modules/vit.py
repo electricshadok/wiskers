@@ -24,3 +24,9 @@ class PatchEmbedding(nn.Module):
 
     def forward(self, x):
         return self.conv(x).flatten(start_dim=2).transpose(1, 2)
+
+
+# Add all the implementation is
+# https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
+# position embeddings, the model can discover the most useful way to represent patch positions
+

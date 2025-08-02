@@ -20,9 +20,10 @@ class CLEVRER(L.LightningDataModule):
     def __init__(self, data_dir: str, batch_size: int, num_workers: int):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
-        self.cleverer = data.Clevrer(self.data_dir)
+        self.train = data.Clevrer(self.data_dir, "train", 16)
         self.batch_size = batch_size
         self.num_workers = num_workers
 
     def prepare_data(self):
-        self.cleverer.download_all()
+        self.train.download_all()
+        self.train.prepare_data()

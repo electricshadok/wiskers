@@ -21,3 +21,4 @@ dependencies:
       - torchaudio==2.6.0
       - safetensors
       - tensorboard
+      - opencv-stubs
