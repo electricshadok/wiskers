@@ -13,6 +13,7 @@ dependencies:
   - onnx
   - onnxruntime
   - ruff
+  - opencv
   - pip
   - pip:
       - torch==2.6.0

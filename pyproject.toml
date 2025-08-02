@@ -19,7 +19,7 @@ fixable = ["ALL"]
 unfixable = []
 
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 lines-after-imports = 2
 known-first-party = ["wiskers"]
 

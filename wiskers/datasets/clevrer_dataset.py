@@ -1,18 +1,10 @@
 import os
 import zipfile
-from urllib.request import Request, urlopen, urlretrieve
+from urllib.request import urlretrieve
 
 from torch.utils.data import Dataset
 
-
-def get_file_size(url):
-    request = Request(url, method="HEAD")
-    with urlopen(request) as response:
-        size = response.getheader("Content-Length")
-        if size is not None:
-            return int(size)
-        else:
-            return None
+from wiskers.datasets.clevrer_utils import get_file_size
 
 
 class Clevrer(Dataset):
@@ -48,15 +40,15 @@ class Clevrer(Dataset):
         ),
     }
 
-    def __init__(self):
+    def __init__(self, data_dir: str):
         super().__init__()
+        self.data_dir = data_dir
 
-    @staticmethod
-    def download_all(data_dir: str):
-        os.makedirs(data_dir, exist_ok=True)
+    def download_all(self):
+        os.makedirs(self.data_dir, exist_ok=True)
 
         # Download JSON Question_Answer
-        qa_dir = os.path.join(data_dir, "question_answer")
+        qa_dir = os.path.join(self.data_dir, "question_answer")
         os.makedirs(qa_dir, exist_ok=True)
         for setname, url_n_local in Clevrer.QA_URLS.items():
             url_path, local_path = url_n_local
@@ -74,7 +66,7 @@ class Clevrer(Dataset):
                 print(f"CLEVRER Question-Answer ({setname}) not specified...")
 
         # Downlod Zip video and Unzip them
-        video_dir = os.path.join(data_dir, "videos")
+        video_dir = os.path.join(self.data_dir, "videos")
         os.makedirs(video_dir, exist_ok=True)
         for setname, url_n_local in Clevrer.VIDEO_URLS.items():
             url_path, local_path = url_n_local

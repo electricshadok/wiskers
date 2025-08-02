@@ -131,7 +131,7 @@ docker run --rm -it wiskers:1.0
 Use code formatter with ruff (see pyproject.toml)
 
 ```
-ruff check
+ruff check --fix
 ```
 
 
