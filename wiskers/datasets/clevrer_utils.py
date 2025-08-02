@@ -4,6 +4,33 @@ from urllib.request import Request, urlopen
 
 import cv2
 
+QA_URLS = {
+    "train": (
+        "http://data.csail.mit.edu/clevrer/questions/train.json",
+        "train.json",
+    ),
+    "valid": (
+        "http://data.csail.mit.edu/clevrer/questions/validation.json",
+        "valid.json",
+    ),
+    "test": ("http://data.csail.mit.edu/clevrer/questions/test.json", "test.json"),
+}
+
+VIDEO_URLS = {
+    "train": (
+        "http://data.csail.mit.edu/clevrer/videos/train/video_train.zip",
+        "video_train.zip",
+    ),
+    "valid": (
+        "http://data.csail.mit.edu/clevrer/videos/validation/video_validation.zip",
+        "video_valid.zip",
+    ),
+    "test": (
+        "http://data.csail.mit.edu/clevrer/videos/test/video_test.zip",
+        "video_test.zip",
+    ),
+}
+
 
 def get_all_videos(root_dir: str) -> list[str]:
     video_paths = []

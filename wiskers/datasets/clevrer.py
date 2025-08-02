@@ -1,4 +1,3 @@
-
 import os
 
 import lightning as L
@@ -27,4 +26,3 @@ class CLEVRER(L.LightningDataModule):
 
     def prepare_data(self):
         self.cleverer.download_all()
-
