@@ -1,10 +1,16 @@
+import json
 import os
 import zipfile
 from urllib.request import urlretrieve
 
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
-from wiskers.datasets.clevrer_utils import get_file_size
+from wiskers.datasets.clevrer_utils import (
+    frame_count_from_video,
+    get_all_videos,
+    get_file_size,
+)
 
 
 class Clevrer(Dataset):
@@ -91,3 +97,35 @@ class Clevrer(Dataset):
                     zip_ref.extractall(raw_video_dir)
             else:
                 print(f"CLEVRER Video ({setname}) already unzipped.")
+
+        splits = ["train", "valid", "test"]
+        video_root = os.path.join(self.data_dir, "videos")
+
+        for split in splits:
+            video_dir = os.path.join(video_root, split)
+            json_path = os.path.join(video_root, f"{split}.json")
+
+            if os.path.exists(json_path):
+                print(f"Skipping {split}, already processed: {json_path}")
+                continue
+
+            video_paths = get_all_videos(video_dir)
+            print(f"Num videos: {len(video_paths)}")
+            print(f"Example video: {video_paths[0]}")
+
+            # Track progress of frame counting
+            frame_map = {}
+            for path in tqdm(video_paths, desc="Counting frames"):
+                try:
+                    count = frame_count_from_video(path)
+                    frame_map[path] = count
+                except Exception as e:
+                    print(f"Error reading {path}: {e}")
+
+            with open(json_path, "w") as f:
+                json.dump(frame_map, f, indent=2)
+
+            total_frames = sum(frame_map.values())
+            print(
+                f"Saved frame count mapping to: {json_path} ({len(frame_map)} videos, {total_frames} frames)"
+            )
