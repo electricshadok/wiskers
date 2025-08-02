@@ -22,26 +22,23 @@ class Clevrer(Dataset):
         self.chunk_len = chunk_len
 
     def prepare_data(self):
-        splits = ["train", "valid", "test"]
         video_root = os.path.join(self.data_dir, "videos")
+        video_dir = os.path.join(video_root, self.split)
+        json_path = os.path.join(video_root, f"{self.split}.json")
 
-        for split in splits:
-            video_dir = os.path.join(video_root, split)
-            json_path = os.path.join(video_root, f"{split}.json")
+        if os.path.exists(json_path):
+            print(f"Skipping {self.split}, already processed: {json_path}")
+            return
 
-            if os.path.exists(json_path):
-                print(f"Skipping {split}, already processed: {json_path}")
-                continue
-
-            build_frame_count_json(video_dir, json_path)
+        build_frame_count_json(video_dir, json_path)
 
     def download_all(self):
         os.makedirs(self.data_dir, exist_ok=True)
 
         # Download JSON Question_Answer
         qa_dir = os.path.join(self.data_dir, "question_answer")
-        download_qa(qa_dir)
+        download_qa(qa_dir, self.split)
 
         # Downlod Zip video and Unzip them
         video_dir = os.path.join(self.data_dir, "videos")
-        download_videos(video_dir)
+        download_videos(video_dir, self.split)

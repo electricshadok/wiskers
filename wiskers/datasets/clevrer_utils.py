@@ -36,49 +36,47 @@ VIDEO_URLS = {
 }
 
 
-def download_videos(video_dir: str):
+def download_videos(video_dir: str, split: str):
     os.makedirs(video_dir, exist_ok=True)
-    for setname, url_n_local in VIDEO_URLS.items():
-        url_path, local_path = url_n_local
-        if url_path and local_path:
-            local_path = os.path.join(video_dir, local_path)
-            if not os.path.exists(local_path):
-                size_mb = get_file_size(url_path) / (1024 * 1024)
-                print(
-                    f"Downloading CLEVRER Video ({setname}) of size {size_mb:.2f} MB to {local_path}..."
-                )
-                urlretrieve(url_path, local_path)
-            else:
-                print(f"CLEVRER Video ({setname}) already downloaded.")
+    url_path, local_path = VIDEO_URLS[split]
+    if url_path and local_path:
+        local_path = os.path.join(video_dir, local_path)
+        if not os.path.exists(local_path):
+            size_mb = get_file_size(url_path) / (1024 * 1024)
+            print(
+                f"Downloading CLEVRER Video ({split}) of size {size_mb:.2f} MB to {local_path}..."
+            )
+            urlretrieve(url_path, local_path)
         else:
-            print(f"CLEVRER Video ({setname}) not specified...")
+            print(f"CLEVRER Video ({split}) already downloaded.")
+    else:
+        print(f"CLEVRER Video ({split}) not specified...")
 
-        raw_video_dir = os.path.join(video_dir, setname)
-        if not os.path.exists(raw_video_dir):
-            os.makedirs(raw_video_dir, exist_ok=True)
-            with zipfile.ZipFile(local_path, "r") as zip_ref:
-                print(f"CLEVRER Unzip Video ({setname}).")
-                zip_ref.extractall(raw_video_dir)
-        else:
-            print(f"CLEVRER Video ({setname}) already unzipped.")
+    raw_video_dir = os.path.join(video_dir, split)
+    if not os.path.exists(raw_video_dir):
+        os.makedirs(raw_video_dir, exist_ok=True)
+        with zipfile.ZipFile(local_path, "r") as zip_ref:
+            print(f"CLEVRER Unzip Video ({split}).")
+            zip_ref.extractall(raw_video_dir)
+    else:
+        print(f"CLEVRER Video ({split}) already unzipped.")
 
 
-def download_qa(qa_dir: str):
+def download_qa(qa_dir: str, split: str):
     os.makedirs(qa_dir, exist_ok=True)
-    for setname, url_n_local in QA_URLS.items():
-        url_path, local_path = url_n_local
-        if url_path and local_path:
-            local_path = os.path.join(qa_dir, local_path)
-            if not os.path.exists(local_path):
-                size_mb = get_file_size(url_path) / (1024 * 1024)
-                print(
-                    f"Downloading CLEVRER Question-Answer ({setname}) of size {size_mb:.2f} MB to {local_path}..."
-                )
-                urlretrieve(url_path, local_path)
-            else:
-                print(f"CLEVRER Question-Answer ({setname}) already downloaded.")
+    url_path, local_path = QA_URLS[split]
+    if url_path and local_path:
+        local_path = os.path.join(qa_dir, local_path)
+        if not os.path.exists(local_path):
+            size_mb = get_file_size(url_path) / (1024 * 1024)
+            print(
+                f"Downloading CLEVRER Question-Answer ({split}) of size {size_mb:.2f} MB to {local_path}..."
+            )
+            urlretrieve(url_path, local_path)
         else:
-            print(f"CLEVRER Question-Answer ({setname}) not specified...")
+            print(f"CLEVRER Question-Answer ({split}) already downloaded.")
+    else:
+        print(f"CLEVRER Question-Answer ({split}) not specified...")
 
 
 def build_frame_count_json(video_dir: str, json_path: str):
