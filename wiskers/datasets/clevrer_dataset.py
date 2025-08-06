@@ -1,13 +1,6 @@
-import json
 import os
 
 from torch.utils.data import Dataset
-
-from wiskers.datasets.clevrer_utils import (
-    build_frame_count_json,
-    download_qa,
-    download_videos,
-)
 
 
 class Clevrer(Dataset):
@@ -36,6 +29,7 @@ class Clevrer(Dataset):
     def __len__(self):
         return len(self.index)
 
+    """
     def prepare_data(self):
         # Create cached json
         if not os.path.exists(self.json_path):
@@ -56,12 +50,4 @@ class Clevrer(Dataset):
                 self.index.append((video_idx, i * self.chunk_len))
 
         print(f"CLEVRER {len(self.index)} samples loaded from {self.json_path}")
-
-    def download_all(self):
-        os.makedirs(self.data_dir, exist_ok=True)
-
-        # Download JSON Question_Answer
-        download_qa(self.qa_root, self.split)
-
-        # Downlod Zip video and Unzip them
-        download_videos(self.video_root, self.split)
+    """

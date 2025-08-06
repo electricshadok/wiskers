@@ -5,6 +5,12 @@ from torch.utils.data import DataLoader
 
 import wiskers.datasets.clevrer_dataset as data
 
+from wiskers.datasets.clevrer_utils import (
+    build_frame_count_json,
+    download_qa,
+    download_videos,
+)
+
 
 class CLEVRER(L.LightningDataModule):
     """
@@ -28,14 +34,20 @@ class CLEVRER(L.LightningDataModule):
         self.num_workers = num_workers
 
     def prepare_data(self):
-        self.train_dataset.download_all()
-        self.train_dataset.prepare_data()
+        os.makedirs(self.data_dir, exist_ok=True)
+        for split in ["train", "test", "valid"]:
+            video_root = os.path.join(self.data_dir, "videos")
+            qa_root = os.path.join(self.data_dir, "question_answer")
+            video_dir = os.path.join(video_root, split)
+            json_path = os.path.join(video_root, f"{split}.json")
 
-        self.test_dataset.download_all()
-        self.test_dataset.prepare_data()
+            # Download JSON Question_Answer
+            download_qa(qa_root, split)
 
-        self.val_dataset.download_all()
-        self.val_dataset.prepare_data()
+            # Downlod Zip video and Unzip them
+            download_videos(video_root, split)
+
+            # prepare video
 
     def train_dataloader(self):
         return DataLoader(
