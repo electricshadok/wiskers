@@ -6,6 +6,7 @@ from urllib.request import Request, urlopen, urlretrieve
 
 import cv2
 from tqdm import tqdm
+import numpy as np
 
 
 QA_URLS = {
@@ -134,3 +135,52 @@ def get_file_size(url: str, timeout: float = 10.0) -> Optional[int]:
     except Exception as e:
         print(f"Warning: Failed to get file size from {url} - {e}")
         return None
+
+
+def extract_video_chunks_to_numpy(
+    video_path: str,
+    output_dir: str,
+    chunk_size: int,
+    stride: int = None,
+    resize: tuple[int, int] = None,
+    prefix: str = None,
+) -> int:
+    os.makedirs(output_dir, exist_ok=True)
+
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise IOError(f"Could not open video file: {video_path}")
+
+    stride = stride or chunk_size
+    video_name = os.path.splitext(os.path.basename(video_path))[0]
+    prefix = prefix or video_name
+
+    buffer = []
+    frame_idx = 0
+    chunk_idx = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if resize:
+            frame = cv2.resize(frame, resize)
+
+        buffer.append(frame)
+
+        # If we've collected enough for a chunk
+        if len(buffer) == chunk_size:
+            chunk = np.stack(buffer)
+            save_path = os.path.join(output_dir, f"{prefix}_chunk{chunk_idx:04d}.npy")
+            np.save(save_path, chunk)
+            chunk_idx += 1
+
+            # Move forward by stride
+            buffer = buffer[stride:] if stride < chunk_size else []
+
+        frame_idx += 1
+
+    cap.release()
+    print(f"Saved {chunk_idx} chunks from {video_path} to {output_dir}")
+    return chunk_idx
