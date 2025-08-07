@@ -5,8 +5,8 @@ from typing import Optional
 from urllib.request import Request, urlopen, urlretrieve
 
 import cv2
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 
 
 QA_URLS = {
@@ -158,12 +158,15 @@ def extract_video_chunks_to_numpy(
     buffer = []
     frame_idx = 0
     chunk_idx = 0
+    original_shape = None
+    chunk_shape = None
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
+        original_shape = frame.shape
         if resize:
             frame = cv2.resize(frame, resize)
 
@@ -175,6 +178,7 @@ def extract_video_chunks_to_numpy(
             save_path = os.path.join(output_dir, f"{prefix}_chunk{chunk_idx:04d}.npy")
             np.save(save_path, chunk)
             chunk_idx += 1
+            chunk_shape = chunk.shape
 
             # Move forward by stride
             buffer = buffer[stride:] if stride < chunk_size else []
@@ -182,5 +186,55 @@ def extract_video_chunks_to_numpy(
         frame_idx += 1
 
     cap.release()
-    print(f"Saved {chunk_idx} chunks from {video_path} to {output_dir}")
+    print(
+        f"Saved {chunk_idx} chunks of shape {chunk_shape} / original shape {original_shape} from {video_path} to {output_dir}"  # noqa: E501
+    )
     return chunk_idx
+
+
+def prepare_and_extract_clevrer_videos(
+    raw_video_dir: str,
+    processed_video_dir: str,
+    chunk_size: int = 4,
+    stride: int = 4,
+    resize: tuple[int, int] | None = None,
+    limit: int | None = None,
+):
+    """
+    Preprocess CLEVRER videos by extracting fixed-length chunks and saving them as numpy arrays.
+
+    Args:
+        raw_video_dir (str): Path to the directory with raw .mp4 video files.
+        processed_video_dir (str): Where to save the extracted chunk numpy arrays.
+        chunk_size (int): Number of frames per chunk.
+        stride (int): Step between chunks (stride = chunk_size → no overlap).
+        resize (tuple or None): Resize (H, W) for frames, or None to keep original size.
+        limit (int or None): Limit the number of videos to process.
+
+    TODO: Add multiprocessing support to speed up processing across multiple CPU cores.
+    """
+    os.makedirs(processed_video_dir, exist_ok=True)
+
+    # Get and sort video paths lexicographically (consistent due to video naming)
+    video_paths = sorted(get_all_video_paths(raw_video_dir))
+
+    print(f"{len(video_paths)} videos found in {raw_video_dir}")
+    print("Example:", video_paths[0])
+
+    if limit is not None:
+        video_paths = video_paths[:limit]
+
+    for video_path in tqdm(video_paths, desc="Processing videos"):
+        video_id = os.path.splitext(os.path.basename(video_path))[0]
+        print(f"Start processing {video_id} ...")
+
+        output_dir = os.path.join(processed_video_dir, video_id)
+        os.makedirs(output_dir, exist_ok=True)
+
+        extract_video_chunks_to_numpy(
+            video_path=video_path,
+            output_dir=output_dir,
+            chunk_size=chunk_size,
+            stride=stride,
+            resize=resize,
+        )
