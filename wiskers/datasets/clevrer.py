@@ -23,7 +23,15 @@ class CLEVRER(L.LightningDataModule):
         num_workers (int): Number of workers for data loading.
     """
 
-    def __init__(self, data_dir: str, batch_size: int, num_workers: int):
+    def __init__(
+        self,
+        data_dir: str,
+        batch_size: int,
+        num_workers: int,
+        chunk_size: int,
+        stride: int,
+        resize: tuple[int, int] | None,
+    ):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
         self.train_dataset = data.Clevrer(self.data_dir, "train", 4)
@@ -31,6 +39,9 @@ class CLEVRER(L.LightningDataModule):
         self.val_dataset = data.Clevrer(self.data_dir, "valid", 4)
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.chunk_size = chunk_size
+        self.stride = stride
+        self.resize = resize
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
@@ -46,17 +57,14 @@ class CLEVRER(L.LightningDataModule):
             # Downlod Zip video and Unzip them
             download_videos(video_raw_root, split)
 
-            # Preprocess videos
-            chunk_size = 4  # TODO: add to configuration
-            stride = 4  # TODO: add to configuration
-            resize = [240, 160]  # TODO: add to configuration
             prepare_and_extract_clevrer_videos(
                 raw_video_dir=raw_video_dir,
                 processed_video_dir=processed_video_dir,
-                chunk_size=chunk_size,
-                stride=stride,
-                resize=resize,
+                chunk_size=self.chunk_size,
+                stride=self.stride,
+                resize=self.resize,
                 limit=None,
+                index_filename="index.json",
             )
 
     def train_dataloader(self):

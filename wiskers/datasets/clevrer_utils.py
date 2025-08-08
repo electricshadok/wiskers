@@ -1,6 +1,7 @@
 import json
 import os
 import zipfile
+from glob import glob
 from typing import Optional
 from urllib.request import Request, urlopen, urlretrieve
 
@@ -80,30 +81,6 @@ def download_qa(qa_dir: str, split: str):
         print(f"CLEVRER Question-Answer ({split}) not specified...")
 
 
-def build_frame_count_json(video_dir: str, json_path: str):
-    video_paths = get_all_video_paths(video_dir)
-    print(f"Num videos: {len(video_paths)}")
-    print(f"Example video: {video_paths[0]}")
-
-    # Track progress of frame counting
-    frame_map = {}
-    for path in tqdm(video_paths, desc="Counting frames"):
-        try:
-            count = frame_count_from_video(path)
-            rel_path = os.path.relpath(path, video_dir)
-            frame_map[rel_path] = count
-        except Exception as e:
-            print(f"Error reading {path}: {e}")
-
-    with open(json_path, "w") as f:
-        json.dump(frame_map, f, indent=2)
-
-    total_frames = sum(frame_map.values())
-    print(
-        f"Saved frame count mapping to: {json_path} ({len(frame_map)} videos, {total_frames} frames)"
-    )
-
-
 def get_all_video_paths(root_dir: str) -> list[str]:
     video_paths = []
     for group_dir in os.listdir(root_dir):
@@ -115,15 +92,6 @@ def get_all_video_paths(root_dir: str) -> list[str]:
                 video_path = os.path.join(group_path, file)  # ← more robust
                 video_paths.append(video_path)
     return video_paths
-
-
-def frame_count_from_video(video_path: str) -> int:
-    cap = cv2.VideoCapture(video_path)  # type: ignore
-    if not cap.isOpened():
-        raise IOError(f"Failed to open video file: {video_path}")
-    num_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))  # type: ignore
-    cap.release()
-    return num_frames
 
 
 def get_file_size(url: str, timeout: float = 10.0) -> Optional[int]:
@@ -199,6 +167,7 @@ def prepare_and_extract_clevrer_videos(
     stride: int = 4,
     resize: tuple[int, int] | None = None,
     limit: int | None = None,
+    index_filename: str | None = "index.json",
 ):
     """
     Preprocess CLEVRER videos by extracting fixed-length chunks and saving them as numpy arrays.
@@ -224,17 +193,44 @@ def prepare_and_extract_clevrer_videos(
     if limit is not None:
         video_paths = video_paths[:limit]
 
+    # Collect all chunk paths (relative to processed_video_dir) if we’re writing an index
+    all_rel_paths = []
+
     for video_path in tqdm(video_paths, desc="Processing videos"):
         video_id = os.path.splitext(os.path.basename(video_path))[0]
         print(f"Start processing {video_id} ...")
 
         output_dir = os.path.join(processed_video_dir, video_id)
-        os.makedirs(output_dir, exist_ok=True)
 
-        extract_video_chunks_to_numpy(
-            video_path=video_path,
-            output_dir=output_dir,
-            chunk_size=chunk_size,
-            stride=stride,
-            resize=resize,
-        )
+        if os.path.exists(output_dir):
+            print(f"{video_id} is already processed.")
+        else:
+            os.makedirs(output_dir, exist_ok=True)
+
+            extract_video_chunks_to_numpy(
+                video_path=video_path,
+                output_dir=output_dir,
+                chunk_size=chunk_size,
+                stride=stride,
+                resize=resize,
+            )
+
+        if index_filename:
+            # After extraction, list chunks we just created and add them (relative) to the index
+            chunk_files = sorted(glob(os.path.join(output_dir, "*.npy")))
+            rel_files = [os.path.relpath(p, processed_video_dir) for p in chunk_files]
+            all_rel_paths.extend(rel_files)
+
+    if index_filename:
+        index_path = os.path.join(processed_video_dir, index_filename)
+        payload = {
+            "root": ".",  # paths are relative to this JSON
+            "chunk_size": chunk_size,
+            "stride": stride,
+            "resize": list(resize) if resize else None,
+            "num_samples": len(all_rel_paths),
+            "samples": all_rel_paths,
+        }
+        with open(index_path, "w") as f:
+            json.dump(payload, f, indent=2)
+        print(f"Saved index with {len(all_rel_paths)} samples → {index_path}")
