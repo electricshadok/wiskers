@@ -57,7 +57,7 @@ class CLEVRER(L.LightningDataModule):
             # Downlod Zip video and Unzip them
             download_videos(video_raw_root, split)
 
-            prepare_and_extract_clevrer_videos(
+            index_path = prepare_and_extract_clevrer_videos(
                 raw_video_dir=raw_video_dir,
                 processed_video_dir=processed_video_dir,
                 chunk_size=self.chunk_size,
@@ -66,6 +66,7 @@ class CLEVRER(L.LightningDataModule):
                 limit=None,
                 index_filename="index.json",
             )
+            print(f"CLEVRER Index ({split}) {index_path} available")
 
     def train_dataloader(self):
         return DataLoader(

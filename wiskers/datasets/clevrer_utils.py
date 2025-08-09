@@ -167,8 +167,8 @@ def prepare_and_extract_clevrer_videos(
     stride: int = 4,
     resize: tuple[int, int] | None = None,
     limit: int | None = None,
-    index_filename: str | None = "index.json",
-):
+    index_filename: str = "index.json",
+) -> str:
     """
     Preprocess CLEVRER videos by extracting fixed-length chunks and saving them as numpy arrays.
 
@@ -183,6 +183,9 @@ def prepare_and_extract_clevrer_videos(
     TODO: Add multiprocessing support to speed up processing across multiple CPU cores.
     """
     os.makedirs(processed_video_dir, exist_ok=True)
+    index_path = os.path.join(processed_video_dir, index_filename)
+    if os.path.exists(index_path):
+        return index_path
 
     # Get and sort video paths lexicographically (consistent due to video naming)
     video_paths = sorted(get_all_video_paths(raw_video_dir))
@@ -215,22 +218,20 @@ def prepare_and_extract_clevrer_videos(
                 resize=resize,
             )
 
-        if index_filename:
-            # After extraction, list chunks we just created and add them (relative) to the index
-            chunk_files = sorted(glob(os.path.join(output_dir, "*.npy")))
-            rel_files = [os.path.relpath(p, processed_video_dir) for p in chunk_files]
-            all_rel_paths.extend(rel_files)
+        # After extraction, list chunks we just created and add them (relative) to the index
+        chunk_files = sorted(glob(os.path.join(output_dir, "*.npy")))
+        rel_files = [os.path.relpath(p, processed_video_dir) for p in chunk_files]
+        all_rel_paths.extend(rel_files)
 
-    if index_filename:
-        index_path = os.path.join(processed_video_dir, index_filename)
-        payload = {
-            "root": ".",  # paths are relative to this JSON
-            "chunk_size": chunk_size,
-            "stride": stride,
-            "resize": list(resize) if resize else None,
-            "num_samples": len(all_rel_paths),
-            "samples": all_rel_paths,
-        }
-        with open(index_path, "w") as f:
-            json.dump(payload, f, indent=2)
-        print(f"Saved index with {len(all_rel_paths)} samples → {index_path}")
+    payload = {
+        "root": ".",  # paths are relative to this JSON
+        "chunk_size": chunk_size,
+        "stride": stride,
+        "resize": list(resize) if resize else None,
+        "num_samples": len(all_rel_paths),
+        "samples": all_rel_paths,
+    }
+    with open(index_path, "w") as f:
+        json.dump(payload, f, indent=2)
+    print(f"Saved index with {len(all_rel_paths)} samples → {index_path}")
+    return index_path
