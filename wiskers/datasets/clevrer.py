@@ -34,14 +34,12 @@ class CLEVRER(L.LightningDataModule):
     ):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
-        self.train_dataset = data.Clevrer(self.data_dir, "train", 4)
-        self.test_dataset = data.Clevrer(self.data_dir, "test", 4)
-        self.val_dataset = data.Clevrer(self.data_dir, "valid", 4)
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.chunk_size = chunk_size
         self.stride = stride
         self.resize = resize
+        self.index_paths = {}
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
@@ -68,9 +66,12 @@ class CLEVRER(L.LightningDataModule):
             )
             print(f"CLEVRER Index ({split}) {index_path} available")
 
+            self.index_paths[split] = index_path
+
     def train_dataloader(self):
+        train_dataset = data.Clevrer(self.index_paths["train"])
         return DataLoader(
-            self.train_dataset,
+            train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
@@ -78,8 +79,9 @@ class CLEVRER(L.LightningDataModule):
         )
 
     def val_dataloader(self):
+        val_dataset = data.Clevrer(self.index_paths["valid"])
         return DataLoader(
-            self.val_dataset,
+            val_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
@@ -87,8 +89,9 @@ class CLEVRER(L.LightningDataModule):
         )
 
     def test_dataloader(self):
+        test_dataset = data.Clevrer(self.index_paths["test"])
         return DataLoader(
-            self.test_dataset,
+            test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,

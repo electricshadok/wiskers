@@ -28,15 +28,43 @@ class InspectDatasetCLI:
         )
 
     def run(self):
-        # TODO
         print(self.config.data_module_type)
 
         self.datamodule.prepare_data()
 
+        train_loader = self.datamodule.train_dataloader()
+        val_loader = self.datamodule.val_dataloader()
+        test_loader = self.datamodule.test_dataloader()
+
+        # Print dataset lengths and batch info
+        for name, loader in [
+            ("Train", train_loader),
+            ("Val", val_loader),
+            ("Test", test_loader),
+        ]:
+            ds = loader.dataset
+            print(f"{name} dataset length: {len(ds)}")
+            batch = next(iter(loader))
+            if isinstance(batch, (list, tuple)):
+                for i, elem in enumerate(batch):
+                    shape_info = (
+                        f", shape={tuple(elem.shape)}" if hasattr(elem, "shape") else ""
+                    )
+                    print(f"  [{i}] {type(elem).__name__}{shape_info}")
+            else:
+                shape_info = (
+                    f", shape={tuple(batch.shape)}" if hasattr(batch, "shape") else ""
+                )
+                print(f"  {type(batch).__name__}{shape_info}")
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the training script with a given configuration file.")
-    parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
+    parser = argparse.ArgumentParser(
+        description="Run the training script with a given configuration file."
+    )
+    parser.add_argument(
+        "--config", type=str, required=True, help="Path to the configuration file"
+    )
     args = parser.parse_args()
     cmd = InspectDatasetCLI(args.config)
     cmd.run()

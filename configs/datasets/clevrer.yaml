@@ -7,7 +7,7 @@ data_module_type: "clevrer"
 # syntax data_module_type: "cifar10:cat" - load dataset with specific category
 data_module:
   data_dir: "./datasets"
-  batch_size: 16
+  batch_size: 4
   num_workers: 2
   chunk_size: 16
   stride: 16
