@@ -1,8 +1,8 @@
 import torch
 import torchvision
 
-import streamlit as st
-from streamlit.diffusion.utils import get_dataset, get_diffuser_module
+import streamlit_ui as st
+from streamlit_ui.diffusion.utils import get_dataset, get_diffuser_module
 from wiskers.common.commands.utils import load_config
 
 

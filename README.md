@@ -93,7 +93,7 @@ python wiskers/inspect_dataset.py --config configs/vae/train.yaml
 Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.
 
 ```
-streamlit run streamlit/main.py
+streamlit run streamlit_ui/main.py
 ```
 
 <details>

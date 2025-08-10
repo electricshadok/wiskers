@@ -1,7 +1,7 @@
 import torch
 import torchvision
 
-import streamlit as st
+import streamlit_ui as st
 
 
 def dataset_ui(dataset: torch.utils.data.Dataset):

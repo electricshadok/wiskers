@@ -1,10 +1,10 @@
 import os
 from typing import List
 
-import streamlit as st
-from streamlit.common.dataset_ui import dataset_ui
-from streamlit.diffusion.noise_debug_ui import noise_debug_ui
-from streamlit.diffusion.utils import get_dataset
+import streamlit_ui as st
+from streamlit_ui.common.dataset_ui import dataset_ui
+from streamlit_ui.diffusion.noise_debug_ui import noise_debug_ui
+from streamlit_ui.diffusion.utils import get_dataset
 
 
 def get_config_files() -> List[str]:

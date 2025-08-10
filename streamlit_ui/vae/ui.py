@@ -1,9 +1,9 @@
 import os
 from typing import List
 
-import streamlit as st
-from streamlit.common.dataset_ui import dataset_ui
-from streamlit.vae.utils import get_dataset
+import streamlit_ui as st
+from streamlit_ui.common.dataset_ui import dataset_ui
+from streamlit_ui.vae.utils import get_dataset
 
 
 def get_config_files() -> List[str]:

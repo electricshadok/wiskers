@@ -1,6 +1,6 @@
 import streamlit as st
-import streamlit.diffusion.ui as diffusion_ui
-import streamlit.vae.ui as vae_ui
+import streamlit_ui.diffusion.ui as diffusion_ui
+import streamlit_ui.vae.ui as vae_ui
 
 
 if __name__ == "__main__":
