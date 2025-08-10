@@ -31,6 +31,9 @@ class InspectDatasetCLI:
         print(self.config.data_module_type)
 
         self.datamodule.prepare_data()
+        self.datamodule.setup("fit")
+        self.datamodule.setup("test")
+        self.datamodule.setup("predict")
 
         train_loader = self.datamodule.train_dataloader()
         val_loader = self.datamodule.val_dataloader()
