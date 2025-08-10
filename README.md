@@ -34,13 +34,13 @@ Run a quick training process.
 
 ```
 # Diffusion
-python wiskers/train.py --config configs/diffusion/train.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/diffusion/train.yaml --fast_dev_run
 
 # VAE
-python wiskers/train.py --config configs/vae/train.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/vae/train.yaml --fast_dev_run
 
 # GAN
-python wiskers/train.py --config configs/gan/train.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/gan/train.yaml --fast_dev_run
 ```
 
 ## Training
@@ -51,16 +51,16 @@ Use the following command to begin the training process. The configuration is de
 
 ```
 # Diffusion
-python wiskers/train.py --config configs/diffusion/train.yaml
-python wiskers/train.py --config configs/diffusion/train.yaml --quick_run
+python wiskers/train.py --config configs/models/diffusion/train.yaml
+python wiskers/train.py --config configs/models/diffusion/train.yaml --quick_run
 
 # VAE
-python wiskers/train.py --config configs/vae/train.yaml
-python wiskers/train.py --config configs/vae/train.yaml --quick_run
+python wiskers/train.py --config configs/models/vae/train.yaml
+python wiskers/train.py --config configs/models/vae/train.yaml --quick_run
 
 # GAN
-python wiskers/train.py --config configs/gan/train.yaml
-python wiskers/train.py --config configs/gan/train.yaml --quick_run
+python wiskers/train.py --config configs/models/gan/train.yaml
+python wiskers/train.py --config configs/models/gan/train.yaml --quick_run
 ```
 
 ## Inference
@@ -69,13 +69,13 @@ Use trained model to generate samples. This command triggers the sample generati
 
 ```
 # Diffusion
-python wiskers/generate.py --config configs/diffusion/generate.yaml
+python wiskers/generate.py --config configs/models/diffusion/generate.yaml
 
 # VAE
-python wiskers/generate.py --config configs/vae/generate.yaml
+python wiskers/generate.py --config configs/models/vae/generate.yaml
 
 # GAN
-python wiskers/generate.py --config configs/gan/generate.yaml
+python wiskers/generate.py --config configs/models/gan/generate.yaml
 ```
 
 ## Inspect Datasets
@@ -85,7 +85,7 @@ Inspect and test the dataloaders.
 ```
 python wiskers/inspect_dataset.py --config configs/datasets/clevrer.yaml 
 python wiskers/inspect_dataset.py --config configs/datasets/cifar10.yaml
-python wiskers/inspect_dataset.py --config configs/vae/train.yaml
+python wiskers/inspect_dataset.py --config configs/models/vae/train.yaml
 ```
 
 ## Streamlit
