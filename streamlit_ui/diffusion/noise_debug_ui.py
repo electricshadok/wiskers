@@ -14,22 +14,18 @@ def noise_debug_ui(config_path: str):
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        config.module.scheduler.beta_start = st.number_input(
+        config.module.beta_start = st.number_input(
             "Beta start", value=1e-5, format="%0.5f"
         )
 
     with col2:
-        config.module.scheduler.beta_end = st.number_input(
-            "Beta end", value=2e-2, format="%0.5f"
-        )
+        config.module.beta_end = st.number_input("Beta end", value=2e-2, format="%0.5f")
 
     with col3:
-        config.module.scheduler.num_steps = st.number_input(
-            "Num steps", value=100, step=1
-        )
+        config.module.num_steps = st.number_input("Num steps", value=100, step=1)
 
     with col4:
-        config.module.scheduler.beta_schedule = st.selectbox(
+        config.module.beta_schedule = st.selectbox(
             "Select a variance type", ["linear", "quadratic", "sigmoid", "cosine"]
         )
 
@@ -38,6 +34,7 @@ def noise_debug_ui(config_path: str):
         **config.module.model,
         **config.module.optimizer,
     )
+
     scheduler = diffuser_module.scheduler
 
     st.line_chart(scheduler.betas.numpy(), height=200)
@@ -76,3 +73,4 @@ def noise_debug_ui(config_path: str):
     )
     grid = grid.permute(1, 2, 0).numpy()
     st.image(grid, caption=f"idx: {index}, label{label}", use_column_width=True)
+
