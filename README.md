@@ -50,6 +50,10 @@ Use the following command to begin the training process. The configuration is de
 --quick_run : Run few batches an single epoch
 
 ```
+# Clevrer
+python wiskers/train.py --config configs/train_clevrer.yaml
+python wiskers/train.py --config configs/train_clevrer.yaml --quick_run
+
 # Diffusion
 python wiskers/train.py --config configs/models/diffusion/train.yaml
 python wiskers/train.py --config configs/models/diffusion/train.yaml --quick_run
