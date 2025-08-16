@@ -1,9 +1,9 @@
 import streamlit as st
 import torch
 import torchvision
+from hydra.utils import instantiate
 
 from wiskers.common.commands.utils import load_config
-from hydra.utils import instantiate
 
 
 def noise_debug_ui(config_path: str):
