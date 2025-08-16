@@ -4,6 +4,7 @@ import pathlib
 import shutil
 
 import lightning as L
+from hydra.utils import instantiate
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -11,7 +12,6 @@ from lightning.pytorch.profilers import PyTorchProfiler
 from safetensors.torch import save_model
 
 from wiskers.common.commands.utils import load_config
-from wiskers.utils import get_data_module, get_model
 
 
 class TrainCLI:
@@ -52,18 +52,13 @@ class TrainCLI:
 
         self.callbacks = [self.checkpoint_callback]
         if self.config.earlystopping:
-            self.callbacks.append(EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5))
+            self.callbacks.append(
+                EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5)
+            )
 
-        self.model = get_model(
-            self.config.module_type,
-            **self.config.module.model,
-            **self.config.module.optimizer,
-        )
+        self.model = instantiate(self.config.module)
 
-        self.datamodule = get_data_module(
-            self.config.data_module_type,
-            **self.config.data_module,
-        )
+        self.datamodule = instantiate(self.config.data_module)
 
     def run(self, fast_dev_run=False, quick_run=False):
         """
@@ -115,10 +110,22 @@ class TrainCLI:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the training script with a given configuration file.")
-    parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
-    parser.add_argument("--fast_dev_run", action="store_true", help="Run a single batch to test configuration")
-    parser.add_argument("--quick_run", action="store_true", help="Run a short real training + test + export")
+    parser = argparse.ArgumentParser(
+        description="Run the training script with a given configuration file."
+    )
+    parser.add_argument(
+        "--config", type=str, required=True, help="Path to the configuration file"
+    )
+    parser.add_argument(
+        "--fast_dev_run",
+        action="store_true",
+        help="Run a single batch to test configuration",
+    )
+    parser.add_argument(
+        "--quick_run",
+        action="store_true",
+        help="Run a short real training + test + export",
+    )
     args = parser.parse_args()
     cmd = TrainCLI(args.config)
     cmd.run(fast_dev_run=args.fast_dev_run, quick_run=args.quick_run)

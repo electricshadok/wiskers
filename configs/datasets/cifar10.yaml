@@ -1,10 +1,7 @@
 seed: 0
 
-# Datamodule configuration to initialize a LightningDataModule
-data_module_type: "cifar10"
-# syntax: data_module_type: "cifar" - load the all dataset
-# syntax data_module_type: "cifar10:cat" - load dataset with specific category
 data_module:
+  _target_: wiskers.datasets.cifar10_subset.CIFAR10Subset
   data_dir: "./datasets/"
   batch_size: 16
   num_workers: 2

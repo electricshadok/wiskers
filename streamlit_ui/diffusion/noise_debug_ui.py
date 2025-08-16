@@ -3,7 +3,7 @@ import torch
 import torchvision
 
 from wiskers.common.commands.utils import load_config
-from wiskers.utils import get_data_module, get_model
+from hydra.utils import instantiate
 
 
 def noise_debug_ui(config_path: str):
@@ -29,11 +29,7 @@ def noise_debug_ui(config_path: str):
             "Select a variance type", ["linear", "quadratic", "sigmoid", "cosine"]
         )
 
-    diffuser_module = get_model(
-        config.module_type,
-        **config.module.model,
-        **config.module.optimizer,
-    )
+    diffuser_module = instantiate(config.module)
 
     scheduler = diffuser_module.scheduler
 
@@ -41,10 +37,7 @@ def noise_debug_ui(config_path: str):
 
     st.write(f"### Noising Process ({config.module.scheduler.beta_schedule})")
 
-    datamodule = get_data_module(
-        config.data_module_type,
-        **config.data_module,
-    )
+    datamodule = instantiate(config.data_module)
     dataset = datamodule.train_dataloader().dataset
     max_index = len(dataset) - 1
     index = st.number_input(
@@ -73,4 +66,3 @@ def noise_debug_ui(config_path: str):
     )
     grid = grid.permute(1, 2, 0).numpy()
     st.image(grid, caption=f"idx: {index}, label{label}", use_column_width=True)
-

@@ -122,7 +122,11 @@ class VAEModule(L.LightningModule):
         loss = kl_loss + reconstruction_loss
 
         # Log losses
-        losses = {"loss": loss, "kl_loss": kl_loss, "reconstruction_loss": reconstruction_loss}
+        losses = {
+            "loss": loss,
+            "kl_loss": kl_loss,
+            "reconstruction_loss": reconstruction_loss,
+        }
 
         for name, value in losses.items():
             self.log(

@@ -1,9 +1,9 @@
 import argparse
 
 import lightning as L
+from hydra.utils import instantiate
 
 from wiskers.common.commands.utils import load_config
-from wiskers.utils import get_data_module
 
 
 class InspectDatasetCLI:
@@ -22,14 +22,9 @@ class InspectDatasetCLI:
 
         L.seed_everything(seed=self.config.seed, workers=True)
 
-        self.datamodule = get_data_module(
-            self.config.data_module_type,
-            **self.config.data_module,
-        )
+        self.datamodule = instantiate(self.config.data_module)
 
     def run(self):
-        print(self.config.data_module_type)
-
         self.datamodule.prepare_data()
         self.datamodule.setup("fit")
         self.datamodule.setup("test")

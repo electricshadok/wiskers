@@ -5,7 +5,7 @@ import streamlit as st
 
 from streamlit_ui.utils import dataset_ui
 from wiskers.common.commands.utils import load_config
-from wiskers.utils import get_data_module
+from hydra.utils import instantiate
 
 
 def get_config_files() -> List[str]:
@@ -23,10 +23,7 @@ def start_ui():
     (tab1,) = st.tabs(["Dataset"])
     with tab1:
         config = load_config(config_path)
-        data_module = get_data_module(
-            config.data_module_type,
-            **config.data_module,
-        )
+        data_module = instantiate(config.data_module)
         data_module.prepare_data()
         data_module.setup("fit")
         dataloader = data_module.train_dataloader()

@@ -1,17 +1,16 @@
 # Global seed
 seed: 0
 
-# Datamodule configuration to initialize a LightningDataModule
-data_module_type: "cifar10"
-# syntax: data_module_type: "cifar" - load the all dataset
-# syntax data_module_type: "cifar10:cat" - load dataset with specific category
+# Datamodule Config
 data_module:
+  _target_: wiskers.datasets.cifar10_subset.CIFAR10Subset
   data_dir: "./datasets/"
   batch_size: 16
   num_workers: 2
   image_size: 32
+  category_name: "cat"
   # augmentations
-  random_horizontal_flip: true
+  random_horizontal_flip: false
 
 # Logger Configs
 tensor_board_logger:
@@ -24,29 +23,29 @@ export_onnx: True
 export_safetensors: True
 
 # Module Config (model, scheduler and optimizer)
-module_type: "diffusion"
 module:
-  model:
-    # Model Configurations
-    in_channels: 3
-    out_channels: 3
-    time_dim: 256
-    num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention
-    widths: [32, 64, 128, 256]
-    attentions: [True, True, True]
-    image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
-    activation: "relu"
+  _target_: wiskers.diffusion.diffuser_module.DiffuserModule
 
-    # Scheduler Configurations
-    scheduler_type: "ddpm"
-    num_steps: 1000
-    beta_start: 1e-4
-    beta_end: 2e-2
-    beta_schedule: "linear"
+  # Model Configuration
+  in_channels: 3
+  out_channels: 3
+  time_dim: 256
+  num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention
+  widths: [32, 64, 128, 256]
+  attentions: [True, True, True]
+  image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
+  activation: "relu"
 
-  optimizer:
-    learning_rate: 1e-4
-    prediction_type: "noise" # noise/sample/v-prediction
+  # Scheduler Configuration
+  scheduler_type: "ddpm"
+  num_steps: 1000
+  beta_start: 1e-4
+  beta_end: 2e-2
+  beta_schedule: "linear"
+  
+  # Optimizer Configuration
+  learning_rate: 1e-4
+  prediction_type: "noise" # noise/sample/v-prediction
 
 # Training Configs
 earlystopping: False

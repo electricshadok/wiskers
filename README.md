@@ -30,41 +30,42 @@ Run unit tests
 pytest tests
 ```
 
-Run a quick training process.
+```--fast_dev_run```: Run a quick training process.
 
 ```
-# Diffusion
+# CLEVRER
+python wiskers/train.py --config configs/train_clevrer.yaml --fast_dev_run
+
+# CIFAR-10
 python wiskers/train.py --config configs/models/diffusion/train.yaml --fast_dev_run
-
-# VAE
 python wiskers/train.py --config configs/models/vae/train.yaml --fast_dev_run
-
-# GAN
 python wiskers/train.py --config configs/models/gan/train.yaml --fast_dev_run
+```
+
+```--quick_run``` : Run few batches and single epoch.
+
+```
+# CLEVRER
+python wiskers/train.py --config configs/train_clevrer.yaml --quick_run
+
+# CIFAR-10
+python wiskers/train.py --config configs/models/diffusion/train.yaml --quick_run
+python wiskers/train.py --config configs/models/vae/train.yaml --quick_run
+python wiskers/train.py --config configs/models/gan/train.yaml --quick_run
 ```
 
 ## Training
 
 Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
 
---quick_run : Run few batches an single epoch
-
 ```
-# Clevrer
+# CLEVRER
 python wiskers/train.py --config configs/train_clevrer.yaml
-python wiskers/train.py --config configs/train_clevrer.yaml --quick_run
 
-# Diffusion
+# CIFAR-10
 python wiskers/train.py --config configs/models/diffusion/train.yaml
-python wiskers/train.py --config configs/models/diffusion/train.yaml --quick_run
-
-# VAE
 python wiskers/train.py --config configs/models/vae/train.yaml
-python wiskers/train.py --config configs/models/vae/train.yaml --quick_run
-
-# GAN
 python wiskers/train.py --config configs/models/gan/train.yaml
-python wiskers/train.py --config configs/models/gan/train.yaml --quick_run
 ```
 
 ## Inference
@@ -72,13 +73,9 @@ python wiskers/train.py --config configs/models/gan/train.yaml --quick_run
 Use trained model to generate samples. This command triggers the sample generation proces with the configuration *generate.yaml*.
 
 ```
-# Diffusion
+# CIFAR-10
 python wiskers/generate.py --config configs/models/diffusion/generate.yaml
-
-# VAE
 python wiskers/generate.py --config configs/models/vae/generate.yaml
-
-# GAN
 python wiskers/generate.py --config configs/models/gan/generate.yaml
 ```
 
@@ -89,7 +86,6 @@ Inspect and test the dataloaders.
 ```
 python wiskers/inspect_dataset.py --config configs/datasets/clevrer.yaml 
 python wiskers/inspect_dataset.py --config configs/datasets/cifar10.yaml
-python wiskers/inspect_dataset.py --config configs/models/vae/train.yaml
 ```
 
 ## Streamlit
