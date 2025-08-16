@@ -38,7 +38,7 @@ VIDEO_URLS = {
 }
 
 
-def download_videos(video_dir: str, split: str):
+def download_videos(video_dir: str, split: str) -> str:
     os.makedirs(video_dir, exist_ok=True)
     url_path, local_path = VIDEO_URLS[split]
     if url_path and local_path:
@@ -63,8 +63,10 @@ def download_videos(video_dir: str, split: str):
     else:
         print(f"CLEVRER Video ({split}) already unzipped.")
 
+    return raw_video_dir
 
-def download_qa(qa_dir: str, split: str):
+
+def download_qa(qa_dir: str, split: str) -> str:
     os.makedirs(qa_dir, exist_ok=True)
     url_path, local_path = QA_URLS[split]
     if url_path and local_path:
@@ -79,6 +81,8 @@ def download_qa(qa_dir: str, split: str):
             print(f"CLEVRER Question-Answer ({split}) already downloaded.")
     else:
         print(f"CLEVRER Question-Answer ({split}) not specified...")
+
+    return local_path
 
 
 def get_all_video_paths(root_dir: str) -> list[str]:

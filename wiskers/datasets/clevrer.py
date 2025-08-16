@@ -39,23 +39,25 @@ class CLEVRER(L.LightningDataModule):
         self.chunk_size = chunk_size
         self.stride = stride
         self.resize = resize
-        self.index_paths = {}
+        self.qa_index_paths = {}
+        self.video_index_paths = {}
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
         for split in ["train", "test", "valid"]:
             video_raw_root = os.path.join(self.data_dir, "video_raw")
             qa_root = os.path.join(self.data_dir, "question_answer")
-            raw_video_dir = os.path.join(video_raw_root, split)
             processed_video_dir = os.path.join(self.data_dir, "video", split)
 
             # Download JSON Question_Answer
-            download_qa(qa_root, split)
+            qa_index_path = download_qa(qa_root, split)
+            self.qa_index_paths[split] = qa_index_path
+            print(f"CLEVRER QA Index ({split}) {qa_index_path} available")
 
             # Downlod Zip video and Unzip them
-            download_videos(video_raw_root, split)
+            raw_video_dir = download_videos(video_raw_root, split)
 
-            index_path = prepare_and_extract_clevrer_videos(
+            video_index_path = prepare_and_extract_clevrer_videos(
                 raw_video_dir=raw_video_dir,
                 processed_video_dir=processed_video_dir,
                 chunk_size=self.chunk_size,
@@ -64,12 +66,13 @@ class CLEVRER(L.LightningDataModule):
                 limit=None,
                 index_filename="index.json",
             )
-            print(f"CLEVRER Index ({split}) {index_path} available")
-
-            self.index_paths[split] = index_path
+            self.video_index_paths[split] = video_index_path
+            print(f"CLEVRER Video Index ({split}) {video_index_path} available")
 
     def train_dataloader(self):
-        train_dataset = data.Clevrer(self.index_paths["train"])
+        train_dataset = data.Clevrer(
+            self.video_index_paths["train"], self.qa_index_paths["train"]
+        )
         return DataLoader(
             train_dataset,
             batch_size=self.batch_size,
@@ -79,7 +82,9 @@ class CLEVRER(L.LightningDataModule):
         )
 
     def val_dataloader(self):
-        val_dataset = data.Clevrer(self.index_paths["valid"])
+        val_dataset = data.Clevrer(
+            self.video_index_paths["valid"], self.qa_index_paths["valid"]
+        )
         return DataLoader(
             val_dataset,
             batch_size=self.batch_size,
@@ -89,7 +94,9 @@ class CLEVRER(L.LightningDataModule):
         )
 
     def test_dataloader(self):
-        test_dataset = data.Clevrer(self.index_paths["test"])
+        test_dataset = data.Clevrer(
+            self.video_index_paths["test"], self.qa_index_paths["test"]
+        )
         return DataLoader(
             test_dataset,
             batch_size=self.batch_size,
