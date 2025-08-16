@@ -6,8 +6,8 @@ import lightning as L
 import onnxruntime
 import torchvision
 
+from wiskers.autoencoder.vae_module import VAEModule
 from wiskers.common.commands.utils import load_config
-from wiskers.vae.vae_module import VAEModule
 
 
 class ONNXInference:

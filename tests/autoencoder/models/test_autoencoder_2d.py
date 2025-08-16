@@ -4,7 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
-from wiskers.vae.models.vae_2d import VAE2D
+from wiskers.autoencoder.models.autoencoder_2d import Autoencoder2D
 
 
 @pytest.mark.parametrize(
@@ -14,11 +14,11 @@ from wiskers.vae.models.vae_2d import VAE2D
         (8, 1, 1, 32, 32),
     ],
 )
-def test_vae2D(batch_size, in_channels, out_channels, height, width):
+def test_autoencoder2D(batch_size, in_channels, out_channels, height, width):
     z_dim = 64
-    net = VAE2D(in_channels, out_channels, num_heads=2, z_dim=z_dim)
+    net = Autoencoder2D(in_channels, out_channels, num_heads=2, z_dim=z_dim)
     x = torch.randn(batch_size, in_channels, height, width)
-    out_x, mu, logvar = net(x)
+    out_x = net(x)
 
     assert out_x.shape == (
         batch_size,
@@ -28,9 +28,6 @@ def test_vae2D(batch_size, in_channels, out_channels, height, width):
     )
     assert out_x.dtype == x.dtype
 
-    assert mu.shape == (batch_size, z_dim)
-    assert logvar.shape == (batch_size, z_dim)
-
 
 @pytest.mark.parametrize(
     "batch_size, in_channels, out_channels, height, width",
@@ -38,12 +35,12 @@ def test_vae2D(batch_size, in_channels, out_channels, height, width):
         (4, 3, 3, 32, 32),
     ],
 )
-def test_vae2D_to_onnx(batch_size, in_channels, out_channels, height, width, tmp_path):
-    net = VAE2D(in_channels, out_channels, num_heads=2)
+def test_autoencoder2D_to_onnx(batch_size, in_channels, out_channels, height, width, tmp_path):
+    net = Autoencoder2D(in_channels, out_channels, num_heads=2)
     x = torch.randn(batch_size, in_channels, height, width)
 
     # Export the model
-    onnx_file_path = tmp_path / "vae_2D.onnx"
+    onnx_file_path = tmp_path / "autoencoder_2D.onnx"
     torch.onnx.export(
         net,
         x,

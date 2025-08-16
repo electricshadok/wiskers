@@ -3,7 +3,7 @@ import torch
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset
 
-from wiskers.vae.vae_module import VAEModule
+from wiskers.autoencoder.vae_module import VAEModule
 
 
 @pytest.fixture

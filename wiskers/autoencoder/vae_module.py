@@ -4,7 +4,7 @@ import lightning as L
 import torch
 import torch.nn.functional as F
 
-from wiskers.vae.models.vae_2d import VAE2D
+from wiskers.autoencoder.models.vae_2d import VAE2D
 
 
 class VAEModule(L.LightningModule):

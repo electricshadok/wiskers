@@ -3,8 +3,8 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 
+from wiskers.autoencoder.models.autoencoder_2d import Decoder, Encoder
 from wiskers.common.modules.conv_blocks_2d import ResDoubleConv2D
-from wiskers.vae.models.autoencoder_2d import Decoder, Encoder
 
 
 class BottleneckVAE(nn.Module):
