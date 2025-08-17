@@ -4,7 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
-from wiskers.autoencoder.models.autoencoder_2d import Autoencoder2D
+from wiskers.autoencoder.models.ae_2d import Autoencoder2D
 
 
 @pytest.mark.parametrize(
