@@ -166,6 +166,7 @@ class DiffuserModule(L.LightningModule):
 
         return loss
 
+    @torch.no_grad()
     def generate_samples(self, num_samples: int, num_inference_steps: int) -> torch.Tensor:
         """
         Generates samples using diffusion model.

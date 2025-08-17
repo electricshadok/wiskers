@@ -144,9 +144,10 @@ class VAEModule(L.LightningModule):
 
         return loss
 
+    @torch.no_grad()
     def generate_samples(self, num_samples: int) -> torch.Tensor:
         """
-        Generates samples using diffusion model.
+        Generates samples.
 
         Args:
             num_images (int): Number of images to generate.
