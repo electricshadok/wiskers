@@ -22,7 +22,7 @@ class InspectDatasetCLI:
 
         L.seed_everything(seed=self.config.seed, workers=True)
 
-        self.datamodule = instantiate(self.config.data_module)
+        self.datamodule = instantiate(self.config.data_module, _convert_="all")
 
     def run(self):
         self.datamodule.prepare_data()

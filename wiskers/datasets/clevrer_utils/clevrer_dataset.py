@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 
@@ -16,7 +17,12 @@ class Clevrer(Dataset):
     Returns: (tensor, rel_path)
     """
 
-    def __init__(self, video_index_path: str, qa_path: str):
+    def __init__(
+        self,
+        video_index_path: str,
+        qa_path: str,
+        resize: tuple[int, int] | None,
+    ):
         super().__init__()
         # Prepare video samples
         if not os.path.exists(video_index_path):
@@ -43,6 +49,8 @@ class Clevrer(Dataset):
             scene_index = qa_data["scene_index"]
             self.scene_index_2_qa_mapping[scene_index] = qa_data["questions"]
 
+        self.resize = resize
+
     def __len__(self):
         return len(self.samples)
 
@@ -52,8 +60,12 @@ class Clevrer(Dataset):
         abs_path = os.path.join(self.video_root_dir, rel_path)
 
         arr = np.load(abs_path)  # shape: (T, H, W, C)
-        tensor = torch.from_numpy(arr).float() / 255.0  # normalize to [0,1]
-        tensor = tensor.permute(0, 3, 1, 2).contiguous()  # (T, C, H, W)
+        video = torch.from_numpy(arr).float() / 255.0  # normalize to [0,1]
+        video = video.permute(0, 3, 1, 2).contiguous()  # (T, C, H, W)
+
+        video = F.interpolate(
+            video, size=self.resize, mode="bilinear", align_corners=False
+        )
 
         # Get scene_index
         # folder_name = rel_path.split("/")[0]
@@ -62,4 +74,4 @@ class Clevrer(Dataset):
         # Get the question_answers
         # TODO: qa_data = self.scene_index_2_qa_mapping[scene_index]
 
-        return tensor, rel_path
+        return video, rel_path

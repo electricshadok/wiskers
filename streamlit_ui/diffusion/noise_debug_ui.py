@@ -29,7 +29,7 @@ def noise_debug_ui(config_path: str):
             "Select a variance type", ["linear", "quadratic", "sigmoid", "cosine"]
         )
 
-    diffuser_module = instantiate(config.module)
+    diffuser_module = instantiate(config.module, _convert_="all")
 
     scheduler = diffuser_module.scheduler
 
@@ -37,7 +37,7 @@ def noise_debug_ui(config_path: str):
 
     st.write(f"### Noising Process ({config.module.scheduler.beta_schedule})")
 
-    datamodule = instantiate(config.data_module)
+    datamodule = instantiate(config.data_module, _convert_="all")
     dataset = datamodule.train_dataloader().dataset
     max_index = len(dataset) - 1
     index = st.number_input(

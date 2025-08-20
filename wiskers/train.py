@@ -56,9 +56,9 @@ class TrainCLI:
                 EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5)
             )
 
-        self.model = instantiate(self.config.module)
+        self.model = instantiate(self.config.module, _convert_="all")
 
-        self.datamodule = instantiate(self.config.data_module)
+        self.datamodule = instantiate(self.config.data_module, _convert_="all")
 
     def run(self, fast_dev_run=False, quick_run=False):
         """

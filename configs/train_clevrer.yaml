@@ -1,0 +1,50 @@
+# Global Seed
+seed: 0
+
+# Datamodule Config
+data_module:
+  _target_: wiskers.datasets.clevrer.CLEVRER
+  data_dir: "./datasets"
+  batch_size: 4
+  num_workers: 2
+  chunk_size: 16
+  stride: 16
+  resize: [240, 160]
+  image_size: [80, 120]
+
+# Logger Configs
+tensor_board_logger:
+  save_dir: "./experiments"
+  name: "ae"
+  version: null
+
+# Export Model
+export_onnx: True
+export_safetensors: True
+
+# Module Config (model and optimizer)
+module:
+  _target_: wiskers.autoencoder.ae_module.AEModule
+  # model
+  in_channels: 3
+  out_channels: 3
+  num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
+  widths: [32, 64, 128, 256]
+  attentions: [False, False, False]
+  z_dim: 64
+  image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
+  activation: "relu"
+  # optimizer
+  learning_rate: 1e-4
+
+# Training Configs
+earlystopping: False
+
+# lightning.Trainer Config
+trainer:
+  # fast_dev_run: 1
+  limit_train_batches: 1.0
+  limit_test_batches: 1.0
+  limit_val_batches: 1.0
+  max_epochs: 20
+  log_every_n_steps: 10

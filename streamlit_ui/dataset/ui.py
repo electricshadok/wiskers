@@ -23,7 +23,7 @@ def start_ui():
     (tab1,) = st.tabs(["Dataset"])
     with tab1:
         config = load_config(config_path)
-        data_module = instantiate(config.data_module)
+        data_module = instantiate(config.data_module, _convert_="all")
         data_module.prepare_data()
         data_module.setup("fit")
         dataloader = data_module.train_dataloader()

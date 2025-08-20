@@ -3,8 +3,8 @@ import os
 import lightning as L
 from torch.utils.data import DataLoader
 
-import wiskers.datasets.clevrer_dataset as data
-from wiskers.datasets.clevrer_utils import (
+import wiskers.datasets.clevrer_utils.clevrer_dataset as data
+from wiskers.datasets.clevrer_utils.prepare_clevrer import (
     download_qa,
     download_videos,
     prepare_and_extract_clevrer_videos,
@@ -31,6 +31,7 @@ class CLEVRER(L.LightningDataModule):
         chunk_size: int,
         stride: int,
         resize: tuple[int, int] | None,
+        image_size: tuple[int, int] | None,
     ):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
@@ -39,6 +40,7 @@ class CLEVRER(L.LightningDataModule):
         self.chunk_size = chunk_size
         self.stride = stride
         self.resize = resize
+        self.image_size = image_size
         self.qa_index_paths = {}
         self.video_index_paths = {}
 
@@ -71,7 +73,9 @@ class CLEVRER(L.LightningDataModule):
 
     def train_dataloader(self):
         train_dataset = data.Clevrer(
-            self.video_index_paths["train"], self.qa_index_paths["train"]
+            self.video_index_paths["train"],
+            self.qa_index_paths["train"],
+            self.image_size,
         )
         return DataLoader(
             train_dataset,
@@ -83,7 +87,9 @@ class CLEVRER(L.LightningDataModule):
 
     def val_dataloader(self):
         val_dataset = data.Clevrer(
-            self.video_index_paths["valid"], self.qa_index_paths["valid"]
+            self.video_index_paths["valid"],
+            self.qa_index_paths["valid"],
+            self.image_size,
         )
         return DataLoader(
             val_dataset,
@@ -95,7 +101,9 @@ class CLEVRER(L.LightningDataModule):
 
     def test_dataloader(self):
         test_dataset = data.Clevrer(
-            self.video_index_paths["test"], self.qa_index_paths["test"]
+            self.video_index_paths["test"],
+            self.qa_index_paths["test"],
+            self.image_size,
         )
         return DataLoader(
             test_dataset,
