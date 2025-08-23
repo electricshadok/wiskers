@@ -26,7 +26,7 @@ class UNet2D(nn.Module):
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
-        activation (str): Activation function.
+        activation (nn.Module): Activation function.
 
     Shapes:
         in: [N, 3, 32, 32]
@@ -58,7 +58,7 @@ class UNet2D(nn.Module):
         num_heads: int = 8,
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
         if len(widths) - 1 != len(attentions):
@@ -73,14 +73,18 @@ class UNet2D(nn.Module):
         self.pe = SinusoidalPositionEmbedding(time_dim)
 
         # Input
-        self.input = DoubleConv2D(in_channels=in_channels, out_channels=widths[0], activation=activation)
+        self.input = DoubleConv2D(
+            in_channels=in_channels, out_channels=widths[0], activation=activation
+        )
 
         # Encoder (Down blocks and self-attention blocks)
         self.down_blocks = []
         for level_idx in range(self.num_levels):
             up_filters, low_filters = widths[level_idx], widths[level_idx + 1]
             if attentions[level_idx]:
-                down_block = AttnDownBlock2D(up_filters, low_filters, time_dim, activation, num_heads)
+                down_block = AttnDownBlock2D(
+                    up_filters, low_filters, time_dim, activation, num_heads
+                )
             else:
                 down_block = DownBlock2D(up_filters, low_filters, time_dim, activation)
             self.down_blocks.append(down_block)
@@ -94,9 +98,13 @@ class UNet2D(nn.Module):
         for level_idx in reversed(range(self.num_levels)):
             low_filters, up_filters = widths[level_idx + 1], widths[level_idx]
             if attentions[level_idx]:
-                up_block = AttnUpBlock2D(low_filters, up_filters, up_filters, time_dim, activation, num_heads)
+                up_block = AttnUpBlock2D(
+                    low_filters, up_filters, up_filters, time_dim, activation, num_heads
+                )
             else:
-                up_block = UpBlock2D(low_filters, up_filters, up_filters, time_dim, activation)
+                up_block = UpBlock2D(
+                    low_filters, up_filters, up_filters, time_dim, activation
+                )
             self.up_blocks.append(up_block)
         self.up_blocks = nn.ModuleList(self.up_blocks)
 

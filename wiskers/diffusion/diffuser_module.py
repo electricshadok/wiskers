@@ -4,6 +4,7 @@ import lightning as L
 import torch
 import torch.nn.functional as F
 
+from wiskers.common.activations import ActivationFct
 from wiskers.diffusion.models.unet_2d import UNet2D
 from wiskers.diffusion.schedulers.registry import Schedulers
 
@@ -65,7 +66,7 @@ class DiffuserModule(L.LightningModule):
             num_heads=num_heads,
             widths=widths,
             attentions=attentions,
-            activation=activation,
+            activation=ActivationFct.get(activation),
         )
         self.learning_rate = learning_rate
         if prediction_type not in ["noise", "sample", "v-prediction"]:
@@ -73,7 +74,9 @@ class DiffuserModule(L.LightningModule):
         self.prediction_type = prediction_type
 
         # Register scheduler and associated buffer
-        self.scheduler = Schedulers.get(scheduler_type)(num_steps, beta_start, beta_end, beta_schedule)
+        self.scheduler = Schedulers.get(scheduler_type)(
+            num_steps, beta_start, beta_end, beta_schedule
+        )
 
         # Set 'example_input_array' for ONNX export initialization
         self.example_input_array = (
@@ -134,7 +137,9 @@ class DiffuserModule(L.LightningModule):
 
         # Uniformly sample timesteps
         num_steps = self.scheduler.num_steps()
-        t = torch.randint(0, num_steps, (batch_size,), dtype=torch.long, device=images.device)
+        t = torch.randint(
+            0, num_steps, (batch_size,), dtype=torch.long, device=images.device
+        )
 
         # Diffuse the batched images with noise
         noise = torch.randn_like(images)
@@ -167,7 +172,9 @@ class DiffuserModule(L.LightningModule):
         return loss
 
     @torch.no_grad()
-    def generate_samples(self, num_samples: int, num_inference_steps: int) -> torch.Tensor:
+    def generate_samples(
+        self, num_samples: int, num_inference_steps: int
+    ) -> torch.Tensor:
         """
         Generates samples using diffusion model.
 
@@ -187,7 +194,9 @@ class DiffuserModule(L.LightningModule):
         )
 
         for step_id in reversed(range(0, num_inference_steps)):
-            t = torch.full((num_samples,), step_id, device=self.device, dtype=torch.long)
+            t = torch.full(
+                (num_samples,), step_id, device=self.device, dtype=torch.long
+            )
             samples = self.scheduler.p_sample(self.model, samples, t, step_id)
 
         samples = samples.clip(0.0, 1.0)

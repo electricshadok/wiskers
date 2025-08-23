@@ -16,7 +16,7 @@ class BottleneckVAE(nn.Module):
         super().__init__()
         self.lowest_tensor_shape = lowest_tensor_shape
         bot_channels, bot_tensor_h, bot_tensor_w = lowest_tensor_shape
-        self.bot = ResDoubleConv2D(bot_channels, "sigmoid")
+        self.bot = ResDoubleConv2D(bot_channels, nn.Sigmoid())
         hidden_dim = bot_channels * bot_tensor_h * bot_tensor_w
         self.bot_flatten = nn.Flatten(start_dim=1)  # (N, hidden_dim)
         self.fc_mu = nn.Linear(hidden_dim, z_dim)
@@ -59,7 +59,7 @@ class VAE2D(nn.Module):
         attentions (List[bool]) : Enable attention per level.
         z_dim (int): Bottleneck dimension for vae.
         image_size (tuple): Image size to with the model.
-        activation (str): Activation function.
+        activation (nn.Module): Activation function.
 
     Shapes:
         in: [N, in_C, H, W]
@@ -75,7 +75,7 @@ class VAE2D(nn.Module):
         attentions: List[bool] = [True, True, True],
         z_dim: int = 64,
         image_size: int = 32,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
         if len(widths) - 1 != len(attentions):

@@ -21,7 +21,7 @@ class Encoder(nn.Module):
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
-        activation (str): Activation function.
+        activation (nn.Module): Activation function.
 
     Shapes:
         in: [N, in_C, H, W]
@@ -34,7 +34,7 @@ class Encoder(nn.Module):
         num_heads: int = 8,
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
         if len(widths) - 1 != len(attentions):
@@ -42,12 +42,16 @@ class Encoder(nn.Module):
 
         # Input and Encoder (Down blocks and self-attention blocks)
         num_levels = len(attentions)
-        self.input = DoubleConv2D(in_channels=in_channels, out_channels=widths[0], activation=activation)
+        self.input = DoubleConv2D(
+            in_channels=in_channels, out_channels=widths[0], activation=activation
+        )
         down_blocks = []
         for level_idx in range(num_levels):
             up_filters, low_filters = widths[level_idx], widths[level_idx + 1]
             if attentions[level_idx]:
-                down_block = AttnDownBlock2D(up_filters, low_filters, activation, num_heads)
+                down_block = AttnDownBlock2D(
+                    up_filters, low_filters, activation, num_heads
+                )
             else:
                 down_block = DownBlock2D(up_filters, low_filters, activation)
             down_blocks.append(down_block)
@@ -66,7 +70,7 @@ class Decoder(nn.Module):
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
-        activation (str): Activation function.
+        activation (nn.Module): Activation function.
 
     Shapes:
         in: [N, in_C, H, W]
@@ -79,7 +83,7 @@ class Decoder(nn.Module):
         num_heads: int = 8,
         widths: List[int] = [256, 128, 64, 32],
         attentions: List[bool] = [True, True, True],
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
         if len(widths) - 1 != len(attentions):
@@ -90,7 +94,9 @@ class Decoder(nn.Module):
         for level_idx in range(num_levels):
             low_filters, up_filters = widths[level_idx], widths[level_idx + 1]
             if attentions[level_idx]:
-                up_block = AttnUpBlock2D(low_filters, 0, up_filters, activation, num_heads)
+                up_block = AttnUpBlock2D(
+                    low_filters, 0, up_filters, activation, num_heads
+                )
             else:
                 up_block = UpBlock2D(low_filters, 0, up_filters, activation)
             up_blocks.append(up_block)
@@ -110,7 +116,7 @@ class BottleneckAE(nn.Module):
         super().__init__()
         self.lowest_tensor_shape = lowest_tensor_shape
         bot_channels, bot_tensor_h, bot_tensor_w = lowest_tensor_shape
-        self.bot = ResDoubleConv2D(bot_channels, "sigmoid")
+        self.bot = ResDoubleConv2D(bot_channels, nn.Sigmoid())
         hidden_dim = bot_channels * bot_tensor_h * bot_tensor_w
         self.bot_flatten = nn.Flatten(start_dim=1)  # (N, hidden_dim)
         self.to_latent = nn.Linear(hidden_dim, z_dim)
@@ -145,7 +151,7 @@ class Autoencoder2D(nn.Module):
         attentions (List[bool]) : Enable attention per level.
         z_dim (int): Bottleneck dimension for vae.
         image_size (tuple): Image size to with the model.
-        activation (str): Activation function.
+        activation (nn.Module): Activation function.
 
     Shapes:
         in: [N, in_C, H, W]
@@ -161,7 +167,7 @@ class Autoencoder2D(nn.Module):
         attentions: List[bool] = [True, True, True],
         z_dim: int = 64,
         image_size: int = 32,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
         if len(widths) - 1 != len(attentions):

@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 
 import wiskers.common.modules.conv_blocks_2d as conv_2d
-from wiskers.common.modules.activations import ActivationFct
-from wiskers.common.modules.attentions_2d import SelfMultiheadAttention2D, SelfScaledDotProductAttention2D
+from wiskers.common.modules.attentions_2d import (
+    SelfMultiheadAttention2D,
+    SelfScaledDotProductAttention2D,
+)
 
 
 class DownBlock2D(conv_2d.DownBlock2D):
@@ -14,7 +16,7 @@ class DownBlock2D(conv_2d.DownBlock2D):
         in_channels (int): Input channels.
         out_channels (int): Output channels.
         time_dim (int): Time embedding dimension.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
 
     Shapes:
         Input: (N, in_C, H, W)
@@ -26,12 +28,12 @@ class DownBlock2D(conv_2d.DownBlock2D):
         in_channels: int,
         out_channels: int,
         time_dim: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__(in_channels, out_channels, activation)
 
         self.time_emb = nn.Sequential(
-            ActivationFct.get(activation),
+            activation,
             nn.Linear(time_dim, out_channels),
         )
 
@@ -42,7 +44,9 @@ class DownBlock2D(conv_2d.DownBlock2D):
 
         out_te = self.time_emb(te)  # (N, T) where T is time_dim
         out_te = out_te[:, :, None, None]  # (N, T, 1, 1)
-        out_te = out_te.repeat(1, 1, out_x.shape[-2], out_x.shape[-1])  # [N, out_C, H/2, W/2]
+        out_te = out_te.repeat(
+            1, 1, out_x.shape[-2], out_x.shape[-1]
+        )  # [N, out_C, H/2, W/2]
 
         return out_x + out_te
 
@@ -55,7 +59,7 @@ class AttnDownBlock2D(DownBlock2D):
         in_channels (int): Input channels.
         out_channels (int): Output channels.
         time_dim (int): Time embedding dimension.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
         num_heads (int): Number of parallel attention heads.
             A value of 0 implies the use of scaled dot-product attention
             instead of multihead attention.
@@ -70,7 +74,7 @@ class AttnDownBlock2D(DownBlock2D):
         in_channels: int,
         out_channels: int,
         time_dim: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
         num_heads: int = 0,
     ):
         super().__init__(in_channels, out_channels, time_dim, activation)
@@ -94,7 +98,7 @@ class UpBlock2D(conv_2d.UpBlock2D):
         skip_channels (int): Number of channels from skip connections.
         out_channels (int): Output channels.
         time_dim (int): Time embedding dimension.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
 
     Shapes:
         Input: (N, in_C, H, W)
@@ -107,11 +111,11 @@ class UpBlock2D(conv_2d.UpBlock2D):
         skip_channels: int,
         out_channels: int,
         time_dim: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__(in_channels, skip_channels, out_channels, activation)
         self.time_emb = nn.Sequential(
-            ActivationFct.get(activation),
+            activation,
             nn.Linear(time_dim, out_channels),
         )
 
@@ -132,7 +136,9 @@ class UpBlock2D(conv_2d.UpBlock2D):
 
         out_te = self.time_emb(te)  # (N, T) where T is time_dim
         out_te = out_te[:, :, None, None]  # (N, T, 1, 1)
-        out_te = out_te.repeat(1, 1, out_x.shape[-2], out_x.shape[-1])  # [N, out_C, H*2, W*2]
+        out_te = out_te.repeat(
+            1, 1, out_x.shape[-2], out_x.shape[-1]
+        )  # [N, out_C, H*2, W*2]
 
         return out_x + out_te
 
@@ -146,7 +152,7 @@ class AttnUpBlock2D(UpBlock2D):
         skip_channels (int): Number of channels from skip connections.
         out_channels (int): Output channels.
         time_dim (int): Time embedding dimension.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
         num_heads (int): Number of parallel attention heads.
             A value of 0 implies the use of scaled dot-product attention
             instead of multihead attention.
@@ -162,7 +168,7 @@ class AttnUpBlock2D(UpBlock2D):
         skip_channels: int,
         out_channels: int,
         time_dim: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
         num_heads: int = 0,
     ):
         super().__init__(in_channels, skip_channels, out_channels, time_dim, activation)

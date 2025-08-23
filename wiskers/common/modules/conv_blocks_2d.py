@@ -3,8 +3,10 @@ from typing import Optional
 import torch  # noqa: F401
 import torch.nn as nn
 
-from wiskers.common.modules.activations import ActivationFct
-from wiskers.common.modules.attentions_2d import SelfMultiheadAttention2D, SelfScaledDotProductAttention2D  # noqa: F401
+from wiskers.common.modules.attentions_2d import (
+    SelfMultiheadAttention2D,
+    SelfScaledDotProductAttention2D,
+)  # noqa: F401
 
 
 class DoubleConv2D(nn.Module):
@@ -15,7 +17,7 @@ class DoubleConv2D(nn.Module):
         in_channels (int): Input channel count.
         mid_channels (Optional[int]): Mid channel count. if None use (in_channels + out_channels) // 2
         out_channels (int): Output channel count.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
 
     Shapes:
         Input: (N, in_C, H, W)
@@ -27,10 +29,9 @@ class DoubleConv2D(nn.Module):
         in_channels: int = 3,
         mid_channels: Optional[int] = None,
         out_channels: int = 3,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        activation = ActivationFct.get(activation)
         if mid_channels is None:
             mid_channels = (in_channels + out_channels) // 2
 
@@ -54,7 +55,7 @@ class ResDoubleConv2D(DoubleConv2D):
 
     Args:
         channels (int): Input and output channel count.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
 
     Shapes:
         Input: (N, C, H, W)
@@ -64,10 +65,10 @@ class ResDoubleConv2D(DoubleConv2D):
     def __init__(
         self,
         channels: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__(in_channels=channels, out_channels=channels)
-        self.activation = ActivationFct.get(activation)
+        self.activation = activation
 
     def forward(self, x):
         # in: [N, C, H, W]
@@ -82,7 +83,7 @@ class DownBlock2D(nn.Module):
     Args:
         in_channels (int): Input channels.
         out_channels (int): Output channels.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
 
     Shapes:
         Input: (N, in_C, H, W)
@@ -99,7 +100,7 @@ class DownBlock2D(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
         self.conv_net = nn.Sequential(
@@ -124,7 +125,7 @@ class AttnDownBlock2D(DownBlock2D):
     Args:
         in_channels (int): Input channels.
         out_channels (int): Output channels.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
         num_heads (int): Number of parallel attention heads.
             A value of 0 implies the use of scaled dot-product attention
             instead of multihead attention.
@@ -138,7 +139,7 @@ class AttnDownBlock2D(DownBlock2D):
         self,
         in_channels: int,
         out_channels: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
         num_heads: int = 0,
     ):
         super().__init__(in_channels, out_channels, activation)
@@ -161,7 +162,7 @@ class UpBlock2D(nn.Module):
         in_channels (int): Input channels.
         skip_channels (int): Number of channels from skip connections.
         out_channels (int): Output channels.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
 
     Shapes:
         Input: (N, in_C, H, W)
@@ -174,9 +175,22 @@ class UpBlock2D(nn.Module):
             kernel_size=4, stride=2, padding=1, output_padding=0
     """
 
-    def __init__(self, in_channels: int, skip_channels: int, out_channels: int, activation: str = "relu"):
+    def __init__(
+        self,
+        in_channels: int,
+        skip_channels: int,
+        out_channels: int,
+        activation: nn.Module = nn.ReLU(),
+    ):
         super().__init__()
-        self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=2, padding=0, output_padding=0)
+        self.up = nn.ConvTranspose2d(
+            in_channels,
+            in_channels,
+            kernel_size=2,
+            stride=2,
+            padding=0,
+            output_padding=0,
+        )
         self.net = DoubleConv2D(
             in_channels=in_channels + skip_channels,
             out_channels=out_channels,
@@ -212,7 +226,7 @@ class AttnUpBlock2D(UpBlock2D):
         in_channels (int): Input channels.
         skip_channels (int): Number of channels from skip connections.
         out_channels (int): Output channels.
-        activation (str): Activation name.
+        activation (nn.Module): Activation function.
         num_heads (int): Number of parallel attention heads.
             A value of 0 implies the use of scaled dot-product attention
             instead of multihead attention.
@@ -227,7 +241,7 @@ class AttnUpBlock2D(UpBlock2D):
         in_channels: int,
         skip_channels: int,
         out_channels: int,
-        activation: str = "relu",
+        activation: nn.Module = nn.ReLU(),
         num_heads: int = 0,
     ):
         super().__init__(in_channels, skip_channels, out_channels, activation)
