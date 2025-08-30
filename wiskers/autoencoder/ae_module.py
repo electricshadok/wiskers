@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 
 from wiskers.autoencoder.models.ae_2d import Autoencoder2D
+from wiskers.common.activations import ActivationFct
 
 
 class AEModule(L.LightningModule):
@@ -50,7 +51,7 @@ class AEModule(L.LightningModule):
             attentions=attentions,
             z_dim=z_dim,
             image_size=image_size,
-            activation=activation,
+            activation=ActivationFct.get(activation),
         )
         self.learning_rate = learning_rate
         self.z_dim = z_dim
