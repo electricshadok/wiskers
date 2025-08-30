@@ -30,7 +30,9 @@ Run unit tests
 pytest tests
 ```
 
-```--fast_dev_run```: Run a quick training process.
+```--fast_dev_run```
+
+Use this when you want the fastest check that everything compiles and runs. Doesn't test the full training pipeline.
 
 ```
 # CLEVRER
@@ -42,7 +44,9 @@ python wiskers/train.py --config configs/models/vae/train.yaml --fast_dev_run
 python wiskers/train.py --config configs/models/gan/train.yaml --fast_dev_run
 ```
 
-```--quick_run``` : Run few batches and single epoch.
+```--quick_run```
+
+Use this when you want to simulate a real training run and catch bugs across the full training pipeline (checkpointing, LR scheduler, etc.).
 
 ```
 # CLEVRER
