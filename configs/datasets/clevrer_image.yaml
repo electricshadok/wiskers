@@ -7,5 +7,5 @@ data_module:
   num_workers: 2
   chunk_size: 16
   stride: 16
-  resize: [240, 160]
+  resize: [160, 240]
   image_size: [80, 120]

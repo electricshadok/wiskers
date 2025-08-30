@@ -140,7 +140,9 @@ def extract_video_chunks_to_numpy(
 
         original_shape = frame.shape
         if resize:
-            frame = cv2.resize(frame, resize)
+            # OpenCV expects (width, height), but we follow PyTorch's (height, width) convention.
+            # Flip the dimensions to match OpenCV's format.
+            frame = cv2.resize(frame, (resize[1], resize[0]))
 
         buffer.append(frame)
 
