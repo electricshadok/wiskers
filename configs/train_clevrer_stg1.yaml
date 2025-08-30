@@ -3,7 +3,7 @@ seed: 0
 
 # Datamodule Config
 data_module:
-  _target_: wiskers.datasets.clevrer.CLEVRER
+  _target_: wiskers.datasets.clevrer.ClevrerImage
   data_dir: "./datasets"
   batch_size: 4
   num_workers: 2

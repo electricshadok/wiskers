@@ -153,6 +153,8 @@ def extract_video_chunks_to_numpy(
             chunk_shape = chunk.shape
 
             # Move forward by stride
+            # If stride < chunk_size, we keep overlapping frames by slicing the buffer
+            # Otherwise, if stride >= chunk_size, we clear the buffer entirely (no overlap)
             buffer = buffer[stride:] if stride < chunk_size else []
 
         frame_idx += 1

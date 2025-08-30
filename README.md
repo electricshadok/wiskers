@@ -34,7 +34,7 @@ pytest tests
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/train_clevrer.yaml --fast_dev_run
+python wiskers/train.py --config configs/train_clevrer_stg1.yaml --fast_dev_run
 
 # CIFAR-10
 python wiskers/train.py --config configs/models/diffusion/train.yaml --fast_dev_run
@@ -46,7 +46,7 @@ python wiskers/train.py --config configs/models/gan/train.yaml --fast_dev_run
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/train_clevrer.yaml --quick_run
+python wiskers/train.py --config configs/train_clevrer_stg1.yaml --quick_run
 
 # CIFAR-10
 python wiskers/train.py --config configs/models/diffusion/train.yaml --quick_run
@@ -60,7 +60,7 @@ Use the following command to begin the training process. The configuration is de
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/train_clevrer.yaml
+python wiskers/train.py --config configs/train_clevrer_stg1.yaml
 
 # CIFAR-10
 python wiskers/train.py --config configs/models/diffusion/train.yaml
@@ -84,7 +84,8 @@ python wiskers/generate.py --config configs/models/gan/generate.yaml
 Inspect and test the dataloaders.
 
 ```
-python wiskers/inspect_dataset.py --config configs/datasets/clevrer.yaml 
+python wiskers/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
+python wiskers/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
 python wiskers/inspect_dataset.py --config configs/datasets/cifar10.yaml
 ```
 

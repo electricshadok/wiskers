@@ -1,7 +1,7 @@
 seed: 0
 
 data_module:
-  _target_: wiskers.datasets.clevrer.CLEVRER
+  _target_: wiskers.datasets.clevrer.ClevrerVideo
   data_dir: "./datasets"
   batch_size: 4
   num_workers: 2
