@@ -1,7 +1,8 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import torch.nn as nn
 
+from wiskers.autoencoder.utils import format_image_size
 from wiskers.common.modules.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,
@@ -150,7 +151,7 @@ class Autoencoder2D(nn.Module):
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
         z_dim (int): Bottleneck dimension for vae.
-        image_size (tuple): Image size to with the model.
+        image_size (int or tuple): Input image size (H, W).
         activation (nn.Module): Activation function.
 
     Shapes:
@@ -166,7 +167,7 @@ class Autoencoder2D(nn.Module):
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
         z_dim: int = 64,
-        image_size: int = 32,
+        image_size: Union[int, Tuple[int, int]] = 32,
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
@@ -176,6 +177,9 @@ class Autoencoder2D(nn.Module):
         self.num_levels = len(attentions)
         self.in_channels = in_channels
         self.out_channels = out_channels
+
+        # Convert image_size to (H, W)
+        image_size = format_image_size(image_size)
 
         # Input and Encoder (Down blocks and self-attention blocks)
         self._encoder = Encoder(
@@ -187,9 +191,10 @@ class Autoencoder2D(nn.Module):
         )
 
         # Bottleneck
-        # flatten the tensor (N, widths[-1], H / 2^(num_levels), W / 2^(num_levels))
-        bot_img_size = image_size // 2**self.num_levels
-        lowest_tensor_shape = (widths[-1], bot_img_size, bot_img_size)
+        # Image is downsampled 2^num_levels times in each dimension
+        h_bot = image_size[0] // (2**self.num_levels)
+        w_bot = image_size[1] // (2**self.num_levels)
+        lowest_tensor_shape = (widths[-1], h_bot, w_bot)
         self._bottleneck = BottleneckAE(lowest_tensor_shape, z_dim)
 
         # Decoder (Up blocks and self-attention blocks)

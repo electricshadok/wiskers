@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 
 from wiskers.autoencoder.models.ae_2d import Autoencoder2D
+from wiskers.autoencoder.utils import format_image_size
 from wiskers.common.activations import ActivationFct
 
 
@@ -20,7 +21,7 @@ class AEModule(L.LightningModule):
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
         z_dim (int): Bottleneck dimension for vae.
-        image_size (tuple): Image size to with the model.
+        image_size (int or tuple): Input image size (H, W).
         activation (str): Activation function.
         # Optimizer configuration
         learning_rate (float): Learning rate for the optimizer.
@@ -35,7 +36,7 @@ class AEModule(L.LightningModule):
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
         z_dim: int = 64,
-        image_size: int = 32,
+        image_size: Union[int, Tuple[int, int]] = 32,
         activation: str = "relu",
         # Optimizer Configuration
         learning_rate: float = 1e-4,
@@ -57,7 +58,10 @@ class AEModule(L.LightningModule):
         self.z_dim = z_dim
 
         # Set 'example_input_array' for ONNX export initialization
-        self.example_input_array = torch.randn(1, in_channels, image_size, image_size)
+        image_size = format_image_size(image_size)
+        self.example_input_array = torch.randn(
+            1, in_channels, image_size[0], image_size[1]
+        )
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
