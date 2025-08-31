@@ -34,7 +34,6 @@ class AEModule(L.LightningModule):
         num_heads: int = 8,
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
-        z_dim: int = 64,
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: str = "relu",
         # Optimizer Configuration
@@ -49,12 +48,10 @@ class AEModule(L.LightningModule):
             num_heads=num_heads,
             widths=widths,
             attentions=attentions,
-            z_dim=z_dim,
             image_size=image_size,
             activation=get_activation(activation),
         )
         self.learning_rate = learning_rate
-        self.z_dim = z_dim
 
         # Set 'example_input_array' for ONNX export initialization
         image_size = format_image_size(image_size)
@@ -157,7 +154,8 @@ class AEModule(L.LightningModule):
         Returns:
             torch.Tensor: Tensor of generated images with pixel values in [0, 1].
         """
-        z = torch.randn(num_samples, self.z_dim, device=self.device)
+        mid_c, mid_h, mid_w = self.model.get_expected_shape()
+        z = torch.randn(num_samples, mid_c, mid_h, mid_w, device=self.device)
         samples = self.model.decoder(z)
         samples = samples.clip(0.0, 1.0)
         return samples

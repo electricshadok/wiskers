@@ -41,6 +41,7 @@ python wiskers/train.py --config configs/train_clevrer_stg1.yaml --fast_dev_run
 # CIFAR-10
 python wiskers/train.py --config configs/models/train_diffusion.yaml --fast_dev_run
 python wiskers/train.py --config configs/models/train_vae.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/train_ae.yaml --fast_dev_run
 python wiskers/train.py --config configs/models/train_gan.yaml --fast_dev_run
 ```
 

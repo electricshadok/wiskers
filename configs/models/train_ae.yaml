@@ -3,22 +3,19 @@ seed: 0
 
 # Datamodule Config
 data_module:
-  _target_: wiskers.datasets.clevrer.ClevrerImage
-  data_dir: "./datasets"
-  batch_size: 4
+  _target_: wiskers.datasets.cifar10_subset.CIFAR10Subset
+  data_dir: "./datasets/"
+  batch_size: 16
   num_workers: 2
-  image_size: [80, 120]
-  preprocessing:
-    _target_: wiskers.datasets.clevrer.PreprocessingConfig
-    chunk_size: 16
-    stride: 16
-    resize: [160, 240]
-    limit: null
+  image_size: 32
+  category_name: "cat"
+  # augmentations
+  random_horizontal_flip: false
 
 # Logger Configs
 tensor_board_logger:
   save_dir: "./experiments"
-  name: "clevrer_stg1"
+  name: "ae"
   version: null
 
 # Export Model
@@ -33,7 +30,7 @@ module:
   out_channels: 3
   num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
   widths: [32, 64, 128, 256]
-  attentions: [False, False, False]
+  attentions: [True, True, True]
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
   activation: "relu"
   # optimizer

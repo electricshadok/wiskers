@@ -8,7 +8,6 @@ from wiskers.common.modules.conv_blocks_2d import (
     AttnUpBlock2D,
     DoubleConv2D,
     DownBlock2D,
-    ResDoubleConv2D,
     UpBlock2D,
 )
 
@@ -108,55 +107,22 @@ class Decoder(nn.Module):
         return self.up_blocks(x)
 
 
-class BottleneckAE(nn.Module):
-    """
-    Bottleneck module for Autoencoder.
-    """
-
-    def __init__(self, lowest_tensor_shape: Tuple[int, int, int], z_dim: int):
-        super().__init__()
-        self.lowest_tensor_shape = lowest_tensor_shape
-        bot_channels, bot_tensor_h, bot_tensor_w = lowest_tensor_shape
-        self.bot = ResDoubleConv2D(bot_channels, nn.Sigmoid())
-        hidden_dim = bot_channels * bot_tensor_h * bot_tensor_w
-        self.bot_flatten = nn.Flatten(start_dim=1)  # (N, hidden_dim)
-        self.to_latent = nn.Linear(hidden_dim, z_dim)
-        self.from_latent = nn.Linear(z_dim, hidden_dim)
-
-    def unflatten(self, z):
-        bot_shape = (
-            z.shape[0],
-            self.lowest_tensor_shape[0],
-            self.lowest_tensor_shape[1],
-            self.lowest_tensor_shape[2],
-        )
-        unflatten = self.from_latent(z).view(*bot_shape)
-        return unflatten
-
-    def forward(self, x):
-        bot = self.bot(x)
-        bot_flatten = self.bot_flatten(bot)
-        z = self.to_latent(bot_flatten)
-        return z
-
-
 class Autoencoder2D(nn.Module):
     """
-    Autoencoder architecture.
+    Autoencoder architecture with a fully convolutional bottleneck.
 
     Args:
         in_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
-        attentions (List[bool]) : Enable attention per level.
-        z_dim (int): Bottleneck dimension for vae.
+        attentions (List[bool]): Enable attention per level.
         image_size (int or tuple): Input image size (H, W).
         activation (nn.Module): Activation function.
 
     Shapes:
-        in: [N, in_C, H, W]
-        out: [N, out_C, H, W]
+        Input: [N, in_C, H, W]
+        Output: [N, out_C, H, W]
     """
 
     def __init__(
@@ -166,7 +132,6 @@ class Autoencoder2D(nn.Module):
         num_heads: int = 8,
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
-        z_dim: int = 64,
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: nn.Module = nn.ReLU(),
     ):
@@ -177,11 +142,9 @@ class Autoencoder2D(nn.Module):
         self.num_levels = len(attentions)
         self.in_channels = in_channels
         self.out_channels = out_channels
+        self.widths = widths
+        self.image_size = format_image_size(image_size)
 
-        # Convert image_size to (H, W)
-        image_size = format_image_size(image_size)
-
-        # Input and Encoder (Down blocks and self-attention blocks)
         self._encoder = Encoder(
             in_channels=in_channels,
             num_heads=num_heads,
@@ -190,14 +153,10 @@ class Autoencoder2D(nn.Module):
             activation=activation,
         )
 
-        # Bottleneck
-        # Image is downsampled 2^num_levels times in each dimension
-        h_bot = image_size[0] // (2**self.num_levels)
-        w_bot = image_size[1] // (2**self.num_levels)
-        lowest_tensor_shape = (widths[-1], h_bot, w_bot)
-        self._bottleneck = BottleneckAE(lowest_tensor_shape, z_dim)
+        self._mid_block = DoubleConv2D(
+            in_channels=widths[-1], out_channels=widths[-1], activation=nn.ReLU()
+        )
 
-        # Decoder (Up blocks and self-attention blocks)
         self._decoder = Decoder(
             out_channels=out_channels,
             num_heads=num_heads,
@@ -206,9 +165,21 @@ class Autoencoder2D(nn.Module):
             activation=activation,
         )
 
+    def get_expected_shape(self):
+        # downsampled 2^num_levels times in each dimension
+        mid_h = self.image_size[0] // (2**self.num_levels)
+        mid_w = self.image_size[1] // (2**self.num_levels)
+        mid_c = self.widths[-1]
+        return mid_c, mid_h, mid_w
+
     def decoder(self, z):
-        unflatten_z = self._bottleneck.unflatten(z)
-        return self._decoder(unflatten_z)
+        mid_c, mid_h, mid_w = self.get_expected_shape()
+        expected_shape = (z.shape[0], mid_c, mid_h, mid_w)
+        if z.shape[1:] != expected_shape[1:]:
+            raise ValueError(
+                f"Expected latent shape {expected_shape}, but got {z.shape}"
+            )
+        return self._decoder(z)
 
     def forward(self, x):
         """
@@ -224,12 +195,7 @@ class Autoencoder2D(nn.Module):
             in: [N, in_C, H, W]
             out: [N, out_C, H, W]
         """
-        # Encoder
         encoder_x = self._encoder(x)
-
-        # Bottleneck
-        z = self._bottleneck(encoder_x)
-
-        # Decoder
+        z = self._mid_block(encoder_x)
         decoder_x = self.decoder(z)
         return decoder_x
