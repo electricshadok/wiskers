@@ -4,7 +4,7 @@ import lightning as L
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.activations import ActivationFct
+from wiskers.common.arg_utils import get_activation
 from wiskers.diffusion.models.unet_2d import UNet2D
 from wiskers.diffusion.schedulers.registry import Schedulers
 
@@ -66,7 +66,7 @@ class DiffuserModule(L.LightningModule):
             num_heads=num_heads,
             widths=widths,
             attentions=attentions,
-            activation=ActivationFct.get(activation),
+            activation=get_activation(activation),
         )
         self.learning_rate = learning_rate
         if prediction_type not in ["noise", "sample", "v-prediction"]:

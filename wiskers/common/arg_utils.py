@@ -1,4 +1,25 @@
-from typing import List, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
+
+import torch.nn as nn
+
+
+_ACTIVATION_MAP: Dict[str, Callable[[], nn.Module]] = {
+    "relu": nn.ReLU,
+    "leakyrelu": nn.LeakyReLU,
+    "sigmoid": nn.Sigmoid,
+    "tanh": nn.Tanh,
+    "softplus": nn.Softplus,
+    "gelu": nn.GELU,
+    "silu": nn.SiLU,
+}
+
+
+def get_activation(name: str) -> nn.Module:
+    """Returns an instantiated activation function by name."""
+    name = name.lower()
+    if name not in _ACTIVATION_MAP:
+        raise ValueError(f"Unknown activation function: '{name}'")
+    return _ACTIVATION_MAP[name]()
 
 
 def format_image_size(

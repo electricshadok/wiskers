@@ -2,7 +2,7 @@ from typing import List, Tuple, Union
 
 import torch.nn as nn
 
-from wiskers.autoencoder.utils import format_image_size
+from wiskers.common.arg_utils import format_image_size
 from wiskers.common.modules.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,

@@ -1,4 +1,6 @@
 import os
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 import lightning as L
 from torch.utils.data import DataLoader
@@ -9,6 +11,14 @@ from wiskers.datasets.clevrer_utils.prepare_clevrer import (
     download_videos,
     prepare_and_extract_clevrer_videos,
 )
+
+
+@dataclass
+class PreprocessingConfig:
+    chunk_size: int = 16
+    stride: int = 16
+    resize: List[int] = field(default_factory=lambda: [160, 240])
+    limit: Optional[int] = None  # Optional limit on number of videos processed
 
 
 class ClevrerBase(L.LightningDataModule):
@@ -32,18 +42,14 @@ class ClevrerBase(L.LightningDataModule):
         data_dir: str,
         batch_size: int,
         num_workers: int,
-        chunk_size: int,
-        stride: int,
-        resize: tuple[int, int] | None,
         image_size: tuple[int, int] | None,
+        preprocessing: PreprocessingConfig,
     ):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.chunk_size = chunk_size
-        self.stride = stride
-        self.resize = resize
+        self.preprocessing = preprocessing
         self.image_size = image_size
         self.qa_index_paths = {}
         self.video_index_paths = {}
@@ -66,10 +72,10 @@ class ClevrerBase(L.LightningDataModule):
             video_index_path = prepare_and_extract_clevrer_videos(
                 raw_video_dir=raw_video_dir,
                 processed_video_dir=processed_video_dir,
-                chunk_size=self.chunk_size,
-                stride=self.stride,
-                resize=self.resize,
-                limit=None,
+                chunk_size=self.preprocessing.chunk_size,
+                stride=self.preprocessing.stride,
+                resize=self.preprocessing.resize,
+                limit=self.preprocessing.limit,
                 index_filename="index.json",
             )
             self.video_index_paths[split] = video_index_path

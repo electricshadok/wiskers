@@ -39,9 +39,9 @@ Use this when you want the fastest check that everything compiles and runs. Does
 python wiskers/train.py --config configs/train_clevrer_stg1.yaml --fast_dev_run
 
 # CIFAR-10
-python wiskers/train.py --config configs/models/diffusion/train.yaml --fast_dev_run
-python wiskers/train.py --config configs/models/vae/train.yaml --fast_dev_run
-python wiskers/train.py --config configs/models/gan/train.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/train_diffusion.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/train_vae.yaml --fast_dev_run
+python wiskers/train.py --config configs/models/train_gan.yaml --fast_dev_run
 ```
 
 ```--quick_run```
@@ -53,9 +53,9 @@ Use this when you want to simulate a real training run and catch bugs across the
 python wiskers/train.py --config configs/train_clevrer_stg1.yaml --quick_run
 
 # CIFAR-10
-python wiskers/train.py --config configs/models/diffusion/train.yaml --quick_run
-python wiskers/train.py --config configs/models/vae/train.yaml --quick_run
-python wiskers/train.py --config configs/models/gan/train.yaml --quick_run
+python wiskers/train.py --config configs/models/train_diffusion.yaml --quick_run
+python wiskers/train.py --config configs/models/train_vae.yaml --quick_run
+python wiskers/train.py --config configs/models/train_gan.yaml --quick_run
 ```
 
 ## Training
@@ -67,9 +67,9 @@ Use the following command to begin the training process. The configuration is de
 python wiskers/train.py --config configs/train_clevrer_stg1.yaml
 
 # CIFAR-10
-python wiskers/train.py --config configs/models/diffusion/train.yaml
-python wiskers/train.py --config configs/models/vae/train.yaml
-python wiskers/train.py --config configs/models/gan/train.yaml
+python wiskers/train.py --config configs/models/train_diffusion.yaml
+python wiskers/train.py --config configs/models/train_vae.yaml
+python wiskers/train.py --config configs/models/train_gan.yaml
 ```
 
 ## Inference
@@ -78,9 +78,9 @@ Use trained model to generate samples. This command triggers the sample generati
 
 ```
 # CIFAR-10
-python wiskers/generate.py --config configs/models/diffusion/generate.yaml
-python wiskers/generate.py --config configs/models/vae/generate.yaml
-python wiskers/generate.py --config configs/models/gan/generate.yaml
+python wiskers/generate.py --config configs/models/generate_diffusion.yaml
+python wiskers/generate.py --config configs/models/generate_vae.yaml
+python wiskers/generate.py --config configs/models/generate_gan.yaml
 ```
 
 ## Inspect Datasets
