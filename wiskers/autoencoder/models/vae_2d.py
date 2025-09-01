@@ -48,7 +48,6 @@ class VAE2D(nn.Module):
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
-        z_dim (int): Bottleneck dimension for vae.
         image_size (int or tuple): Input image size (H, W).
         activation (nn.Module): Activation function.
 
