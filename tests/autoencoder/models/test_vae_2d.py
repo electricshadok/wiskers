@@ -15,8 +15,7 @@ from wiskers.autoencoder.models.vae_2d import VAE2D
     ],
 )
 def test_vae2D(batch_size, in_channels, out_channels, height, width):
-    z_dim = 64
-    net = VAE2D(in_channels, out_channels, num_heads=2, z_dim=z_dim)
+    net = VAE2D(in_channels, out_channels, num_heads=2)
     x = torch.randn(batch_size, in_channels, height, width)
     out_x, mu, logvar = net(x)
 
@@ -28,8 +27,10 @@ def test_vae2D(batch_size, in_channels, out_channels, height, width):
     )
     assert out_x.dtype == x.dtype
 
-    assert mu.shape == (batch_size, z_dim)
-    assert logvar.shape == (batch_size, z_dim)
+    mid_c, mid_h, mid_w = net.get_latent_shape()
+
+    assert mu.shape == (batch_size, mid_c, mid_h, mid_w)
+    assert logvar.shape == (batch_size, mid_c, mid_h, mid_w)
 
 
 @pytest.mark.parametrize(

@@ -165,7 +165,7 @@ class Autoencoder2D(nn.Module):
             activation=activation,
         )
 
-    def get_expected_shape(self):
+    def get_latent_shape(self):
         # downsampled 2^num_levels times in each dimension
         mid_h = self.image_size[0] // (2**self.num_levels)
         mid_w = self.image_size[1] // (2**self.num_levels)
@@ -173,7 +173,7 @@ class Autoencoder2D(nn.Module):
         return mid_c, mid_h, mid_w
 
     def decoder(self, z):
-        mid_c, mid_h, mid_w = self.get_expected_shape()
+        mid_c, mid_h, mid_w = self.get_latent_shape()
         expected_shape = (z.shape[0], mid_c, mid_h, mid_w)
         if z.shape[1:] != expected_shape[1:]:
             raise ValueError(

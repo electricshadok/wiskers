@@ -10,40 +10,30 @@ from wiskers.common.modules.conv_blocks_2d import ResDoubleConv2D
 
 class BottleneckVAE(nn.Module):
     """
-    Bottleneck module for Variational Autoencoder (VAE).
+    Convolutional bottleneck for Variational Autoencoder (VAE) without flattening.
+
+    Shapes:
+        in: [N, C, H, W]
+        out: [N, C, H, W]
     """
 
-    def __init__(self, lowest_tensor_shape: Tuple[int, int, int], z_dim: int):
+    def __init__(self, channels: int):
         super().__init__()
-        self.lowest_tensor_shape = lowest_tensor_shape
-        bot_channels, bot_tensor_h, bot_tensor_w = lowest_tensor_shape
-        self.bot = ResDoubleConv2D(bot_channels, nn.Sigmoid())
-        hidden_dim = bot_channels * bot_tensor_h * bot_tensor_w
-        self.bot_flatten = nn.Flatten(start_dim=1)  # (N, hidden_dim)
-        self.fc_mu = nn.Linear(hidden_dim, z_dim)
-        self.fc_logvar = nn.Linear(hidden_dim, z_dim)
-        self.bot_unflatten = nn.Linear(z_dim, hidden_dim)
+        self.encoder_conv = ResDoubleConv2D(channels, nn.Sigmoid())
+
+        # Reparametrize using convolution instead of fully connected layers
+        self.conv_mu = nn.Conv2d(channels, channels, kernel_size=1)
+        self.conv_logvar = nn.Conv2d(channels, channels, kernel_size=1)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
 
-    def unflatten(self, z):
-        bot_shape = (
-            z.shape[0],
-            self.lowest_tensor_shape[0],
-            self.lowest_tensor_shape[1],
-            self.lowest_tensor_shape[2],
-        )
-        unflatten = self.bot_unflatten(z).view(*bot_shape)
-        return unflatten
-
     def forward(self, x):
-        bot = self.bot(x)
-        bot_flatten = self.bot_flatten(bot)
-        mu = self.fc_mu(bot_flatten)
-        logvar = self.fc_logvar(bot_flatten)
+        x = self.encoder_conv(x)
+        mu = self.conv_mu(x)
+        logvar = self.conv_logvar(x)
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
@@ -74,7 +64,6 @@ class VAE2D(nn.Module):
         num_heads: int = 8,
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
-        z_dim: int = 64,
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: nn.Module = nn.ReLU(),
     ):
@@ -85,11 +74,9 @@ class VAE2D(nn.Module):
         self.num_levels = len(attentions)
         self.in_channels = in_channels
         self.out_channels = out_channels
+        self.widths = widths
+        self.image_size = format_image_size(image_size)
 
-        # Convert image_size to (H, W)
-        image_size = format_image_size(image_size)
-
-        # Input and Encoder (Down blocks and self-attention blocks)
         self._encoder = Encoder(
             in_channels=in_channels,
             num_heads=num_heads,
@@ -98,14 +85,8 @@ class VAE2D(nn.Module):
             activation=activation,
         )
 
-        # Bottleneck
-        # Image is downsampled 2^num_levels times in each dimension
-        h_bot = image_size[0] // (2**self.num_levels)
-        w_bot = image_size[1] // (2**self.num_levels)
-        lowest_tensor_shape = (widths[-1], h_bot, w_bot)
-        self._bottleneck = BottleneckVAE(lowest_tensor_shape, z_dim)
+        self._bottleneck = BottleneckVAE(widths[-1])
 
-        # Decoder (Up blocks and self-attention blocks)
         self._decoder = Decoder(
             out_channels=out_channels,
             num_heads=num_heads,
@@ -114,9 +95,21 @@ class VAE2D(nn.Module):
             activation=activation,
         )
 
+    def get_latent_shape(self):
+        # downsampled 2^num_levels times in each dimension
+        mid_h = self.image_size[0] // (2**self.num_levels)
+        mid_w = self.image_size[1] // (2**self.num_levels)
+        mid_c = self.widths[-1]
+        return mid_c, mid_h, mid_w
+
     def decoder(self, z):
-        unflatten_z = self._bottleneck.unflatten(z)
-        return self._decoder(unflatten_z)
+        mid_c, mid_h, mid_w = self.get_latent_shape()
+        expected_shape = (z.shape[0], mid_c, mid_h, mid_w)
+        if z.shape[1:] != expected_shape[1:]:
+            raise ValueError(
+                f"Expected latent shape {expected_shape}, but got {z.shape}"
+            )
+        return self._decoder(z)
 
     def forward(self, x):
         """
@@ -132,12 +125,7 @@ class VAE2D(nn.Module):
             in: [N, in_C, H, W]
             out: [N, out_C, H, W]
         """
-        # Encoder
         encoder_x = self._encoder(x)
-
-        # Bottleneck
         z, mu, logvar = self._bottleneck(encoder_x)
-
-        # Decoder
         decoder_x = self.decoder(z)
         return decoder_x, mu, logvar

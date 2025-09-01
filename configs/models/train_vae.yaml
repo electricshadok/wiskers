@@ -31,7 +31,6 @@ module:
   num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
   widths: [32, 64, 128, 256]
   attentions: [True, True, True]
-  z_dim: 64
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
   activation: "relu"
   # optimizer

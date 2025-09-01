@@ -154,7 +154,7 @@ class AEModule(L.LightningModule):
         Returns:
             torch.Tensor: Tensor of generated images with pixel values in [0, 1].
         """
-        mid_c, mid_h, mid_w = self.model.get_expected_shape()
+        mid_c, mid_h, mid_w = self.model.get_latent_shape()
         z = torch.randn(num_samples, mid_c, mid_h, mid_w, device=self.device)
         samples = self.model.decoder(z)
         samples = samples.clip(0.0, 1.0)
