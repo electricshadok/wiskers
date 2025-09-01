@@ -36,13 +36,13 @@ Use this when you want the fastest check that everything compiles and runs. Does
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/train_clevrer_stg1.yaml --fast_dev_run
+python wiskers/train.py --config configs/training/clevrer_stg1.yaml --fast_dev_run
 
-# CIFAR-10
-python wiskers/train.py --config configs/models/train_diffusion.yaml --fast_dev_run
-python wiskers/train.py --config configs/models/train_vae.yaml --fast_dev_run
-python wiskers/train.py --config configs/models/train_ae.yaml --fast_dev_run
-python wiskers/train.py --config configs/models/train_gan.yaml --fast_dev_run
+# CIFAR-10 (testing)
+python wiskers/train.py --config configs/training/cifar10_diffusion.yaml --fast_dev_run
+python wiskers/train.py --config configs/training/cifar10_ae.yaml --fast_dev_run
+python wiskers/train.py --config configs/training/cifar10_vae.yaml --fast_dev_run
+python wiskers/train.py --config configs/training/cifar10_gan.yaml --fast_dev_run
 ```
 
 ```--quick_run```
@@ -51,12 +51,13 @@ Use this when you want to simulate a real training run and catch bugs across the
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/train_clevrer_stg1.yaml --quick_run
+python wiskers/train.py --config configs/training/clevrer_stg1.yaml --quick_run
 
-# CIFAR-10
-python wiskers/train.py --config configs/models/train_diffusion.yaml --quick_run
-python wiskers/train.py --config configs/models/train_vae.yaml --quick_run
-python wiskers/train.py --config configs/models/train_gan.yaml --quick_run
+# CIFAR-10 (testing)
+python wiskers/train.py --config configs/training/cifar10_diffusion.yaml --quick_run
+python wiskers/train.py --config configs/training/cifar10_ae.yaml --quick_run
+python wiskers/train.py --config configs/training/cifar10_vae.yaml --quick_run
+python wiskers/train.py --config configs/training/cifar10_gan.yaml --quick_run
 ```
 
 ## Training
@@ -65,12 +66,13 @@ Use the following command to begin the training process. The configuration is de
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/train_clevrer_stg1.yaml
+python wiskers/train.py --config configs/training/clevrer_stg1.yaml
 
-# CIFAR-10
-python wiskers/train.py --config configs/models/train_diffusion.yaml
-python wiskers/train.py --config configs/models/train_vae.yaml
-python wiskers/train.py --config configs/models/train_gan.yaml
+# CIFAR-10 (testing)
+python wiskers/train.py --config configs/training/cifar10_diffusion.yaml
+python wiskers/train.py --config configs/training/cifar10_ae.yaml
+python wiskers/train.py --config configs/training/cifar10_vae.yaml
+python wiskers/train.py --config configs/training/cifar10_gan.yaml
 ```
 
 ## Inference
@@ -79,9 +81,8 @@ Use trained model to generate samples. This command triggers the sample generati
 
 ```
 # CIFAR-10
-python wiskers/generate.py --config configs/models/generate_diffusion.yaml
-python wiskers/generate.py --config configs/models/generate_vae.yaml
-python wiskers/generate.py --config configs/models/generate_gan.yaml
+python wiskers/generate.py --config configs/inference/diffusion.yaml
+python wiskers/generate.py --config configs/inference/vae.yaml
 ```
 
 ## Inspect Datasets
