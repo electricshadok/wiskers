@@ -1,0 +1,22 @@
+# Global seed
+seed: 0
+
+run_name: version_1
+best_models_dir: "./experiments/clevrer_stg1"
+
+best_model_path:
+  _target_: wiskers.generate.GenerateCLI.get_model_path
+  best_models_dir: ${best_models_dir}
+  run_name: ${run_name}
+  model_format: "ckpt" # onnx/ckpt/safetensors
+
+output_dir: 
+  _target_: wiskers.generate.GenerateCLI.get_output_dir
+  best_models_dir: ${best_models_dir}
+  run_name: ${run_name}
+
+module_type: "ae"
+num_images: 16
+
+
+

@@ -1,8 +1,0 @@
-# Global seed
-seed: 0
-
-module_type: "vae"
-model_format: "ckpt" # onnx/ckpt/safetensors
-run_name: version_0
-num_images: 16
-best_models_dir: "./experiments/vae"

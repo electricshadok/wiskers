@@ -5,8 +5,9 @@ import os
 import lightning as L
 import onnxruntime
 import torchvision
+from hydra.utils import instantiate
 
-from wiskers.autoencoder.vae_module import VAEModule
+from wiskers.autoencoder.ae_module import AEModule
 from wiskers.common.commands.utils import load_config
 
 
@@ -16,7 +17,7 @@ class ONNXInference:
     def __init__(self, filepath: str):
         self.model = onnxruntime.InferenceSession(filepath)
 
-    def __call__(self, num_samples: int, num_inference_steps: int):
+    def __call__(self, num_samples: int):
         # TODO - add implementation for ONNXInference
         # inputs = {self.model.get_inputs()[0].name: x}
         # outputs = self.model.run(None, inputs)
@@ -31,7 +32,7 @@ class SafeTensorInference:
         # from safetensors.torch import load_model
         self.model = None
 
-    def __call__(self, num_samples: int, num_inference_steps: int):
+    def __call__(self, num_samples: int):
         # TODO - add implementation for SafeTensorInference
         raise NotImplementedError("SafeTensorInference._call() not implemented")
 
@@ -40,9 +41,8 @@ class CheckpointInference:
     format = "ckpt"
 
     def __init__(self, filepath: str):
-        self.model = VAEModule.load_from_checkpoint(filepath)
+        self.model = AEModule.load_from_checkpoint(filepath)
         print(f"Load model: {filepath} with hyperparameters:")
-        print(self.model.hparams)
 
     def __call__(self, num_samples: int):
         return self.model.generate_samples(num_samples)
@@ -69,32 +69,83 @@ class GenerateCLI:
         # Initialize random number generators
         L.seed_everything(seed=self.config.seed, workers=True)
 
-        # Instance the correct object for inference
-        self.model_dir = os.path.join(self.config.best_models_dir, self.config.run_name)
-        self.output_dir = self.model_dir  # for now save images in model directory
-        model_filepaths = glob.glob(os.path.join(self.model_dir, "*." + self.config.model_format))
-        if len(model_filepaths) == 0:
-            raise FileNotFoundError(f"No '.{self.config.model_format}' files found in the directory.")
+        model_filepath = instantiate(self.config.best_model_path)
 
-        model_filepath = model_filepaths[0]
         inference_types = [ONNXInference, CheckpointInference, SafeTensorInference]
         inference_formats = [cls.format for cls in inference_types]
-        inference_idx = inference_formats.index(self.config.model_format)
+        ext = os.path.splitext(model_filepath)[1][1:]
+        inference_idx = inference_formats.index(ext)
         self.inference = inference_types[inference_idx](model_filepath)
+
+    @staticmethod
+    def get_output_dir(best_models_dir: str, run_name: str) -> str:
+        run_dir = os.path.join(best_models_dir, run_name)
+        output_dir = os.path.join(run_dir, "outputs")
+        os.makedirs(output_dir, exist_ok=True)
+        return output_dir
+
+    @staticmethod
+    def get_model_path(
+        best_models_dir: str, run_name: str | None, model_format: str
+    ) -> str:
+        # Instance the correct object for inference
+        if run_name is None:
+            run_name = GenerateCLI.find_latest_run(best_models_dir)
+        run_dir = os.path.join(best_models_dir, run_name)
+        checkpoint_dir = os.path.join(run_dir, "checkpoints")
+        if not os.path.exists(checkpoint_dir):
+            raise FileNotFoundError(f"{checkpoint_dir} doesn't exist")
+
+        model_filepaths = glob.glob(os.path.join(checkpoint_dir, "*." + model_format))
+        if len(model_filepaths) == 0:
+            raise FileNotFoundError(
+                f"No '.{model_format}' files found in {checkpoint_dir}"
+            )
+
+        return model_filepaths[-1]  # For now get the latest checkpoint
+
+    @staticmethod
+    def find_latest_run(best_models_dir: str):
+        """
+        Returns the subdirectory in `base_dir` with the highest numeric suffix in the format <prefix>_<number>.
+        Example: among ['run_1', 'run_2', 'run_3'], returns 'run_3'.
+        """
+        max_suffix = -1
+        latest_run = None
+
+        for name in os.listdir(best_models_dir):
+            full_path = os.path.join(best_models_dir, name)
+            if not os.path.isdir(full_path):
+                continue
+
+            if "_" in name:
+                prefix, suffix = name.rsplit("_", 1)
+                if suffix.isdigit():
+                    num = int(suffix)
+                    if num > max_suffix:
+                        max_suffix = num
+                        latest_run = name
+
+        return latest_run
 
     def run(self):
         """
         Runs the image generation process with the user settings.
         """
+        output_dir = instantiate(self.config.output_dir)
         samples = self.inference(self.config.num_images)
-        output_path = os.path.join(self.output_dir, "output.png")
+        output_path = os.path.join(output_dir, "output.png")
         torchvision.utils.save_image(samples, output_path)
-        # TODO - add FID to evaluate the generated images
+        print(f"Export output: {output_path}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the training script with a given configuration file.")
-    parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
+    parser = argparse.ArgumentParser(
+        description="Run the training script with a given configuration file."
+    )
+    parser.add_argument(
+        "--config", type=str, required=True, help="Path to the configuration file"
+    )
     args = parser.parse_args()
     cmd = GenerateCLI(args.config)
     cmd.run()

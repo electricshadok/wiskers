@@ -80,9 +80,7 @@ python wiskers/train.py --config configs/training/cifar10_gan.yaml
 Use trained model to generate samples. This command triggers the sample generation proces with the configuration *generate.yaml*.
 
 ```
-# CIFAR-10
-python wiskers/generate.py --config configs/inference/diffusion.yaml
-python wiskers/generate.py --config configs/inference/vae.yaml
+python wiskers/generate.py --config configs/inference/clevrer_stg1.yaml
 ```
 
 ## Inspect Datasets

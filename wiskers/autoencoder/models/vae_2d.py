@@ -102,11 +102,15 @@ class VAE2D(nn.Module):
         return mid_c, mid_h, mid_w
 
     def decoder(self, z):
-        mid_c, mid_h, mid_w = self.get_latent_shape()
-        expected_shape = (z.shape[0], mid_c, mid_h, mid_w)
-        if z.shape[1:] != expected_shape[1:]:
-            raise ValueError(
-                f"Expected latent shape {expected_shape}, but got {z.shape}"
+        if not torch.jit.is_tracing():
+            # This block ensures certain operations (like shape assertions or debug logging)
+            # are only executed during eager mode (normal Python execution).
+            # During JIT tracing, Python control flow depending on tensor values cannot be
+            # captured correctly, so we avoid tracing potentially problematic code paths.
+            mid_c, mid_h, mid_w = self.get_latent_shape()
+            torch._assert(
+                z.size(1) == mid_c and z.size(2) == mid_h and z.size(3) == mid_w,
+                "Shape mismatch",
             )
         return self._decoder(z)
 
