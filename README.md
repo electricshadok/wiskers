@@ -35,14 +35,7 @@ pytest tests
 Use this when you want the fastest check that everything compiles and runs. Doesn't test the full training pipeline.
 
 ```
-# CLEVRER
 python wiskers/train.py --config configs/training/clevrer_stg1.yaml --fast_dev_run
-
-# CIFAR-10 (testing)
-python wiskers/train.py --config configs/training/cifar10_diffusion.yaml --fast_dev_run
-python wiskers/train.py --config configs/training/cifar10_ae.yaml --fast_dev_run
-python wiskers/train.py --config configs/training/cifar10_vae.yaml --fast_dev_run
-python wiskers/train.py --config configs/training/cifar10_gan.yaml --fast_dev_run
 ```
 
 ```--quick_run```
@@ -50,14 +43,7 @@ python wiskers/train.py --config configs/training/cifar10_gan.yaml --fast_dev_ru
 Use this when you want to simulate a real training run and catch bugs across the full training pipeline (checkpointing, LR scheduler, etc.).
 
 ```
-# CLEVRER
 python wiskers/train.py --config configs/training/clevrer_stg1.yaml --quick_run
-
-# CIFAR-10 (testing)
-python wiskers/train.py --config configs/training/cifar10_diffusion.yaml --quick_run
-python wiskers/train.py --config configs/training/cifar10_ae.yaml --quick_run
-python wiskers/train.py --config configs/training/cifar10_vae.yaml --quick_run
-python wiskers/train.py --config configs/training/cifar10_gan.yaml --quick_run
 ```
 
 ## Training
@@ -75,12 +61,12 @@ python wiskers/train.py --config configs/training/cifar10_vae.yaml
 python wiskers/train.py --config configs/training/cifar10_gan.yaml
 ```
 
-## Inference
+## Prediction
 
-Use trained model to generate samples. This command triggers the sample generation proces with the configuration *generate.yaml*.
+Use the following command to run the prediction process with a configuration.
 
 ```
-python wiskers/generate.py --config configs/inference/clevrer_stg1.yaml
+python wiskers/predict.py --config configs/inference/clevrer_stg1.yaml
 ```
 
 ## Inspect Datasets

@@ -48,5 +48,5 @@ trainer:
   limit_train_batches: 1.0
   limit_test_batches: 1.0
   limit_val_batches: 1.0
-  max_epochs: 20
+  max_epochs: 100
   log_every_n_steps: 10

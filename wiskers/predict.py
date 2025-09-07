@@ -48,9 +48,9 @@ class CheckpointInference:
         return self.model.generate_samples(num_samples)
 
 
-class GenerateCLI:
+class PredictCLI:
     """
-    Command-line interface for generating image using a trained PyTorch Lightning model checkpoint.
+    Command-line interface for running image prediction using a trained PyTorch Lightning model checkpoint.
 
     Args:
         config_path (str): Path to the configuration file.
@@ -58,7 +58,7 @@ class GenerateCLI:
 
     def __init__(self, config_path: str) -> None:
         """
-        Initializes the GenerateCLI.
+        Initializes the PredictCLI.
 
         Args:
             config_path (str): Path to the configuration file.
@@ -90,7 +90,7 @@ class GenerateCLI:
     ) -> str:
         # Instance the correct object for inference
         if run_name is None:
-            run_name = GenerateCLI.find_latest_run(best_models_dir)
+            run_name = PredictCLI.find_latest_run(best_models_dir)
         run_dir = os.path.join(best_models_dir, run_name)
         checkpoint_dir = os.path.join(run_dir, "checkpoints")
         if not os.path.exists(checkpoint_dir):
@@ -147,5 +147,5 @@ if __name__ == "__main__":
         "--config", type=str, required=True, help="Path to the configuration file"
     )
     args = parser.parse_args()
-    cmd = GenerateCLI(args.config)
+    cmd = PredictCLI(args.config)
     cmd.run()
