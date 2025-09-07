@@ -1,19 +1,27 @@
-# Global seed
+# Global configuration
 seed: 0
-
-best_models_dir: "./experiments/clevrer_stg1"
+experiment_dir: "./experiments/clevrer_stg1"
 run_name: version_0
-module_type: "ae"
 num_images: 16
+backend_engine:
+  _target_: wiskers.backends.AECheckpointInference
 
-best_model_path:
-  _target_: wiskers.predict.PredictCLI.get_model_path
-  best_models_dir: ${best_models_dir}
-  run_name: ${run_name}
-  model_format: "ckpt" # onnx/ckpt/safetensors
+# Data module (Test only)
+data_module:
+  _target_: wiskers.datasets.clevrer.ClevrerImage
+  data_dir: "./datasets"
+  batch_size: 4
+  num_workers: 2
+  image_size: [80, 120]
+  preprocessing:
+    _target_: wiskers.datasets.clevrer.PreprocessingConfig
+    chunk_size: 16
+    stride: 16
+    resize: [160, 240]
+    limit: null
 
-output_dir: 
-  _target_: wiskers.predict.PredictCLI.get_output_dir
-  best_models_dir: ${best_models_dir}
-  run_name: ${run_name}
+# # Model and output paths
+best_model_path: null
+output_dir: null
+
 
