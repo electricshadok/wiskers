@@ -44,6 +44,7 @@ class ClevrerBase(L.LightningDataModule):
         num_workers: int,
         image_size: tuple[int, int] | None,
         preprocessing: PreprocessingConfig,
+        splits: Optional[List[str]] = None,
     ):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
@@ -53,10 +54,11 @@ class ClevrerBase(L.LightningDataModule):
         self.image_size = image_size
         self.qa_index_paths = {}
         self.video_index_paths = {}
+        self.splits = splits or ["train", "valid", "test"]
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
-        for split in ["train", "test", "valid"]:
+        for split in self.splits:
             video_raw_root = os.path.join(self.data_dir, "video_raw")
             qa_root = os.path.join(self.data_dir, "question_answer")
             processed_video_dir = os.path.join(self.data_dir, "video", split)

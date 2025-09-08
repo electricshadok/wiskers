@@ -85,8 +85,11 @@ class PredictCLI:
         """
         Runs the image generation process with the user settings.
         """
-        # Get test datamodule
-        # datamodule = instantiate(self.config.data_module, _convert_="all")
+        datamodule = instantiate(self.config.data_module, _convert_="all")
+        datamodule.prepare_data()
+        # test_loader = datamodule.test_dataloader()
+        # batch = next(iter(test_loader))
+
         output_dir = (
             self.config.output_dir if self.config.output_dir else self.get_output_dir()
         )

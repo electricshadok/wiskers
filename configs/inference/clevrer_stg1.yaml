@@ -13,6 +13,7 @@ data_module:
   batch_size: 4
   num_workers: 2
   image_size: [80, 120]
+  splits: ["test"]
   preprocessing:
     _target_: wiskers.datasets.clevrer.PreprocessingConfig
     chunk_size: 16
@@ -23,5 +24,4 @@ data_module:
 # # Model and output paths
 best_model_path: null
 output_dir: null
-
 
