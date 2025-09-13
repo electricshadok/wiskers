@@ -35,7 +35,7 @@ module:
   widths: [32, 64, 128, 256]
   attentions: [False, False, False]
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
-  activation: "relu"
+  activation: "nn.ReLU"
   # optimizer
   learning_rate: 1e-4
 
