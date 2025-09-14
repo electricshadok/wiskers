@@ -2,11 +2,11 @@ from typing import List
 
 import torch.nn as nn
 
-from wiskers.common.modules.conv_blocks_2d import (
+from wiskers.common.blocks.conv_blocks_2d import (
     DoubleConv2D,
     ResDoubleConv2D,
 )
-from wiskers.common.modules.time_encoding import SinusoidalPositionEmbedding
+from wiskers.common.blocks.time_encoding import SinusoidalPositionEmbedding
 from wiskers.diffusion.models.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,

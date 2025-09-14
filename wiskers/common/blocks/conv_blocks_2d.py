@@ -3,7 +3,7 @@ from typing import Optional
 import torch  # noqa: F401
 import torch.nn as nn
 
-from wiskers.common.modules.attentions_2d import (
+from wiskers.common.blocks.attentions_2d import (
     SelfMultiheadAttention2D,
     SelfScaledDotProductAttention2D,
 )  # noqa: F401

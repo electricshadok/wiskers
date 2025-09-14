@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.non_local_block import NonLocalBlock
+from wiskers.common.blocks.non_local_block import NonLocalBlock
 
 
 @pytest.mark.parametrize(

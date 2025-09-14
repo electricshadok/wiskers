@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.gated_conv_3d import GatedConv3d, GatedConvTranspose3d
+from wiskers.common.blocks.gated_conv_3d import GatedConv3d, GatedConvTranspose3d
 
 
 @pytest.mark.parametrize(

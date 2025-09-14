@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.cbam import CBAM, ChannelAttention, SpatialAttention
+from wiskers.common.blocks.bam import BAM, ChannelAttention, SpatialAttention
 
 
 @pytest.mark.parametrize(
@@ -28,7 +28,7 @@ def test_channel_attention(batch_size, in_channels, height, width):
     ],
 )
 def test_spatial_attention(batch_size, in_channels, height, width):
-    net = SpatialAttention()
+    net = SpatialAttention(in_channels, 4)
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
@@ -44,7 +44,7 @@ def test_spatial_attention(batch_size, in_channels, height, width):
     ],
 )
 def test_cbam(batch_size, in_channels, height, width):
-    net = CBAM(in_channels, 4)
+    net = BAM(in_channels, 4)
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 

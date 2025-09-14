@@ -6,9 +6,9 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from wiskers.common.modules.attentions_2d import SelfMultiheadAttention2D, SelfScaledDotProductAttention2D
-from wiskers.common.modules.cbam import CBAM
-from wiskers.common.modules.se_block_2d import SEBlock
+from wiskers.common.blocks.attentions_2d import SelfMultiheadAttention2D, SelfScaledDotProductAttention2D
+from wiskers.common.blocks.cbam import CBAM
+from wiskers.common.blocks.se_block_2d import SEBlock
 
 
 def get_device():

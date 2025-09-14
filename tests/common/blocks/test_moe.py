@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.moe import FFN, MoE
+from wiskers.common.blocks.moe import FFN, MoE
 
 
 @pytest.mark.parametrize(

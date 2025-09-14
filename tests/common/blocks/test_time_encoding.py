@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.time_encoding import SinusoidalPositionEmbedding
+from wiskers.common.blocks.time_encoding import SinusoidalPositionEmbedding
 
 
 @pytest.mark.parametrize("batch_size, time_dim", [(16, 128), (64, 512)])

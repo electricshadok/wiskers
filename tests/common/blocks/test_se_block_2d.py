@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.se_block_2d import SEBlock
+from wiskers.common.blocks.se_block_2d import SEBlock
 
 
 @pytest.mark.parametrize(

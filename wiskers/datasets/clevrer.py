@@ -21,6 +21,11 @@ class PreprocessingConfig:
     limit: Optional[int] = None  # Optional limit on number of videos processed
 
 
+@dataclass
+class TransformConfig:
+    image_size: List[int] = field(default_factory=lambda: [80, 120])
+
+
 class ClevrerBase(L.LightningDataModule):
     """
     Base LightningDataModule for CLEVRER dataset variants (video/image).
@@ -42,8 +47,8 @@ class ClevrerBase(L.LightningDataModule):
         data_dir: str,
         batch_size: int,
         num_workers: int,
-        image_size: tuple[int, int] | None,
         preprocessing: PreprocessingConfig,
+        transform: TransformConfig,
         splits: Optional[List[str]] = None,
     ):
         super().__init__()
@@ -51,7 +56,7 @@ class ClevrerBase(L.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.preprocessing = preprocessing
-        self.image_size = image_size
+        self.transform = transform
         self.qa_index_paths = {}
         self.video_index_paths = {}
         self.splits = splits or ["train", "valid", "test"]
@@ -87,7 +92,7 @@ class ClevrerBase(L.LightningDataModule):
         dataset = dataset_cls(
             self.video_index_paths[split],
             self.qa_index_paths[split],
-            self.image_size,
+            self.transform.image_size,
         )
         return DataLoader(
             dataset,

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from wiskers.common.arg_utils import format_image_size
-from wiskers.common.modules.conv_blocks_2d import (
+from wiskers.common.blocks.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,
     DoubleConv2D,

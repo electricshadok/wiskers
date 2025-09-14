@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.normalization import AdaIN, DyT
+from wiskers.common.blocks.normalization import AdaIN, DyT
 
 
 @pytest.mark.parametrize(

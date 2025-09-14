@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from wiskers.autoencoder.models.ae_2d import Decoder, Encoder
 from wiskers.common.arg_utils import format_image_size
-from wiskers.common.modules.conv_blocks_2d import ResDoubleConv2D
+from wiskers.common.blocks.conv_blocks_2d import ResDoubleConv2D
 
 
 class BottleneckVAE(nn.Module):

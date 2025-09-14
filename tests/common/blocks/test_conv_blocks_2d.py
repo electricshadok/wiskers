@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.conv_blocks_2d import (
+from wiskers.common.blocks.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,
     DoubleConv2D,

@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.modules.causal_conv_1d import CausalConv1d
+from wiskers.common.blocks.causal_conv_1d import CausalConv1d
 
 
 @pytest.mark.parametrize(
