@@ -46,9 +46,15 @@ earlystopping: False
 
 # lightning.Trainer Config
 trainer:
-  # fast_dev_run: 1
-  limit_train_batches: 1.0
-  limit_test_batches: 1.0
+  # Debugging options
+  # fast_dev_run: 1        # runs 1 train/val/test batch then quits
+  # overfit_batches: 1     # force train/val on the same batch every epoch
+
+  # Batch limits
+  limit_train_batches: 1.0   # 1.0 = full dataset, int = exact number of batches
   limit_val_batches: 1.0
+  limit_test_batches: 1.0
+
+  # Training schedule
   max_epochs: 100
   log_every_n_steps: 10
