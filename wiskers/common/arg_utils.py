@@ -4,8 +4,8 @@ from typing import List, Tuple, Union
 import torch.nn as nn
 
 
-def get_activation(name: str) -> nn.Module:
-    """Instantiate activation by full path string, e.g. 'torch.nn.GELU' or 'nn.GELU'."""
+def torch_instantiate(name: str) -> nn.Module:
+    """Instantiate torch object by full path string, e.g. 'torch.nn.GELU' or 'nn.GELU'."""
     if name.startswith("nn."):
         name = "torch." + name  # expand shortcut
     try:
