@@ -37,6 +37,18 @@ VIDEO_URLS = {
     ),
 }
 
+ANNOTATION_URLS = {
+    "train": (
+        "http://data.csail.mit.edu/clevrer/annotations/train/annotation_train.zip",
+        "annotation_train.zip",
+    ),
+    "valid": (
+        "http://data.csail.mit.edu/clevrer/annotations/validation/annotation_validation.zip",
+        "annotation_valid.zip",
+    ),
+    "test": (None, None),
+}
+
 
 def download_videos(video_dir: str, split: str) -> str:
     os.makedirs(video_dir, exist_ok=True)
@@ -83,6 +95,64 @@ def download_qa(qa_dir: str, split: str) -> str:
         print(f"CLEVRER Question-Answer ({split}) not specified...")
 
     return local_path
+
+
+def download_annotations(annotation_dir: str, split: str) -> str:
+    os.makedirs(annotation_dir, exist_ok=True)
+    url_path, local_path = ANNOTATION_URLS[split]
+    if url_path and local_path:
+        local_path = os.path.join(annotation_dir, local_path)
+        if not os.path.exists(local_path):
+            size_mb = get_file_size(url_path) / (1024 * 1024)
+            print(
+                f"Downloading CLEVRER Annotation ({split}) of size {size_mb:.2f} MB to {local_path}..."
+            )
+            urlretrieve(url_path, local_path)
+        else:
+            print(f"CLEVRER Annotation ({split}) already downloaded.")
+    else:
+        print(f"CLEVRER Annotation ({split}) not specified...")
+
+    # unzip and create index file
+    if local_path:
+        index_file = os.path.join(annotation_dir, f"{split}_index.json")
+
+        if not os.path.exists(index_file):
+            output_dir = os.path.join(annotation_dir, split)
+            os.makedirs(output_dir, exist_ok=True)
+            with zipfile.ZipFile(local_path, "r") as zip_ref:
+                print(f"CLEVRER Unzip Annotation ({split}).")
+                zip_ref.extractall(output_dir)
+            build_annotation_index(output_dir, index_file)
+        else:
+            print(f"CLEVRER Annotation ({split}) already unzipped.")
+
+        return index_file
+
+    return None
+
+
+def build_annotation_index(annotation_root: str, output_file: str):
+    annotation_data = {"root": ".", "num_scenes": 0, "samples": {}}
+
+    for root, dirs, files in os.walk(annotation_root):
+        for file in sorted(files):
+            if file.startswith("annotation_") and file.endswith(".json"):
+                # Extract number using simple string split
+                parts = file.replace(".json", "").split("_")
+                if len(parts) == 2 and parts[1].isdigit():
+                    scene_idx = int(parts[1])
+                    relative_path = os.path.relpath(
+                        os.path.join(root, file), os.path.dirname(output_file)
+                    )
+                    annotation_data["samples"][scene_idx] = relative_path
+
+    annotation_data["num_scenes"] = len(annotation_data["samples"])
+
+    with open(output_file, "w") as f:
+        json.dump(annotation_data, f, indent=2)
+
+    print(f"Annotation index written to {output_file}")
 
 
 def get_all_video_paths(root_dir: str) -> list[str]:

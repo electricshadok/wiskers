@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 
 import wiskers.datasets.clevrer_utils.clevrer_datasets as datasets
 from wiskers.datasets.clevrer_utils.prepare_clevrer import (
+    download_annotations,
     download_qa,
     download_videos,
     prepare_and_extract_clevrer_videos,
@@ -58,20 +59,26 @@ class ClevrerBase(L.LightningDataModule):
         self.preprocessing = preprocessing
         self.transform = transform
         self.qa_index_paths = {}
+        self.annnotation_index_paths = {}
         self.video_index_paths = {}
         self.splits = splits or ["train", "valid", "test"]
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
         for split in self.splits:
-            video_raw_root = os.path.join(self.data_dir, "video_raw")
             qa_root = os.path.join(self.data_dir, "question_answer")
+            annotation_root = os.path.join(self.data_dir, "annotations")
+            video_raw_root = os.path.join(self.data_dir, "video_raw")
             processed_video_dir = os.path.join(self.data_dir, "video", split)
 
             # Download QA JSON
             qa_index_path = download_qa(qa_root, split)
             self.qa_index_paths[split] = qa_index_path
-            print(f"CLEVRER QA Index ({split}) {qa_index_path} available")
+            print(f"CLEVRER QA Index ({split}) {qa_index_path}")
+
+            # Download & extract annotations
+            annnotation_index_path = download_annotations(annotation_root, split)
+            print(f"CLEVRER Annotation Index ({split}) {annnotation_index_path}")
 
             # Download & extract videos
             raw_video_dir = download_videos(video_raw_root, split)
@@ -86,7 +93,7 @@ class ClevrerBase(L.LightningDataModule):
                 index_filename="index.json",
             )
             self.video_index_paths[split] = video_index_path
-            print(f"CLEVRER Video Index ({split}) {video_index_path} available")
+            print(f"CLEVRER Video Index ({split}) {video_index_path}")
 
     def _make_dataloader(self, split: str, dataset_cls):
         dataset = dataset_cls(
