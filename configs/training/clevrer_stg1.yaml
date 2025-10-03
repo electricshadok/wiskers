@@ -3,18 +3,18 @@ seed: 0
 
 # Datamodule Config
 data_module:
-  _target_: wiskers.datasets.clevrer.ClevrerImage
+  _target_: wiskers.datasets.clevrer.data_module.ClevrerImage
   data_dir: "./datasets"
   batch_size: 4
   num_workers: 2
   preprocessing:
-    _target_: wiskers.datasets.clevrer.PreprocessingConfig
+    _target_: wiskers.datasets.clevrer.data_module.PreprocessingConfig
     chunk_size: 16
     stride: 16
     resize: [160, 240]
     limit: null
   transform:
-    _target_: wiskers.datasets.clevrer.TransformConfig
+    _target_: wiskers.datasets.clevrer.data_module.TransformConfig
     image_size: [80, 120]
 
 # Logger Configs

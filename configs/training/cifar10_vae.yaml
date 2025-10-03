@@ -3,7 +3,7 @@ seed: 0
 
 # Datamodule Config
 data_module:
-  _target_: wiskers.datasets.cifar10_subset.CIFAR10Subset
+  _target_: wiskers.datasets.cifar10.data_module.CIFAR10Subset
   data_dir: "./datasets/"
   batch_size: 16
   num_workers: 2

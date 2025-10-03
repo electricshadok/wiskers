@@ -5,8 +5,8 @@ from typing import List, Optional
 import lightning as L
 from torch.utils.data import DataLoader
 
-import wiskers.datasets.clevrer_utils.clevrer_datasets as datasets
-from wiskers.datasets.clevrer_utils.prepare_clevrer import (
+import wiskers.datasets.clevrer.datasets as datasets
+from wiskers.datasets.clevrer.prepare import (
     download_annotations,
     download_qa,
     download_videos,
