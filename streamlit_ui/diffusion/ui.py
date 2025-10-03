@@ -8,7 +8,7 @@ from streamlit_ui.diffusion.noise_debug_ui import noise_debug_ui
 
 def get_config_files() -> List[str]:
     return [
-        os.path.join("configs", "diffusion", "train.yaml"),
+        os.path.join("configs", "training", "cifar10_diffusion.yaml"),
     ]
 
 

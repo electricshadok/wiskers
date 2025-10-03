@@ -35,10 +35,15 @@ def noise_debug_ui(config_path: str):
 
     st.line_chart(scheduler.betas.numpy(), height=200)
 
-    st.write(f"### Noising Process ({config.module.scheduler.beta_schedule})")
+    st.write(f"### Noising Process ({config.module.beta_schedule})")
 
     datamodule = instantiate(config.data_module, _convert_="all")
+    datamodule.prepare_data()
+    datamodule.setup("fit")
+    datamodule.setup("test")
+    datamodule.setup("predict")
     dataset = datamodule.train_dataloader().dataset
+
     max_index = len(dataset) - 1
     index = st.number_input(
         f"Sample index (0-{max_index})", min_value=0, max_value=max_index, step=1
@@ -65,4 +70,4 @@ def noise_debug_ui(config_path: str):
         noisy_images, nrow=len(noisy_images), padding=2, pad_value=1
     )
     grid = grid.permute(1, 2, 0).numpy()
-    st.image(grid, caption=f"idx: {index}, label{label}", use_column_width=True)
+    st.image(grid, caption=f"idx: {index}, label{label}", use_container_width=True)

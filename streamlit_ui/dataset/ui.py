@@ -11,7 +11,8 @@ from wiskers.common.commands.utils import load_config
 def get_config_files() -> List[str]:
     return [
         os.path.join("configs", "datasets", "cifar10.yaml"),
-        os.path.join("configs", "datasets", "clevrer.yaml"),
+        os.path.join("configs", "datasets", "clevrer_image.yaml"),
+        os.path.join("configs", "datasets", "clevrer_video.yaml"),
     ]
 
 
