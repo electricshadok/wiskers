@@ -111,7 +111,7 @@ class ClevrerVideo(ClevrerBase):
         # scene_index = self.extract_scene_index(rel_path)
         # TODO: qa_data = self.scene_index_2_qa_mapping[scene_index]
 
-        return video, rel_path
+        return {"media": video, "media_path": rel_path}
 
 
 class ClevrerImage(ClevrerBase):
@@ -142,7 +142,7 @@ class ClevrerImage(ClevrerBase):
             raise IndexError(f"Frame {frame_idx} out of bounds in video {rel_path}")
 
         image = video[frame_idx]  # (C, H, W)
-        return image, rel_path
+        return {"media": image, "media_path": rel_path}
 
     def __len__(self):
         return len(self.samples) * self.chunk_size
