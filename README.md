@@ -35,7 +35,7 @@ pytest tests
 Use this when you want the fastest check that everything compiles and runs. Doesn't test the full training pipeline.
 
 ```
-python wiskers/train.py --config configs/training/clevrer_stg1.yaml --fast_dev_run
+python wiskers/cli/train.py --config configs/training/clevrer_stg1.yaml --fast_dev_run
 ```
 
 ```--quick_run```
@@ -43,7 +43,7 @@ python wiskers/train.py --config configs/training/clevrer_stg1.yaml --fast_dev_r
 Use this when you want to simulate a real training run and catch bugs across the full training pipeline (checkpointing, LR scheduler, etc.).
 
 ```
-python wiskers/train.py --config configs/training/clevrer_stg1.yaml --quick_run
+python wiskers/cli/train.py --config configs/training/clevrer_stg1.yaml --quick_run
 ```
 
 ## Training
@@ -52,13 +52,13 @@ Use the following command to begin the training process. The configuration is de
 
 ```
 # CLEVRER
-python wiskers/train.py --config configs/training/clevrer_stg1.yaml
+python wiskers/cli/train.py --config configs/training/clevrer_stg1.yaml
 
 # CIFAR-10 (testing)
-python wiskers/train.py --config configs/training/cifar10_diffusion.yaml
-python wiskers/train.py --config configs/training/cifar10_ae.yaml
-python wiskers/train.py --config configs/training/cifar10_vae.yaml
-python wiskers/train.py --config configs/training/cifar10_gan.yaml
+python wiskers/cli/train.py --config configs/training/cifar10_diffusion.yaml
+python wiskers/cli/train.py --config configs/training/cifar10_ae.yaml
+python wiskers/cli/train.py --config configs/training/cifar10_vae.yaml
+python wiskers/cli/train.py --config configs/training/cifar10_gan.yaml
 ```
 
 ## Prediction
@@ -66,7 +66,7 @@ python wiskers/train.py --config configs/training/cifar10_gan.yaml
 Use the following command to run the prediction process with a configuration.
 
 ```
-python wiskers/predict.py --config configs/inference/clevrer_stg1.yaml
+python wiskers/cli/predict.py --config configs/inference/clevrer_stg1.yaml
 ```
 
 ## Inspect Datasets
@@ -74,9 +74,9 @@ python wiskers/predict.py --config configs/inference/clevrer_stg1.yaml
 Inspect and test the dataloaders.
 
 ```
-python wiskers/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
-python wiskers/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
-python wiskers/inspect_dataset.py --config configs/datasets/cifar10.yaml
+python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
+python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
+python wiskers/cli/inspect_dataset.py --config configs/datasets/cifar10.yaml
 ```
 
 ## Streamlit

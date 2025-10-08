@@ -4,7 +4,7 @@ from typing import Any
 import lightning as L
 from hydra.utils import instantiate
 
-from wiskers.common.commands.utils import load_config
+from wiskers.cli.utils import load_config
 
 
 def describe_element(elem: Any, indent: int = 0, max_items: int = 3) -> None:

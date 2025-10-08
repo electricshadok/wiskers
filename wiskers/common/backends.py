@@ -7,6 +7,10 @@ models saved as:
 - SafeTensors serialized models (`.safetensors`)
 """
 
+from typing import Type
+
+from lightning.pytorch import LightningModule
+
 
 class ONNXInference:
     ext = "onnx"
@@ -30,12 +34,13 @@ class SafeTensorInference:
         raise NotImplementedError("SafeTensorInference._call() not implemented")
 
 
-class AECheckpointInference:
+class CheckpointInference:
     ext = "ckpt"
 
-    def __call__(self, filepath: str, num_samples: int):
-        from wiskers.autoencoder.ae_module import AEModule
+    def __init__(self, model_class: Type[LightningModule]):
+        self.model_class = model_class
 
-        self.model = AEModule.load_from_checkpoint(filepath)
-        print(f"Load model: {filepath} with hyperparameters:")
-        return self.model.generate_samples(num_samples)
+    def __call__(self, filepath: str, num_samples: int):
+        model = self.model_class.load_from_checkpoint(filepath)
+        print(f"Loaded model from {filepath} with hyperparameters: {model.hparams}")
+        return model.generate_samples(num_samples)

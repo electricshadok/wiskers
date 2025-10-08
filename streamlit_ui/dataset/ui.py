@@ -5,7 +5,7 @@ import streamlit as st
 from hydra.utils import instantiate
 
 from streamlit_ui.utils import dataset_ui
-from wiskers.common.commands.utils import load_config
+from wiskers.cli.utils import load_config
 
 
 def get_config_files() -> List[str]:

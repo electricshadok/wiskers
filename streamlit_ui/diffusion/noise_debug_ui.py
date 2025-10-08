@@ -3,7 +3,7 @@ import torch
 import torchvision
 from hydra.utils import instantiate
 
-from wiskers.common.commands.utils import load_config
+from wiskers.cli.utils import load_config
 
 
 def noise_debug_ui(config_path: str):

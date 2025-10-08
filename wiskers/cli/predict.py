@@ -6,7 +6,7 @@ import lightning as L
 import torchvision
 from hydra.utils import instantiate
 
-from wiskers.common.commands.utils import load_config
+from wiskers.cli.utils import load_config
 
 
 class PredictCLI:
@@ -93,6 +93,7 @@ class PredictCLI:
         output_dir = (
             self.config.output_dir if self.config.output_dir else self.get_output_dir()
         )
+        os.makedirs(output_dir, exist_ok=True)
 
         model_path = (
             self.config.best_model_path

@@ -11,7 +11,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 from safetensors.torch import save_model
 
-from wiskers.common.commands.utils import load_config
+from wiskers.cli.utils import load_config
 
 
 class TrainCLI:
