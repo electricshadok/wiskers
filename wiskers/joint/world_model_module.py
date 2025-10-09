@@ -1,14 +1,14 @@
 from typing import List, Tuple, Union
 
-import lightning as L
 import torch
 import torch.nn.functional as F
 
 from wiskers.autoencoder.models.vae_2d import VAE2D
 from wiskers.common.arg_utils import format_image_size, torch_instantiate
+from wiskers.common.base_module import BaseLightningModule
 
 
-class WorldModelModule(L.LightningModule):
+class WorldModelModule(BaseLightningModule):
     """
     A LightningModule that combines spatial and temporal modeling for video or physics prediction.
     Encodes input frames into a latent space (via VAE/VQ-VAE) and predicts their temporal evolution.
@@ -64,35 +64,6 @@ class WorldModelModule(L.LightningModule):
 
     def forward(self, x):
         return self.model(x)
-
-    def _log_tensor_stats(self, stage: str, tensor_name: str, data: torch.tensor):
-        """
-        Logs min, max, and mean of a tensor at a given stage.
-
-        Args:
-            stage (str): Stage of step ('train', 'val', 'test').
-            tensor_name (str): Name of the tensor.
-            data (torch.tensor): Data to analyze.
-
-        The method logs these statistics per epoch using `self.log`. It is intended as a private utility
-        within its class.
-        """
-        stats = {
-            "min": data.min(),
-            "max": data.max(),
-            "mean": data.mean(),
-        }
-
-        for stat_name, state_value in stats.items():
-            self.log(
-                f"{stage}_stats/{tensor_name}_{stat_name}",
-                state_value,
-                on_step=False,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                reduce_fx=stat_name,
-            )
 
     def _shared_step(self, batch, batch_idx: int, stage: str):
         """

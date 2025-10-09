@@ -1,15 +1,15 @@
 from typing import List
 
-import lightning as L
 import torch
 import torch.nn.functional as F
 
 from wiskers.common.arg_utils import torch_instantiate
+from wiskers.common.base_module import BaseLightningModule
 from wiskers.diffusion.models.unet_2d import UNet2D
 from wiskers.diffusion.schedulers.registry import Schedulers
 
 
-class DiffuserModule(L.LightningModule):
+class DiffuserModule(BaseLightningModule):
     """
     LightningModule for training and inference of a diffusion model.
 
@@ -89,35 +89,6 @@ class DiffuserModule(L.LightningModule):
 
     def forward(self, x, t):
         return self.model(x, t)
-
-    def _log_tensor_stats(self, stage: str, tensor_name: str, data: torch.tensor):
-        """
-        Logs min, max, and mean of a tensor at a given stage.
-
-        Args:
-            stage (str): Stage of step ('train', 'val', 'test').
-            tensor_name (str): Name of the tensor.
-            data (torch.tensor): Data to analyze.
-
-        The method logs these statistics per epoch using `self.log`. It is intended as a private utility
-        within its class.
-        """
-        stats = {
-            "min": data.min(),
-            "max": data.max(),
-            "mean": data.mean(),
-        }
-
-        for stat_name, state_value in stats.items():
-            self.log(
-                f"{stage}_stats/{tensor_name}_{stat_name}",
-                state_value,
-                on_step=False,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                reduce_fx=stat_name,
-            )
 
     def _shared_step(self, batch, batch_idx: int, stage: str):
         """

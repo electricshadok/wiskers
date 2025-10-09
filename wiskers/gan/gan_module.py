@@ -1,12 +1,12 @@
-import lightning as L
 import torch
 import torch.nn as nn
 
+from wiskers.common.base_module import BaseLightningModule
 from wiskers.gan.models.discriminator import Discriminator
 from wiskers.gan.models.generator import Generator
 
 
-class GANModule(L.LightningModule):
+class GANModule(BaseLightningModule):
     """
     LightningModule for training and inference of a diffusion model.
 
@@ -29,7 +29,11 @@ class GANModule(L.LightningModule):
         gen_filters: list[int] = [32, 16, 8, 3],
         gen_activations: list = [nn.ReLU(True), nn.ReLU(True), nn.Tanh()],
         disc_filters: list[int] = [3, 8, 16, 32],
-        disc_activations: list = [nn.ReLU(True), nn.ReLU(True), nn.LeakyReLU(0.2, True)],
+        disc_activations: list = [
+            nn.ReLU(True),
+            nn.ReLU(True),
+            nn.LeakyReLU(0.2, True),
+        ],
         # Optimizer Configuration
         learning_rate: float = 1e-4,
         num_gen_updates: int = 1,
@@ -58,8 +62,12 @@ class GANModule(L.LightningModule):
         self.automatic_optimization = False
 
     def configure_optimizers(self):
-        gen_optimizer = torch.optim.Adam(self.gen.parameters(), lr=self.hparams.learning_rate)
-        disc_optimizer = torch.optim.Adam(self.disc.parameters(), lr=self.hparams.learning_rate)
+        gen_optimizer = torch.optim.Adam(
+            self.gen.parameters(), lr=self.hparams.learning_rate
+        )
+        disc_optimizer = torch.optim.Adam(
+            self.disc.parameters(), lr=self.hparams.learning_rate
+        )
         optimizers = [gen_optimizer, disc_optimizer]
         lr_schedulers = []
         return optimizers, lr_schedulers
@@ -90,7 +98,9 @@ class GANModule(L.LightningModule):
             # Loss on fake images
             noise = torch.randn(batch_size, self.hparams.image_embedding, device=device)
             fake_images = self.gen(noise, labels)
-            fake_preds = self.disc(fake_images.detach(), labels)  # `detach()` prevents generator updates here
+            fake_preds = self.disc(
+                fake_images.detach(), labels
+            )  # `detach()` prevents generator updates here
             fake_loss = self.bce_loss(fake_preds, fake_labels)
 
             # Discriminator update

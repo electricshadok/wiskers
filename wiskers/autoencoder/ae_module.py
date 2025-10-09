@@ -1,14 +1,14 @@
 from typing import List, Tuple, Union
 
-import lightning as L
 import torch
 import torch.nn.functional as F
 
 from wiskers.autoencoder.models.ae_2d import Autoencoder2D
 from wiskers.common.arg_utils import format_image_size, torch_instantiate
+from wiskers.common.base_module import BaseLightningModule
 
 
-class AEModule(L.LightningModule):
+class AEModule(BaseLightningModule):
     """
     LightningModule for training and inference of an autocencoder model.
 
@@ -63,35 +63,6 @@ class AEModule(L.LightningModule):
 
     def forward(self, x):
         return self.model(x)
-
-    def _log_tensor_stats(self, stage: str, tensor_name: str, data: torch.tensor):
-        """
-        Logs min, max, and mean of a tensor at a given stage.
-
-        Args:
-            stage (str): Stage of step ('train', 'val', 'test').
-            tensor_name (str): Name of the tensor.
-            data (torch.tensor): Data to analyze.
-
-        The method logs these statistics per epoch using `self.log`. It is intended as a private utility
-        within its class.
-        """
-        stats = {
-            "min": data.min(),
-            "max": data.max(),
-            "mean": data.mean(),
-        }
-
-        for stat_name, state_value in stats.items():
-            self.log(
-                f"{stage}_stats/{tensor_name}_{stat_name}",
-                state_value,
-                on_step=False,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                reduce_fx=stat_name,
-            )
 
     def _unpack_batch(
         self, batch: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
