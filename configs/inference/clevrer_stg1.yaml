@@ -26,7 +26,9 @@ data_module:
     image_size: [80, 120]
 
 # Model and output paths
-# default best_model_path : latest checkpoint in ${experiment_dir}/${run_name}/
-# default output_dir  : ${experiment_dir}/${run_name}/outputs
-best_model_path: null
-output_dir: null
+best_model_path:
+  _target_: wiskers.cli.utils.get_latest_checkpoint
+  experiment_dir: ${experiment_dir}
+  run_name: ${run_name}
+  ext: ckpt
+output_dir: ${experiment_dir}/${run_name}/outputs

@@ -51,14 +51,7 @@ python wiskers/cli/train.py --config configs/training/clevrer_stg1.yaml --quick_
 Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
 
 ```
-# CLEVRER
 python wiskers/cli/train.py --config configs/training/clevrer_stg1.yaml
-
-# CIFAR-10 (testing)
-python wiskers/cli/train.py --config configs/training/cifar10_diffusion.yaml
-python wiskers/cli/train.py --config configs/training/cifar10_ae.yaml
-python wiskers/cli/train.py --config configs/training/cifar10_vae.yaml
-python wiskers/cli/train.py --config configs/training/cifar10_gan.yaml
 ```
 
 ## Prediction
