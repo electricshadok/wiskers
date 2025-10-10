@@ -59,7 +59,7 @@ class ClevrerMedia(L.LightningDataModule):
         self.preprocessing = preprocessing
         self.transform = transform
         self.splits = splits or ["train", "valid", "test"]
-        self.qa_index_paths = {}
+        self.qa_paths = {}
         self.annnotation_index_paths = {}
         self.video_index_paths = {}
 
@@ -72,13 +72,17 @@ class ClevrerMedia(L.LightningDataModule):
             processed_video_dir = os.path.join(self.data_dir, "video", split)
 
             # Download QA JSON
-            qa_index_path = download_qa(qa_root, split)
-            self.qa_index_paths[split] = qa_index_path
-            print(f"CLEVRER QA Index ({split}) {qa_index_path}")
+            qa_path = download_qa(qa_root, split)
+            self.qa_paths[split] = qa_path
+            # qa_helper = datasets.ClevrerQAHelper(qa_path)
+            print(f"CLEVRER QA ({split}) {qa_path}")
 
             # Download & extract annotations
             annnotation_index_path = download_annotations(annotation_root, split)
-            self.annnotation_index_paths[split] = annnotation_index_path
+            if annnotation_index_path:
+                # Note: CLEVRER only have annotations for valid and train sets
+                self.annnotation_index_paths[split] = annnotation_index_path
+                # qa_annotation = datasets.ClevrerAnnotationHelper(annnotation_index_path)
             print(f"CLEVRER Annotation Index ({split}) {annnotation_index_path}")
 
             # Download & extract videos

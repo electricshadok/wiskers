@@ -9,24 +9,59 @@ from torch.utils.data import Dataset
 
 class ClevrerQAHelper:
     """
+    Helper for Question-Answer data from CLEVRER
     CLEVRER: CoLlision Events for Video REpresentation and Reasoning
     http://clevrer.csail.mit.edu/
     """
 
     def __init__(self, qa_path: str):
-        # Load QA mapping
+        self.qa_path = qa_path
         if not os.path.exists(qa_path):
             raise FileNotFoundError(f"QA file not found: {qa_path}")
 
         with open(qa_path, "r") as f:
             qa_json = json.load(f)
 
-        self.scene_index_2_qa_mapping = {
-            qa["scene_index"]: qa["questions"] for qa in qa_json
-        }
+        self.scene_index_2_qa = {qa["scene_index"]: qa["questions"] for qa in qa_json}
 
-    def get_questions(self, scene_index: int) -> list:
-        return self.scene_index_2_qa_mapping[scene_index]
+    def get_scene_indices(self) -> list[int]:
+        return list(self.scene_index_2_qa.keys())
+
+    def get_questions(self, scene_index: int) -> list[dict]:
+        return self.scene_index_2_qa[scene_index]
+
+    def __len__(self) -> int:
+        return len(self.scene_index_2_qa)
+
+
+class ClevrerAnnotationHelper:
+    """
+    Helper for Annotation index data
+    CLEVRER: CoLlision Events for Video REpresentation and Reasoning
+    http://clevrer.csail.mit.edu/
+    """
+
+    def __init__(self, annotation_index_path: str):
+        self.annotation_index_path = annotation_index_path
+        if not os.path.exists(annotation_index_path):
+            raise FileNotFoundError(f"QA file not found: {annotation_index_path}")
+
+        with open(annotation_index_path, "r") as f:
+            annotation_json = json.load(f)
+
+        self.scene_index_2_annotation = {}
+        for sample in annotation_json["samples"]:
+            scene_index = sample["scene_index"]
+            self.scene_index_2_annotation[scene_index] = sample
+
+    def get_scene_indices(self) -> list[int]:
+        return list(self.scene_index_2_annotation.keys())
+
+    def get_annotations(self, scene_index: int) -> dict:
+        return self.scene_index_2_annotation[scene_index]
+
+    def __len__(self) -> int:
+        return len(self.scene_index_2_annotation)
 
 
 class ClevrerMedia(Dataset):

@@ -134,7 +134,9 @@ def download_annotations(annotation_dir: str, split: str) -> str:
 
 def build_annotation_index(annotation_root: str, output_file: str):
     annotation_data = {"root": ".", "num_scenes": 0, "samples": {}}
+    samples = []
 
+    # Create samples (scene_index, relative_path)
     for root, dirs, files in os.walk(annotation_root):
         for file in sorted(files):
             if file.startswith("annotation_") and file.endswith(".json"):
@@ -145,8 +147,28 @@ def build_annotation_index(annotation_root: str, output_file: str):
                     relative_path = os.path.relpath(
                         os.path.join(root, file), os.path.dirname(output_file)
                     )
-                    annotation_data["samples"][scene_idx] = relative_path
+                    sample = {"scene_index": scene_idx, "relative_path": relative_path}
+                    samples.append(sample)
 
+    # Extract annotation informations
+    print("CLEVRER Loading Annotations ...")
+    num_samples = len(samples)
+    for sample_idx in range(num_samples):
+        sample = samples[sample_idx]
+        sample_path = os.path.join(
+            os.path.dirname(output_file), sample["relative_path"]
+        )
+        with open(sample_path, "r") as f:
+            data = json.load(f)
+            sample["object_counts"] = len(data["object_property"])
+        if sample_idx % 500 == 0:
+            print(
+                f"...processing {sample_idx}/{num_samples} samples",
+            )
+        samples[sample_idx] = sample
+    print("CLEVRER Loading Annotations Completed")
+
+    annotation_data["samples"] = samples
     annotation_data["num_scenes"] = len(annotation_data["samples"])
 
     with open(output_file, "w") as f:
