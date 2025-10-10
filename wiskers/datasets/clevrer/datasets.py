@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 
-class ClevrerBase(Dataset):
+class ClevrerMedia(Dataset):
     """
     CLEVRER: CoLlision Events for Video REpresentation and Reasoning
     http://clevrer.csail.mit.edu/
@@ -83,7 +83,7 @@ class ClevrerBase(Dataset):
         return int(folder_name.split("_")[1])
 
 
-class ClevrerVideo(ClevrerBase):
+class ClevrerVideo(ClevrerMedia):
     """
     Loads full video chunks as tensors.
 
@@ -114,7 +114,7 @@ class ClevrerVideo(ClevrerBase):
         return {"media": video, "media_path": rel_path}
 
 
-class ClevrerImage(ClevrerBase):
+class ClevrerImage(ClevrerMedia):
     """
     Loads individual frames (as images) from CLEVRER chunks.
 

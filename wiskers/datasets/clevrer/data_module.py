@@ -27,7 +27,7 @@ class TransformConfig:
     image_size: List[int] = field(default_factory=lambda: [80, 120])
 
 
-class ClevrerBase(L.LightningDataModule):
+class ClevrerMedia(L.LightningDataModule):
     """
     Base LightningDataModule for CLEVRER dataset variants (video/image).
 
@@ -110,7 +110,7 @@ class ClevrerBase(L.LightningDataModule):
         )
 
 
-class ClevrerVideo(ClevrerBase):
+class ClevrerVideo(ClevrerMedia):
     """
     LightningDataModule for loading CLEVRER video chunks as 4D tensors (T, C, H, W).
     """
@@ -125,7 +125,7 @@ class ClevrerVideo(ClevrerBase):
         return self._make_dataloader("test", datasets.ClevrerVideo)
 
 
-class ClevrerImage(ClevrerBase):
+class ClevrerImage(ClevrerMedia):
     """
     LightningDataModule for loading individual frames from CLEVRER video chunks.
     Each frame is returned as a 3D tensor (C, H, W).
