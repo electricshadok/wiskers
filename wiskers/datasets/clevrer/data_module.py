@@ -58,10 +58,10 @@ class ClevrerMedia(L.LightningDataModule):
         self.num_workers = num_workers
         self.preprocessing = preprocessing
         self.transform = transform
+        self.splits = splits or ["train", "valid", "test"]
         self.qa_index_paths = {}
         self.annnotation_index_paths = {}
         self.video_index_paths = {}
-        self.splits = splits or ["train", "valid", "test"]
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
@@ -78,6 +78,7 @@ class ClevrerMedia(L.LightningDataModule):
 
             # Download & extract annotations
             annnotation_index_path = download_annotations(annotation_root, split)
+            self.annnotation_index_paths[split] = annnotation_index_path
             print(f"CLEVRER Annotation Index ({split}) {annnotation_index_path}")
 
             # Download & extract videos
@@ -98,7 +99,6 @@ class ClevrerMedia(L.LightningDataModule):
     def _make_dataloader(self, split: str, dataset_cls):
         dataset = dataset_cls(
             self.video_index_paths[split],
-            self.qa_index_paths[split],
             self.transform.image_size,
         )
         return DataLoader(

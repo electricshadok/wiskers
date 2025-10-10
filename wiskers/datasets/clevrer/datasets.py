@@ -7,6 +7,28 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 
+class ClevrerQAHelper:
+    """
+    CLEVRER: CoLlision Events for Video REpresentation and Reasoning
+    http://clevrer.csail.mit.edu/
+    """
+
+    def __init__(self, qa_path: str):
+        # Load QA mapping
+        if not os.path.exists(qa_path):
+            raise FileNotFoundError(f"QA file not found: {qa_path}")
+
+        with open(qa_path, "r") as f:
+            qa_json = json.load(f)
+
+        self.scene_index_2_qa_mapping = {
+            qa["scene_index"]: qa["questions"] for qa in qa_json
+        }
+
+    def get_questions(self, scene_index: int) -> list:
+        return self.scene_index_2_qa_mapping[scene_index]
+
+
 class ClevrerMedia(Dataset):
     """
     CLEVRER: CoLlision Events for Video REpresentation and Reasoning
@@ -27,7 +49,6 @@ class ClevrerMedia(Dataset):
     def __init__(
         self,
         video_index_path: str,
-        qa_path: str,
         resize: tuple[int, int] | None,
     ):
         super().__init__()
@@ -45,17 +66,6 @@ class ClevrerMedia(Dataset):
 
         if not self.samples:
             raise ValueError(f"No samples found in {video_index_path}")
-
-        # Load QA mapping
-        if not os.path.exists(qa_path):
-            raise FileNotFoundError(f"QA file not found: {qa_path}")
-
-        with open(qa_path, "r") as f:
-            qa_json = json.load(f)
-
-        self.scene_index_2_qa_mapping = {
-            qa["scene_index"]: qa["questions"] for qa in qa_json
-        }
 
         self.resize = resize
 
@@ -95,10 +105,9 @@ class ClevrerVideo(ClevrerMedia):
     def __init__(
         self,
         video_index_path: str,
-        qa_path: str,
         resize: tuple[int, int] | None,
     ):
-        super().__init__(video_index_path, qa_path, resize)
+        super().__init__(video_index_path, resize)
 
     def __len__(self):
         return len(self.samples)
@@ -106,10 +115,6 @@ class ClevrerVideo(ClevrerMedia):
     def __getitem__(self, idx: int):
         rel_path = self.samples[idx]  # e.g. video_03903/video_03903_chunk0002.npy
         video = self.load_and_resize_video(rel_path)
-
-        # Get the question_answers
-        # scene_index = self.extract_scene_index(rel_path)
-        # TODO: qa_data = self.scene_index_2_qa_mapping[scene_index]
 
         return {"media": video, "media_path": rel_path}
 
@@ -126,10 +131,9 @@ class ClevrerImage(ClevrerMedia):
     def __init__(
         self,
         video_index_path: str,
-        qa_path: str,
         resize: tuple[int, int] | None,
     ):
-        super().__init__(video_index_path, qa_path, resize)
+        super().__init__(video_index_path, resize)
 
     def __getitem__(self, idx: int):
         chunk_idx = idx // self.chunk_size
