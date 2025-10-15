@@ -7,9 +7,10 @@
 **Wiskers: DL and  Generative AI Study**
 
 
-This repository serves as a learning hub for experimenting with foundational deep learning (DL) architectures and Generative AI. Currently, I am exploring a variety of deep learning techniques (diffusion models, VAEs, GANs) to generate images, videos, audio, and animations into a single, cohesive resource. Expect this repo to continuously evolve.
+**Wiskers** is a framework for **video prediction and reasoning** — learning latent world models that can **understand** and **anticipate** dynamic scenes. 
 
-Fair warning: My curiosity may lead this repo down multiple paths, but fear not—a windy journey is just another step towards clarity. Let’s have fun!
+
+> 📘 For the full philosophy and system blueprint, see [PROJECT.md](https://github.com/vincentbonnetai/wiskers/blob/main/PROJECT.md)
 
 ## Installation
 

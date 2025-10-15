@@ -22,9 +22,10 @@ Wiskers is guided by principles for building **reasoning-capable, physics-aware 
 - Learning should occur in **latent spaces** that support compact and editable representations  
 - Reasoning should happen **at inference time**, not just training — meaning **computation should scale with task complexity**
 - **Autoregressive or iterative inference** may offer better temporal reasoning than fixed-depth transformers  
-- Systems should learn **world models from diverse sensory data** (e.g., vision, motion, touch)  
+- Systems should learn **world models from diverse sensory data** (e.g., vision, motion, touch). The brain simulate the world and anticipation outcomes instead of being purely reactive. — it is not merely stimulus–response.
 - Planning should be framed as **objective-driven inference**, incorporating constraints like safety and stability  
 - Reasoning and generation can be unified under **differentiable optimization frameworks** (e.g., energy-based inference, trajectory planning, goal-conditioned generation)
+- Reasoning emerges from **modular systems** — integrating perception, prediction, memory, and action — rather than from a monolithic architecture.
 
 ---
 
