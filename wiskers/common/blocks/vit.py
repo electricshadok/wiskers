@@ -20,13 +20,9 @@ class PatchEmbedding(nn.Module):
 
     def __init__(self, patch_size=8, in_channels=3, embed_dim=64):
         super().__init__()
-        self.conv = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.conv = nn.Conv2d(
+            in_channels, embed_dim, kernel_size=patch_size, stride=patch_size
+        )
 
     def forward(self, x):
         return self.conv(x).flatten(start_dim=2).transpose(1, 2)
-
-
-# Add all the implementation is
-# https://d2l.ai/chapter_attention-mechanisms-and-transformers/vision-transformer.html
-# position embeddings, the model can discover the most useful way to represent patch positions
-
