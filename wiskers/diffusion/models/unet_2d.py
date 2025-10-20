@@ -6,7 +6,7 @@ from wiskers.common.blocks.conv_blocks_2d import (
     DoubleConv2D,
     ResDoubleConv2D,
 )
-from wiskers.common.blocks.time_encoding import SinusoidalPositionEmbedding
+from wiskers.common.blocks.positional_encoding import SinusoidalPositionEmbedding
 from wiskers.diffusion.models.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,

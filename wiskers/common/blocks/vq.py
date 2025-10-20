@@ -49,14 +49,14 @@ class VectorQuantizer(nn.Module):
 
         # Move channels to the end and flatten spatial dimensions:
         # (B, D, H, W) → (B, H, W, D) → (N, D) where N = B * H * W
-        z = z.permute(0, 2, 3, 1).contiguous().view(-1, self.code_dim)
+        z_flat = z.permute(0, 2, 3, 1).contiguous().view(-1, self.code_dim)
 
         # Compute squared Euclidean distances between each latent vector and all codebook entries
         # Formula: ||z - c||² = ||z||² + ||c||² - 2·z·c^T
-        z2 = (z**2).sum(dim=1, keepdim=True)  # (N, 1)  — squared norms of inputs
+        z2 = (z_flat**2).sum(dim=1, keepdim=True)  # (N, 1)  — squared norms of inputs
         c2 = (self.codebook**2).sum(dim=1)  # (1, K)  — squared norms of codes
         c2 = c2.unsqueeze(0)  # (1, K)
-        zc = z @ self.codebook.t()  # (N, K)
+        zc = z_flat @ self.codebook.t()  # (N, K)
 
         # Full distance matrix between inputs and codebook entries: (N, K)
         distance_matrix = z2 + c2 - 2 * zc
