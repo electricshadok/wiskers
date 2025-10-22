@@ -3,6 +3,59 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class Codebook(nn.Module):
+    """
+    A discrete embedding space used for vector quantization.
+    Stores K embedding vectors of dimension D.
+
+    Args:
+        num_codes (int): Number of discrete embeddings in the codebook (K).
+        code_dim (int): Dimensionality of each embedding vector (D).
+    """
+
+    def __init__(self, num_codes: int, code_dim: int):
+        super().__init__()
+        self.num_codes = num_codes
+        self.code_dim = code_dim
+
+        # Learnable embedding matrix (K, D)
+        self.codebook = nn.Parameter(torch.randn(num_codes, code_dim))
+
+    def compute_distances(self, encoding: torch.Tensor) -> torch.Tensor:
+        """
+        Compute squared Euclidean distance between z_flat and all codebook entries.
+
+        Args:
+            encoding (Tensor): Flattened input tensor of shape (N, D).
+
+        Returns:
+            distance_matrix (Tensor): (N, K) — distances to each codebook vector.
+        """
+        # Compute squared Euclidean distances between each latent vector and all codebook entries
+        # Formula: ||z - c||² = ||z||² + ||c||² - 2·z·c^T
+        z2 = (encoding**2).sum(dim=1, keepdim=True)  # (N, 1)  — squared norms of inputs
+        c2 = (self.codebook**2).sum(dim=1)  # (1, K)  — squared norms of codes
+        c2 = c2.unsqueeze(0)  # (1, K)
+        zc = encoding @ self.codebook.t()  # (N, K)
+
+        # Full distance matrix between inputs and codebook entries: (N, K)
+        distance_matrix = z2 + c2 - 2 * zc
+
+        return distance_matrix
+
+    def lookup(self, indices: torch.Tensor) -> torch.Tensor:
+        """
+        Retrieve embedding vectors by their indices.
+
+        Args:
+            indices (Tensor): (N,) — nearest code indices.
+
+        Returns:
+            Tensor: (N, D) — corresponding embedding vectors.
+        """
+        return self.codebook[indices]
+
+
 class VectorQuantizer(nn.Module):
     """
     Implementation of the Vector Quantization (VQ) layer used in VQ-VAE models.
@@ -32,7 +85,7 @@ class VectorQuantizer(nn.Module):
         self.beta = beta  # Commitment loss weight
 
         # Learnable embedding matrix serving as the discrete codebook (K, D)
-        self.codebook = nn.Parameter(torch.randn(num_codes, code_dim))
+        self.codebook = Codebook(num_codes, code_dim)
 
     def _quantize(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -49,23 +102,16 @@ class VectorQuantizer(nn.Module):
 
         # Move channels to the end and flatten spatial dimensions:
         # (B, D, H, W) → (B, H, W, D) → (N, D) where N = B * H * W
-        z_flat = z.permute(0, 2, 3, 1).contiguous().view(-1, self.code_dim)
-
-        # Compute squared Euclidean distances between each latent vector and all codebook entries
-        # Formula: ||z - c||² = ||z||² + ||c||² - 2·z·c^T
-        z2 = (z_flat**2).sum(dim=1, keepdim=True)  # (N, 1)  — squared norms of inputs
-        c2 = (self.codebook**2).sum(dim=1)  # (1, K)  — squared norms of codes
-        c2 = c2.unsqueeze(0)  # (1, K)
-        zc = z_flat @ self.codebook.t()  # (N, K)
+        z_encoder = z.permute(0, 2, 3, 1).contiguous().view(-1, self.code_dim)
 
         # Full distance matrix between inputs and codebook entries: (N, K)
-        distance_matrix = z2 + c2 - 2 * zc
+        distance_matrix = self.codebook.compute_distances(z_encoder)  # (N, K)
 
         # Find index of the nearest codebook vector for each input vector (non-differentiable)
         encoding_indices = distance_matrix.argmin(dim=1)  # (N,)
 
         # Retrieve quantized vectors (the chosen codebook entries)
-        z_q = self.codebook[encoding_indices]  # (N, D)
+        z_q = self.codebook.lookup(encoding_indices)  # (N, D)
 
         # Restore spatial layout
         # (N, D) -> (B, H, W, D) -> (B, D, H, W)
