@@ -64,7 +64,9 @@ class DyT(nn.Module):
     def forward(self, x):
         x = torch.tanh(self.alpha * x)
         if self.channels_last:
-            x = x * self.weight + self.bias  # Element-wise transformation
+            # Element-wise transformation
+            x = x * self.weight + self.bias
         else:
-            x = x * self.weight[:, None, None] + self.bias[:, None, None]  # Broadcast across spatial dims
+            # Broadcast across spatial dims
+            x = x * self.weight[:, None, None] + self.bias[:, None, None]
         return x
