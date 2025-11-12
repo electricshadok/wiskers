@@ -204,7 +204,6 @@ class VectorQuantizer(nn.Module):
         Returns:
             z_q (Tensor): Quantized feature map of shape (B, D, H, W).
         """
-        # https://chatgpt.com/c/690e574e-c0dc-8330-bea9-de6640adbe93 - TODO remove that
         z_e = x  # encoder output
         z_q, encoding_indices, z_encoder = self._quantize(x)  # quantizer output
 
