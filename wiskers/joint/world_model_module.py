@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn.functional as F
 
-from wiskers.autoencoder.models.vae_2d import VAE2D
+from wiskers.autoencoder.models.vqvae_2d import VQ_VAE2D
 from wiskers.common.arg_utils import format_image_size, torch_instantiate
 from wiskers.common.base_module import BaseLightningModule
 
@@ -42,7 +42,7 @@ class WorldModelModule(BaseLightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.image_size = image_size
-        self.model = VAE2D(
+        self.model = VQ_VAE2D(
             in_channels=in_channels,
             out_channels=out_channels,
             num_heads=num_heads,
@@ -63,7 +63,16 @@ class WorldModelModule(BaseLightningModule):
         return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
     def forward(self, x):
-        return self.model(x)
+        recon_x, vq_loss, indices = self.model(x)
+        return recon_x
+
+    def _unpack_batch(
+        self, batch: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
+    ):
+        if isinstance(batch, (tuple, list)):
+            return batch[0]  # images, labels (labels unused)
+
+        return batch  # some datasets return only images
 
     def _shared_step(self, batch, batch_idx: int, stage: str):
         """
@@ -76,27 +85,20 @@ class WorldModelModule(BaseLightningModule):
         """
         valid_stages = ["train", "val", "test"]
         if stage not in valid_stages:
-            raise ValueError(f"stage should {valid_stages}")
+            raise ValueError(f"stage should be one of {valid_stages}")
 
-        images = batch["media"]
+        unpacked_batch = self._unpack_batch(batch)
+        images = unpacked_batch["media"]
 
-        prediction, mu, logvar = self.model(images)
-
-        # kl loss between (mu, logva)r and normal distribution (P)
-        # Latex equation for D_{KL}(q_\phi(z|x) || p(z))
-        #  D_{KL} = -\frac{1}{2} \sum_{j=1}^{J} \left(1 + \log(\sigma_j^2) - \mu_j^2 - \sigma_j^2\right)
-        kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), axis=-1)
-        kl_loss = kl_loss.mean()
-
-        # reconstruction loss
-        reconstruction_loss = F.mse_loss(images, prediction)
-
-        loss = kl_loss + reconstruction_loss
+        # Compute losses
+        recon_x, vq_loss, indices = self.model(images)
+        reconstruction_loss = F.mse_loss(images, recon_x)
+        loss = vq_loss + reconstruction_loss
 
         # Log losses
         losses = {
             "loss": loss,
-            "kl_loss": kl_loss,
+            "vq_loss": vq_loss,
             "reconstruction_loss": reconstruction_loss,
         }
 
@@ -112,7 +114,7 @@ class WorldModelModule(BaseLightningModule):
 
         # Log statistics on tensors
         self._log_tensor_stats(stage, "image", images)
-        self._log_tensor_stats(stage, "prediction", prediction)
+        self._log_tensor_stats(stage, "prediction", recon_x)
 
         return loss
 
