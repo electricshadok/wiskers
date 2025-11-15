@@ -38,9 +38,9 @@ class ClevrerMedia(L.LightningDataModule):
         batch_size (int): Batch size for data loading.
         num_workers (int): Number of subprocesses for data loading.
         chunk_size (int): Number of frames per video chunk.
-        stride (int): Step size between chunks (can be < chunk_size for overlap).
-        resize (tuple or None): Resize dimensions (H, W) for raw video preprocessing.
-        image_size (tuple or None): Resize dimensions for model input (used at dataloader level).
+        preprocessing (PreprocessingConfig): Pre-processing raw video parameters
+        transform (TransformConfig): Post-processing transform parameters
+        splits (List[str], optional): List of dataset splits to prepare and load.
     """
 
     def __init__(

@@ -21,7 +21,6 @@ class VQ_VAE2D(nn.Module):
         image_size (int or tuple): Input image size (H, W).
         activation (nn.Module): Activation function.
         num_codes (int): Number of discrete embeddings in the codebook (K).
-        code_dim (int): Dimensionality of each embedding vector (D).
         beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
         use_ema (bool): Whether to use EMA updates for the codebook.
         decay (float): EMA decay factor (only used if use_ema=True).

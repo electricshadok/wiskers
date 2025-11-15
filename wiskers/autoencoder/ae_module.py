@@ -64,13 +64,6 @@ class AEModule(BaseLightningModule):
     def forward(self, x):
         return self.model(x)
 
-    def _unpack_batch(
-        self, batch: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
-    ):
-        if isinstance(batch, (tuple, list)):
-            return batch[0]  # images, labels (labels unused)
-        return batch  # some datasets return only images
-
     def _shared_step(self, batch, batch_idx: int, stage: str):
         """
         Processes a batch from a given stage (train, val, test).
@@ -84,7 +77,7 @@ class AEModule(BaseLightningModule):
         if stage not in valid_stages:
             raise ValueError(f"stage should {valid_stages}")
 
-        images = self._unpack_batch(batch)
+        images = self._unpack_images(batch)
 
         prediction = self.model(images)
 

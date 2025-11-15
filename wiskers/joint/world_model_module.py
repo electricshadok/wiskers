@@ -22,6 +22,12 @@ class WorldModelModule(BaseLightningModule):
         attentions (List[bool]) : Enable attention per level.
         image_size (int or tuple): Input image size (H, W).
         activation (str): Activation function.
+        # Codebook configuration
+        num_codes (int): Number of discrete embeddings in the codebook (K).
+        beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
+        use_ema (bool): Whether to use EMA updates for the codebook.
+        decay (float): EMA decay factor (only used if use_ema=True).
+        eps (float): Small constant for numerical stability.
         # Optimizer configuration
         learning_rate (float): Learning rate for the optimizer.
     """
@@ -36,6 +42,12 @@ class WorldModelModule(BaseLightningModule):
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: str = "nn.ReLU",
+        # Codebook Configuration
+        num_codes: int = 512,
+        beta: float = 0.25,
+        use_ema: bool = True,
+        decay: float = 0.99,
+        eps: float = 1e-5,
         # Optimizer Configuration
         learning_rate: float = 1e-4,
     ) -> None:
@@ -50,6 +62,11 @@ class WorldModelModule(BaseLightningModule):
             attentions=attentions,
             image_size=image_size,
             activation=torch_instantiate(activation),
+            num_codes=num_codes,
+            beta=beta,
+            use_ema=use_ema,
+            decay=decay,
+            eps=eps,
         )
         self.learning_rate = learning_rate
 
@@ -66,14 +83,6 @@ class WorldModelModule(BaseLightningModule):
         recon_x, vq_loss, indices = self.model(x)
         return recon_x
 
-    def _unpack_batch(
-        self, batch: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
-    ):
-        if isinstance(batch, (tuple, list)):
-            return batch[0]  # images, labels (labels unused)
-
-        return batch  # some datasets return only images
-
     def _shared_step(self, batch, batch_idx: int, stage: str):
         """
         Processes a batch from a given stage (train, val, test).
@@ -87,8 +96,7 @@ class WorldModelModule(BaseLightningModule):
         if stage not in valid_stages:
             raise ValueError(f"stage should be one of {valid_stages}")
 
-        unpacked_batch = self._unpack_batch(batch)
-        images = unpacked_batch["media"]
+        images = self._unpack_images(batch)
 
         # Compute losses
         recon_x, vq_loss, indices = self.model(images)

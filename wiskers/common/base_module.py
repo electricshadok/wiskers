@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Tuple, Union
 
 import lightning as L
 import torch
@@ -54,3 +55,12 @@ class BaseLightningModule(L.LightningModule, ABC):
         raise NotImplementedError(
             f"{self.__class__.__name__} must implement `generate_samples()`"
         )
+
+    def _unpack_images(
+        self, batch: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
+    ):
+        if isinstance(batch, (tuple, list)):
+            return batch[0]  # images, labels (labels unused)
+        elif isinstance(batch, dict):
+            return batch["media"]
+        return batch  # some datasets return only images

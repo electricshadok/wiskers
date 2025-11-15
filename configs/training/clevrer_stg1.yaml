@@ -38,6 +38,12 @@ module:
   attentions: [False, False, False]
   image_size: ${data_module.transform.image_size}  # Use a reference to data_module.image_size
   activation: "nn.ReLU"
+  # codebook
+  num_codes: 512
+  beta: 0.25
+  use_ema: True
+  decay: 0.99
+  eps: 1e-5
   # optimizer
   learning_rate: 1e-4
 
