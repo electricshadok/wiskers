@@ -7,7 +7,7 @@ from wiskers.common.blocks.conv_blocks_2d import (
     ResDoubleConv2D,
 )
 from wiskers.common.blocks.positional_encoding import SinusoidalPositionEmbedding
-from wiskers.diffusion.models.conv_blocks_2d import (
+from wiskers.models.diffusion.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,
     DownBlock2D,

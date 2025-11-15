@@ -3,9 +3,9 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn as nn
 
-from wiskers.autoencoder.models.ae_2d import Decoder, Encoder
 from wiskers.common.arg_utils import format_image_size
 from wiskers.common.blocks.quantizer import VectorQuantizer
+from wiskers.models.autoencoder.ae_2d import Decoder, Encoder
 
 
 class VQ_VAE2D(nn.Module):

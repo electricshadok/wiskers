@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 from torch import FloatTensor, LongTensor
 
-from wiskers.diffusion.schedulers.beta_schedule import (
+from wiskers.models.diffusion.schedulers.beta_schedule import (
     cosine_beta_schedule,
     linear_beta_schedule,
     quadractic_beta_schedule,

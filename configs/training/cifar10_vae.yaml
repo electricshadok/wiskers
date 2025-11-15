@@ -24,7 +24,7 @@ export_safetensors: True
 
 # Module Config (model and optimizer)
 module:
-  _target_: wiskers.autoencoder.vae_module.VAEModule
+  _target_: wiskers.modules.vae_module.VAEModule
   # model
   in_channels: 3
   out_channels: 3

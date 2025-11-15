@@ -5,8 +5,8 @@ import torch.nn.functional as F
 
 from wiskers.common.arg_utils import torch_instantiate
 from wiskers.common.base_module import BaseLightningModule
-from wiskers.diffusion.models.unet_2d import UNet2D
-from wiskers.diffusion.schedulers.registry import Schedulers
+from wiskers.models.diffusion.schedulers.registry import Schedulers
+from wiskers.models.diffusion.unet_2d import UNet2D
 
 
 class DiffuserModule(BaseLightningModule):

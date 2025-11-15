@@ -8,7 +8,7 @@ arXiv preprint arXiv:2010.02502 (2020).
 https://arxiv.org/pdf/2010.02502.pdf
 """
 
-from wiskers.diffusion.schedulers.base_scheduler import BaseScheduler
+from wiskers.models.diffusion.schedulers.base_scheduler import BaseScheduler
 
 
 class DDIMScheduler(BaseScheduler):

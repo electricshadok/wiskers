@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.gan.models.discriminator import Discriminator
+from wiskers.models.gan.discriminator import Discriminator
 
 
 @pytest.mark.parametrize(

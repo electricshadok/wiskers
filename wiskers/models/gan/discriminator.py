@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from wiskers.gan.models.conv_blocks_2d import ClassEmbedding, DownBlock
+from wiskers.models.gan.conv_blocks_2d import ClassEmbedding, DownBlock
 
 
 class Discriminator(nn.Module):

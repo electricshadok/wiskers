@@ -4,7 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
-from wiskers.autoencoder.models.vae_2d import VAE2D
+from wiskers.models.autoencoder.vae_2d import VAE2D
 
 
 @pytest.mark.parametrize(

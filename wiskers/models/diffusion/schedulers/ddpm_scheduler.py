@@ -13,11 +13,15 @@ Nichol, Alexander Quinn, and Prafulla Dhariwal.
 In International Conference on Machine Learning, pp. 8162-8171. PMLR, 2021.
 https://arxiv.org/pdf/2102.09672.pdf
 """
+
 import torch
 import torch.nn as nn
 from torch import FloatTensor, LongTensor
 
-from wiskers.diffusion.schedulers.base_scheduler import BaseScheduler, extract_into_tensor
+from wiskers.models.diffusion.schedulers.base_scheduler import (
+    BaseScheduler,
+    extract_into_tensor,
+)
 
 
 class DDPMScheduler(BaseScheduler):
@@ -30,7 +34,9 @@ class DDPMScheduler(BaseScheduler):
     ):
         super().__init__(num_steps, beta_start, beta_end, beta_schedule)
 
-    def q_sample(self, x_start: FloatTensor, t: LongTensor, noise: FloatTensor) -> FloatTensor:
+    def q_sample(
+        self, x_start: FloatTensor, t: LongTensor, noise: FloatTensor
+    ) -> FloatTensor:
         """
         See Algorithm 1 from "Denoising diffusion probabilistic models.", 2020
         """
@@ -39,16 +45,22 @@ class DDPMScheduler(BaseScheduler):
         # a and b are of shape (B, 1, 1, 1)
         return x_start * a + noise * b
 
-    def p_sample(self, model: nn.Module, x: FloatTensor, t: LongTensor, t_index: int) -> FloatTensor:
+    def p_sample(
+        self, model: nn.Module, x: FloatTensor, t: LongTensor, t_index: int
+    ) -> FloatTensor:
         """
         See Algorithm 2 from "Denoising diffusion probabilistic models.", 2020
         """
         # Calculate the model at time t (\mu_{t})
         # use Equation 11 from "Denoising diffusion probabilistic models.", 2020
         betas_t = extract_into_tensor(self.betas, t)
-        sqrt_one_minus_alphas_cumprod_t = extract_into_tensor(self.sqrt_one_minus_alphas_cumprod, t)
+        sqrt_one_minus_alphas_cumprod_t = extract_into_tensor(
+            self.sqrt_one_minus_alphas_cumprod, t
+        )
         sqrt_recip_alphas_t = extract_into_tensor(self.sqrt_recip_alphas, t)
-        model_mean = sqrt_recip_alphas_t * (x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t)
+        model_mean = sqrt_recip_alphas_t * (
+            x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
+        )
 
         # Get the model variance at time t (\sigma_{t}^2)
         if t_index == 0:

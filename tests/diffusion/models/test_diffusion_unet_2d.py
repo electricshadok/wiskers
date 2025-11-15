@@ -4,7 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
-from wiskers.diffusion.models.unet_2d import UNet2D
+from wiskers.models.diffusion.unet_2d import UNet2D
 
 
 @pytest.mark.parametrize(

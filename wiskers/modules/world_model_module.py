@@ -3,14 +3,15 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn.functional as F
 
-from wiskers.autoencoder.models.vae_2d import VAE2D
 from wiskers.common.arg_utils import format_image_size, torch_instantiate
 from wiskers.common.base_module import BaseLightningModule
+from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 
 
-class VAEModule(BaseLightningModule):
+class WorldModelModule(BaseLightningModule):
     """
-    LightningModule for training and inference of a vae model.
+    A LightningModule that combines spatial and temporal modeling for video or physics prediction.
+    Encodes input frames into a latent space (via VAE/VQ-VAE) and predicts their temporal evolution.
 
     Args:
         # Model configuration
@@ -21,6 +22,12 @@ class VAEModule(BaseLightningModule):
         attentions (List[bool]) : Enable attention per level.
         image_size (int or tuple): Input image size (H, W).
         activation (str): Activation function.
+        # Codebook configuration
+        num_codes (int): Number of discrete embeddings in the codebook (K).
+        beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
+        use_ema (bool): Whether to use EMA updates for the codebook.
+        decay (float): EMA decay factor (only used if use_ema=True).
+        eps (float): Small constant for numerical stability.
         # Optimizer configuration
         learning_rate (float): Learning rate for the optimizer.
     """
@@ -35,13 +42,19 @@ class VAEModule(BaseLightningModule):
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: str = "nn.ReLU",
+        # Codebook Configuration
+        num_codes: int = 512,
+        beta: float = 0.25,
+        use_ema: bool = True,
+        decay: float = 0.99,
+        eps: float = 1e-5,
         # Optimizer Configuration
         learning_rate: float = 1e-4,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
         self.image_size = image_size
-        self.model = VAE2D(
+        self.model = VQ_VAE2D(
             in_channels=in_channels,
             out_channels=out_channels,
             num_heads=num_heads,
@@ -49,6 +62,11 @@ class VAEModule(BaseLightningModule):
             attentions=attentions,
             image_size=image_size,
             activation=torch_instantiate(activation),
+            num_codes=num_codes,
+            beta=beta,
+            use_ema=use_ema,
+            decay=decay,
+            eps=eps,
         )
         self.learning_rate = learning_rate
 
@@ -62,7 +80,8 @@ class VAEModule(BaseLightningModule):
         return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
 
     def forward(self, x):
-        return self.model(x)
+        recon_x, vq_loss, indices = self.model(x)
+        return recon_x
 
     def _shared_step(self, batch, batch_idx: int, stage: str):
         """
@@ -75,27 +94,19 @@ class VAEModule(BaseLightningModule):
         """
         valid_stages = ["train", "val", "test"]
         if stage not in valid_stages:
-            raise ValueError(f"stage should {valid_stages}")
+            raise ValueError(f"stage should be one of {valid_stages}")
 
-        images, labels = batch
+        images = self._unpack_images(batch)
 
-        prediction, mu, logvar = self.model(images)
-
-        # kl loss between (mu, logva)r and normal distribution (P)
-        # Latex equation for D_{KL}(q_\phi(z|x) || p(z))
-        #  D_{KL} = -\frac{1}{2} \sum_{j=1}^{J} \left(1 + \log(\sigma_j^2) - \mu_j^2 - \sigma_j^2\right)
-        kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), axis=-1)
-        kl_loss = kl_loss.mean()
-
-        # reconstruction loss
-        reconstruction_loss = F.mse_loss(images, prediction)
-
-        loss = kl_loss + reconstruction_loss
+        # Compute losses
+        recon_x, vq_loss, indices = self.model(images)
+        reconstruction_loss = F.mse_loss(images, recon_x)
+        loss = vq_loss + reconstruction_loss
 
         # Log losses
         losses = {
             "loss": loss,
-            "kl_loss": kl_loss,
+            "vq_loss": vq_loss,
             "reconstruction_loss": reconstruction_loss,
         }
 
@@ -111,7 +122,7 @@ class VAEModule(BaseLightningModule):
 
         # Log statistics on tensors
         self._log_tensor_stats(stage, "image", images)
-        self._log_tensor_stats(stage, "prediction", prediction)
+        self._log_tensor_stats(stage, "prediction", recon_x)
 
         return loss
 

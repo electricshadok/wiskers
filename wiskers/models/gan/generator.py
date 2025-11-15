@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from wiskers.gan.models.conv_blocks_2d import ClassEmbedding, UpBlock
+from wiskers.models.gan.conv_blocks_2d import ClassEmbedding, UpBlock
 
 
 class Generator(nn.Module):

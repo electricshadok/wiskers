@@ -24,7 +24,7 @@ export_safetensors: True
 
 # Module Config (model, scheduler and optimizer)
 module:
-  _target_: wiskers.diffusion.diffuser_module.DiffuserModule
+  _target_: wiskers.modules.diffuser_module.DiffuserModule
 
   # Model Configuration
   in_channels: 3

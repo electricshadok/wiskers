@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.gan.models.generator import Generator
+from wiskers.models.gan.generator import Generator
 
 
 @pytest.mark.parametrize(

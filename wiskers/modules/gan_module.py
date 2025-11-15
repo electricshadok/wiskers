@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 
 from wiskers.common.base_module import BaseLightningModule
-from wiskers.gan.models.discriminator import Discriminator
-from wiskers.gan.models.generator import Generator
+from wiskers.models.gan.discriminator import Discriminator
+from wiskers.models.gan.generator import Generator
 
 
 class GANModule(BaseLightningModule):

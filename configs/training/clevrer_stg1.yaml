@@ -29,7 +29,7 @@ export_safetensors: True
 
 # Module Config (model and optimizer)
 module:
-  _target_: wiskers.joint.world_model_module.WorldModelModule
+  _target_: wiskers.modules.world_model_module.WorldModelModule
   # model
   in_channels: 3
   out_channels: 3

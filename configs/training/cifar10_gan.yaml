@@ -24,7 +24,7 @@ export_safetensors: True
 
 # Module Config (model, scheduler and optimizer)
 module:
-  _target_: wiskers.gan.gan_module.GANModule
+  _target_: wiskers.modules.gan_module.GANModule
   
   # Model Configuration
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size

@@ -3,7 +3,7 @@ import torch
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset
 
-from wiskers.gan.gan_module import GANModule
+from wiskers.modules.gan_module import GANModule
 
 
 @pytest.fixture

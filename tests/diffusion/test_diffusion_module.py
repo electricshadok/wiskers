@@ -3,7 +3,7 @@ import torch
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset
 
-from wiskers.diffusion.diffuser_module import DiffuserModule
+from wiskers.modules.diffuser_module import DiffuserModule
 
 
 @pytest.fixture
