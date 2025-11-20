@@ -2,6 +2,8 @@ from typing import List, Tuple, Union
 
 import torch
 import torch.nn.functional as F
+import torchvision.utils as vutils
+from lightning.pytorch.loggers import TensorBoardLogger
 
 from wiskers.common.arg_utils import format_image_size, torch_instantiate
 from wiskers.common.base_module import BaseLightningModule
@@ -124,6 +126,10 @@ class WorldModelModule(BaseLightningModule):
         self._log_tensor_stats(stage, "image", images)
         self._log_tensor_stats(stage, "prediction", recon_x)
 
+        # Collect images for visualization
+        if stage == "train":
+            self._collect_images(images, recon_x)
+
         return loss
 
     @torch.no_grad()
@@ -151,3 +157,60 @@ class WorldModelModule(BaseLightningModule):
 
     def test_step(self, batch, batch_idx):
         return self._shared_step(batch, batch_idx, "test")
+
+    def _collect_images(
+        self, images: torch.Tensor, recons: torch.Tensor, max_buffer: int = 15
+    ):
+        if not hasattr(self, "image_buffer"):
+            return
+
+        for x, y in zip(images, recons):
+            if len(self.image_buffer) >= max_buffer:
+                break
+            self.image_buffer.append(
+                (
+                    x.detach().cpu(),
+                    y.detach().cpu(),
+                )
+            )
+
+    def on_train_epoch_start(self):
+        if self.global_rank == 0:
+            self.image_buffer = []
+
+    def on_train_epoch_end(self):
+        if self.global_rank != 0:
+            return
+
+        # No images collected
+        if not hasattr(self, "image_buffer") or len(self.image_buffer) == 0:
+            return
+
+        # Unpack triples
+        inputs = [x for (x, _) in self.image_buffer]
+        preds = [y for (_, y) in self.image_buffer]
+
+        inputs_tensor = torch.stack(inputs)  # (N, C, H, W)
+        preds_tensor = torch.stack(preds)  # (N, C, H, W)
+        diffs_tensor = torch.abs(inputs_tensor - preds_tensor)
+
+        # Rows
+        n = inputs_tensor.size(0)
+
+        row_inputs = vutils.make_grid(inputs_tensor, nrow=n, padding=2, normalize=True)
+        row_preds = vutils.make_grid(preds_tensor, nrow=n, padding=2, normalize=True)
+        row_diffs = vutils.make_grid(diffs_tensor, nrow=n, padding=2, normalize=True)
+
+        # Vertical concatenation → one tall image
+        full_vis = torch.cat([row_inputs, row_preds, row_diffs], dim=1)
+
+        # Log
+        if isinstance(self.logger, TensorBoardLogger):
+            self.logger.experiment.add_image(
+                "train/input_pred_diff",
+                full_vis,
+                global_step=self.current_epoch,
+            )
+
+        # Clear buffer
+        self.image_buffer = []

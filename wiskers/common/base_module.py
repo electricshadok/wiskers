@@ -17,7 +17,7 @@ class BaseLightningModule(L.LightningModule, ABC):
 
         Args:
             stage (str): Stage of step ('train', 'val', 'test').
-            tensor_name (str): Name of the tensor.
+            tensor_name (str): Name of the tensor (e.g. 'image', 'prediction')
             data (torch.tensor): Data to analyze.
 
         The method logs these statistics per epoch using `self.log`. It is intended as a private utility
