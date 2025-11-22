@@ -5,8 +5,8 @@ import torch.nn.functional as F
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from wiskers.common.arg_utils import format_image_size, torch_instantiate
 from wiskers.common.base_module import BaseLightningModule
+from wiskers.common.runtime.arg_utils import format_image_size, torch_instantiate
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 
 

@@ -3,7 +3,6 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn as nn
 
-from wiskers.common.arg_utils import format_image_size
 from wiskers.common.blocks.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,
@@ -11,6 +10,7 @@ from wiskers.common.blocks.conv_blocks_2d import (
     DownBlock2D,
     UpBlock2D,
 )
+from wiskers.common.runtime.arg_utils import format_image_size
 
 
 class Encoder(nn.Module):

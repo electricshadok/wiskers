@@ -4,7 +4,7 @@ experiment_dir: "./experiments/clevrer_stg1"
 run_name: version_0
 num_images: 16
 backend_engine:
-  _target_: wiskers.common.backends.CheckpointInference
+  _target_: wiskers.common.runtime.backends.CheckpointInference
   model_class:
     _target_: hydra.utils.get_class
     path: wiskers.modules.world_model_module.WorldModelModule

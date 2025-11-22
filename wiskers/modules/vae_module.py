@@ -3,8 +3,8 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.arg_utils import format_image_size, torch_instantiate
 from wiskers.common.base_module import BaseLightningModule
+from wiskers.common.runtime.arg_utils import format_image_size, torch_instantiate
 from wiskers.models.autoencoder.vae_2d import VAE2D
 
 
