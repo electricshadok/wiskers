@@ -1,20 +1,28 @@
 import importlib
 from typing import List, Tuple, Union
 
-import torch.nn as nn
 
+def instantiate(name: str):
+    """
+    Import an object by its string path and instantiate/call it.
 
-def torch_instantiate(name: str) -> nn.Module:
-    """Instantiate torch object by full path string, e.g. 'torch.nn.GELU' or 'nn.GELU'."""
-    if name.startswith("nn."):
-        name = "torch." + name  # expand shortcut
+    Args:
+        name: Dotted path string (e.g., 'torch.nn.GELU').
+
+    Returns:
+        The instantiated object.
+    """
     try:
-        module_path, class_name = name.rsplit(".", 1)
+        module_path, attr_name = name.rsplit(".", 1)
         module = importlib.import_module(module_path)
-        cls = getattr(module, class_name)
-        return cls()
+        attr = getattr(module, attr_name)
     except (ImportError, AttributeError) as e:
-        raise ValueError(f"Unknown activation function: '{name}'") from e
+        raise ValueError(f"Unknown import target: '{name}'") from e
+
+    try:
+        return attr()
+    except TypeError as e:
+        raise ValueError(f"Cannot instantiate '{name}' without arguments") from e
 
 
 def format_image_size(

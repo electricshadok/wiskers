@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from wiskers.common.base_module import BaseLightningModule
-from wiskers.common.runtime.arg_utils import torch_instantiate
+from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.models.diffusion.schedulers.registry import Schedulers
 from wiskers.models.diffusion.unet_2d import UNet2D
 
@@ -44,7 +44,7 @@ class DiffuserModule(BaseLightningModule):
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
         image_size: int = 32,
-        activation: str = "nn.ReLU",
+        activation: str = "torch.nn.ReLU",
         # Scheduler Configuration
         scheduler_type: str = "ddpm",
         num_steps: float = 1000,
@@ -66,7 +66,7 @@ class DiffuserModule(BaseLightningModule):
             num_heads=num_heads,
             widths=widths,
             attentions=attentions,
-            activation=torch_instantiate(activation),
+            activation=instantiate(activation),
         )
         self.learning_rate = learning_rate
         if prediction_type not in ["noise", "sample", "v-prediction"]:

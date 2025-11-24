@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from wiskers.common.base_module import BaseLightningModule
-from wiskers.common.runtime.arg_utils import format_image_size, torch_instantiate
+from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.ae_2d import Autoencoder2D
 
 
@@ -34,7 +34,7 @@ class AEModule(BaseLightningModule):
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
-        activation: str = "nn.ReLU",
+        activation: str = "torch.nn.ReLU",
         # Optimizer Configuration
         learning_rate: float = 1e-4,
     ) -> None:
@@ -48,7 +48,7 @@ class AEModule(BaseLightningModule):
             widths=widths,
             attentions=attentions,
             image_size=image_size,
-            activation=torch_instantiate(activation),
+            activation=instantiate(activation),
         )
         self.learning_rate = learning_rate
 

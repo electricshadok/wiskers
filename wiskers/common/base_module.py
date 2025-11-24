@@ -11,6 +11,20 @@ class BaseLightningModule(L.LightningModule, ABC):
     Other model modules (e.g., VAE, WorldModel) should inherit from this class.
     """
 
+    def _log_tensor(self, tensors: dict, stage: str, prog_bar: bool):
+        """
+        Log a dict of scalars for a given stage.
+        """
+        for name, value in tensors.items():
+            self.log(
+                f"{stage}_{name}",
+                value,
+                on_step=False,
+                on_epoch=True,
+                prog_bar=prog_bar,
+                logger=True,
+            )
+
     def _log_tensor_stats(self, stage: str, tensor_name: str, data: torch.tensor):
         """
         Logs min, max, and mean of a tensor at a given stage.
@@ -29,15 +43,15 @@ class BaseLightningModule(L.LightningModule, ABC):
             "mean": data.mean(),
         }
 
-        for stat_name, state_value in stats.items():
+        for name, value in stats.items():
             self.log(
-                f"{stage}_stats/{tensor_name}_{stat_name}",
-                state_value,
+                f"{stage}_stats/{tensor_name}_{name}",
+                value,
                 on_step=False,
                 on_epoch=True,
                 prog_bar=False,
                 logger=True,
-                reduce_fx=stat_name,
+                reduce_fx=name,
             )
 
     @abstractmethod

@@ -34,7 +34,7 @@ module:
   widths: [32, 64, 128, 256]
   attentions: [True, True, True]
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
-  activation: "nn.ReLU"
+  activation: "torch.nn.ReLU"
 
   # Scheduler Configuration
   scheduler_type: "ddpm"

@@ -15,7 +15,7 @@ data_module:
     limit: null
   transform:
     _target_: wiskers.datasets.clevrer.data_module.TransformConfig
-    image_size: [80, 120]
+    image_size: [64,64] # squared image required to work properly (FIXME)
 
 # Logger Configs
 tensor_board_logger:
@@ -24,8 +24,8 @@ tensor_board_logger:
   version: null
 
 # Export Model
-export_onnx: True
-export_safetensors: True
+export_onnx: False
+export_safetensors: False
 
 # Module Config (model and optimizer)
 module:
@@ -34,18 +34,19 @@ module:
   in_channels: 3
   out_channels: 3
   num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
-  widths: [32, 64, 128, 256]
-  attentions: [False, False, False]
+  widths: [8, 16, 32, 64, 128, 256]
+  attentions: [False, False, False, False, False]
   image_size: ${data_module.transform.image_size}  # Use a reference to data_module.image_size
-  activation: "nn.ReLU"
+  activation: "torch.nn.ReLU"
+  reconstruction_loss: "wiskers.common.losses.MixedL1L2Loss"
   # codebook
-  num_codes: 512
-  beta: 0.25
+  num_codes: 128
+  beta: 0.1
   use_ema: True
   decay: 0.99
   eps: 1e-5
   # optimizer
-  learning_rate: 1e-4
+  learning_rate: 3e-4
 
 # Training Configs
 earlystopping: False
@@ -54,13 +55,13 @@ earlystopping: False
 trainer:
   # Debugging options
   # fast_dev_run: 1        # runs 1 train/val/test batch then quits
-  # overfit_batches: 1     # force train/val on the same batch every epoch
+  overfit_batches: 1     # force train/val on the same batch every epoch
 
   # Batch limits
-  limit_train_batches: 1.0   # 1.0 = full dataset, int = exact number of batches
-  limit_val_batches: 1.0
-  limit_test_batches: 1.0
+  limit_train_batches: 2   # 1.0 = full dataset, int = exact number of batches
+  limit_val_batches: 1
+  limit_test_batches: 1
 
   # Training schedule
-  max_epochs: 100
+  max_epochs: 200
   log_every_n_steps: 10

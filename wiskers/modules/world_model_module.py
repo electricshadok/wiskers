@@ -1,12 +1,12 @@
 from typing import List, Tuple, Union
 
 import torch
-import torch.nn.functional as F
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from wiskers.common.base_module import BaseLightningModule
-from wiskers.common.runtime.arg_utils import format_image_size, torch_instantiate
+from wiskers.common.metrics import codebook_usage_metrics
+from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 
 
@@ -43,13 +43,14 @@ class WorldModelModule(BaseLightningModule):
         widths: List[int] = [32, 64, 128, 256],
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
-        activation: str = "nn.ReLU",
+        activation: str = "torch.nn.ReLU",
         # Codebook Configuration
         num_codes: int = 512,
         beta: float = 0.25,
         use_ema: bool = True,
         decay: float = 0.99,
         eps: float = 1e-5,
+        reconstruction_loss: str = "wiskers.common.losses.MixedL1L2Loss",
         # Optimizer Configuration
         learning_rate: float = 1e-4,
     ) -> None:
@@ -63,13 +64,14 @@ class WorldModelModule(BaseLightningModule):
             widths=widths,
             attentions=attentions,
             image_size=image_size,
-            activation=torch_instantiate(activation),
+            activation=instantiate(activation),
             num_codes=num_codes,
             beta=beta,
             use_ema=use_ema,
             decay=decay,
             eps=eps,
         )
+        self.reconstruction_loss_fn = instantiate(reconstruction_loss)
         self.learning_rate = learning_rate
 
         # Set 'example_input_array' for ONNX export initialization
@@ -98,29 +100,30 @@ class WorldModelModule(BaseLightningModule):
         if stage not in valid_stages:
             raise ValueError(f"stage should be one of {valid_stages}")
 
+        # Extract image data
         images = self._unpack_images(batch)
 
-        # Compute losses
+        # Inference
         recon_x, vq_loss, indices = self.model(images)
-        reconstruction_loss = F.mse_loss(images, recon_x)
-        loss = vq_loss + reconstruction_loss
 
-        # Log losses
+        # Losses
+        rec_loss = self.reconstruction_loss_fn(images, recon_x)
+        loss = vq_loss + rec_loss
         losses = {
             "loss": loss,
             "vq_loss": vq_loss,
-            "reconstruction_loss": reconstruction_loss,
+            "reconstruction_loss": rec_loss,
         }
 
-        for name, value in losses.items():
-            self.log(
-                f"{stage}_{name}",
-                value,
-                on_step=False,
-                on_epoch=True,
-                prog_bar=True,
-                logger=True,
+        self._log_tensor(losses, stage, prog_bar=True)
+
+        # Metrics (codebook usage)
+        with torch.no_grad():
+            metrics = codebook_usage_metrics(
+                indices=indices,
+                num_codes=self.model._quantizer.num_codes,  # type: ignore[attr-defined]
             )
+            self._log_tensor(metrics, stage, prog_bar=False)
 
         # Log statistics on tensors
         self._log_tensor_stats(stage, "image", images)
