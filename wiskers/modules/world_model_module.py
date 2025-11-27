@@ -1,5 +1,6 @@
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
+from hydra.utils import instantiate as hydra_instantiate
 import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -32,6 +33,7 @@ class WorldModelModule(BaseLightningModule):
         eps (float): Small constant for numerical stability.
         # Optimizer configuration
         learning_rate (float): Learning rate for the optimizer.
+        lr_scheduler (dict, optional): Hydra config for a torch LR scheduler.
     """
 
     def __init__(
@@ -53,6 +55,7 @@ class WorldModelModule(BaseLightningModule):
         reconstruction_loss: str = "wiskers.common.losses.MixedL1L2Loss",
         # Optimizer Configuration
         learning_rate: float = 1e-4,
+        lr_scheduler: Optional[dict] = None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
@@ -73,6 +76,7 @@ class WorldModelModule(BaseLightningModule):
         )
         self.reconstruction_loss_fn = instantiate(reconstruction_loss)
         self.learning_rate = learning_rate
+        self.lr_scheduler_cfg = lr_scheduler
 
         # Set 'example_input_array' for ONNX export initialization
         image_size = format_image_size(image_size)
@@ -81,7 +85,15 @@ class WorldModelModule(BaseLightningModule):
         )
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+
+        if self.lr_scheduler_cfg is None:
+            return optimizer
+
+        scheduler = hydra_instantiate(
+            self.lr_scheduler_cfg, optimizer=optimizer, _convert_="all"
+        )
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
     def forward(self, x):
         recon_x, vq_loss, indices = self.model(x)

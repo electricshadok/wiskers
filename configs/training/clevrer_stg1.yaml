@@ -27,9 +27,10 @@ tensor_board_logger:
 export_onnx: False
 export_safetensors: False
 
-# Module Config (model and optimizer)
+# Module Config (model, optimizer and scheduler)
 module:
   _target_: wiskers.modules.world_model_module.WorldModelModule
+  _recursive_: false  # keep nested configs (e.g., lr_scheduler) as dicts
   # model
   in_channels: 3
   out_channels: 3
@@ -47,6 +48,11 @@ module:
   eps: 1e-5
   # optimizer
   learning_rate: 3e-4
+  # lr scheduler
+  lr_scheduler:
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 150
+    gamma: 0.5
 
 # Training Configs
 earlystopping: False
