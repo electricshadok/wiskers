@@ -263,11 +263,11 @@ def extract_video_chunks_to_numpy(
 def prepare_and_extract_clevrer_videos(
     raw_video_dir: str,
     processed_video_dir: str,
+    split: str,
     chunk_size: int = 4,
     stride: int = 4,
     resize: tuple[int, int] | None = None,
     limit: int | None = None,
-    index_filename: str = "index.json",
 ) -> str:
     """
     Preprocess CLEVRER videos by extracting fixed-length chunks and saving them as numpy arrays.
@@ -275,6 +275,7 @@ def prepare_and_extract_clevrer_videos(
     Args:
         raw_video_dir (str): Path to the directory with raw .mp4 video files.
         processed_video_dir (str): Where to save the extracted chunk numpy arrays.
+        split (str): Dataset split name (e.g., "train", "valid", "test").
         chunk_size (int): Number of frames per chunk.
         stride (int): Step between chunks (stride = chunk_size → no overlap).
         resize (tuple or None): Resize (H, W) for frames, or None to keep original size.
@@ -282,10 +283,13 @@ def prepare_and_extract_clevrer_videos(
 
     TODO: Add multiprocessing support to speed up processing across multiple CPU cores.
     """
-    os.makedirs(processed_video_dir, exist_ok=True)
+    index_filename = f"{split}_index.json"
     index_path = os.path.join(processed_video_dir, index_filename)
     if os.path.exists(index_path):
         return index_path
+
+    processed_split_dir = os.path.join(processed_video_dir, split)
+    os.makedirs(processed_split_dir, exist_ok=True)
 
     # Get and sort video paths lexicographically (consistent due to video naming)
     video_paths = sorted(get_all_video_paths(raw_video_dir))
@@ -303,7 +307,7 @@ def prepare_and_extract_clevrer_videos(
         video_id = os.path.splitext(os.path.basename(video_path))[0]
         print(f"Start processing {video_id} ...")
 
-        output_dir = os.path.join(processed_video_dir, video_id)
+        output_dir = os.path.join(processed_split_dir, video_id)
 
         if os.path.exists(output_dir):
             print(f"{video_id} is already processed.")

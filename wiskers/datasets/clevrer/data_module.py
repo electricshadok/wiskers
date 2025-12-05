@@ -69,7 +69,7 @@ class ClevrerMedia(L.LightningDataModule):
             qa_root = os.path.join(self.data_dir, "question_answer")
             annotation_root = os.path.join(self.data_dir, "annotations")
             video_raw_root = os.path.join(self.data_dir, "video_raw")
-            processed_video_dir = os.path.join(self.data_dir, "video", split)
+            processed_video_dir = os.path.join(self.data_dir, "video")
 
             # Download QA JSON
             qa_path = download_qa(qa_root, split)
@@ -89,11 +89,11 @@ class ClevrerMedia(L.LightningDataModule):
             video_index_path = prepare_and_extract_clevrer_videos(
                 raw_video_dir=raw_video_dir,
                 processed_video_dir=processed_video_dir,
+                split=split,
                 chunk_size=self.preprocessing.chunk_size,
                 stride=self.preprocessing.stride,
                 resize=self.preprocessing.resize,
                 limit=self.preprocessing.limit,
-                index_filename="index.json",
             )
             self.video_index_paths[split] = video_index_path
             print(f"CLEVRER Video Index ({split}) {video_index_path}")

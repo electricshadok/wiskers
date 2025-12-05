@@ -123,15 +123,26 @@ class ClevrerMediaHelper:
         return video
 
     def get_sample_path(self, sample_idx: int) -> str:
+        # rel_path example: valid/video_03903/video_03903_chunk0002.npy
         rel_path = self.samples[sample_idx]
         abs_path = os.path.join(self.video_root_dir, rel_path)
         return abs_path
 
     def get_scene_index(self, sample_idx: int) -> int:
-        # rel_path example: video_03903/video_03903_chunk0002.npy
+        # rel_path examples:
+        #   train/video_03903/video_03903_chunk0002.npy
+        #   test/video_15028/video_15028_chunk0000.npy
+        # We want the numeric part of the video folder (e.g., "video_15028").
         rel_path = self.samples[sample_idx]
-        folder_name = rel_path.split("/")[0]
-        return int(folder_name.split("_")[1])
+        video_folder = os.path.basename(os.path.dirname(rel_path))
+        # Expect format: video_<scene_id>
+        parts = video_folder.split("_")
+        if len(parts) < 2:
+            raise ValueError(
+                f"Unexpected video folder format in path '{rel_path}'; "
+                "expected something like '.../video_00001/...'"
+            )
+        return int(parts[1])
 
     def num_images(self) -> int:
         return len(self.samples) * self.chunk_size

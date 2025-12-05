@@ -1,8 +1,8 @@
 from typing import List, Optional, Tuple, Union
 
-from hydra.utils import instantiate as hydra_instantiate
 import torch
 import torchvision.utils as vutils
+from hydra.utils import instantiate as hydra_instantiate
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from wiskers.common.base_module import BaseLightningModule
