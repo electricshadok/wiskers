@@ -2,7 +2,6 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 import torchvision.utils as vutils
-from hydra.utils import instantiate as hydra_instantiate
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from wiskers.common.base_module import BaseLightningModule
@@ -90,7 +89,7 @@ class WorldModelModule(BaseLightningModule):
         if self.lr_scheduler_cfg is None:
             return optimizer
 
-        scheduler = hydra_instantiate(
+        scheduler = instantiate(
             self.lr_scheduler_cfg, optimizer=optimizer, _convert_="all"
         )
         return {"optimizer": optimizer, "lr_scheduler": scheduler}

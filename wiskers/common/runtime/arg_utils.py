@@ -1,28 +1,41 @@
 import importlib
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
+
+from hydra.utils import instantiate as hydra_instantiate
+from omegaconf import DictConfig
 
 
-def instantiate(name: str):
+def instantiate(target: Union[str, Dict[str, Any], DictConfig], **kwargs):
     """
-    Import an object by its string path and instantiate/call it.
+    Instantiate an object either from a dotted string path or a Hydra config dict.
 
     Args:
-        name: Dotted path string (e.g., 'torch.nn.GELU').
+        target: Dotted path string (e.g., 'torch.nn.GELU') or Hydra config
+            mapping (dict/DictConfig).
+        **kwargs: Optional keyword arguments forwarded to the instantiation call.
 
     Returns:
         The instantiated object.
     """
-    try:
-        module_path, attr_name = name.rsplit(".", 1)
-        module = importlib.import_module(module_path)
-        attr = getattr(module, attr_name)
-    except (ImportError, AttributeError) as e:
-        raise ValueError(f"Unknown import target: '{name}'") from e
+    if isinstance(target, str):
+        try:
+            module_path, attr_name = target.rsplit(".", 1)
+            module = importlib.import_module(module_path)
+            attr = getattr(module, attr_name)
+        except (ImportError, AttributeError) as e:
+            raise ValueError(f"Unknown import target: '{target}'") from e
 
-    try:
-        return attr()
-    except TypeError as e:
-        raise ValueError(f"Cannot instantiate '{name}' without arguments") from e
+        try:
+            return attr(**kwargs)
+        except TypeError as e:
+            raise ValueError(
+                f"Cannot instantiate '{target}' with provided arguments"
+            ) from e
+
+    if isinstance(target, (dict, DictConfig)):
+        return hydra_instantiate(target, **kwargs)
+
+    raise TypeError("instantiate expects a string import path or a Hydra config dict.")
 
 
 def format_image_size(
