@@ -47,7 +47,9 @@ module:
   decay: 0.99
   eps: 1e-5
   # optimizer
-  learning_rate: 3e-4
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 3e-4
   # lr scheduler
   lr_scheduler:
     _target_: torch.optim.lr_scheduler.StepLR

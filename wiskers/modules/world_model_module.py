@@ -31,7 +31,7 @@ class WorldModelModule(BaseLightningModule):
         decay (float): EMA decay factor (only used if use_ema=True).
         eps (float): Small constant for numerical stability.
         # Optimizer configuration
-        learning_rate (float): Learning rate for the optimizer.
+        optimizer (dict, optional): Hydra config for an optimizer. Defaults to Adam if not provided.
         lr_scheduler (dict, optional): Hydra config for a torch LR scheduler.
     """
 
@@ -53,7 +53,7 @@ class WorldModelModule(BaseLightningModule):
         eps: float = 1e-5,
         reconstruction_loss: str = "wiskers.common.losses.MixedL1L2Loss",
         # Optimizer Configuration
-        learning_rate: float = 1e-4,
+        optimizer: Optional[dict] = None,
         lr_scheduler: Optional[dict] = None,
     ) -> None:
         super().__init__()
@@ -74,7 +74,7 @@ class WorldModelModule(BaseLightningModule):
             eps=eps,
         )
         self.reconstruction_loss_fn = instantiate(reconstruction_loss)
-        self.learning_rate = learning_rate
+        self.optimizer_cfg = optimizer
         self.lr_scheduler_cfg = lr_scheduler
 
         # Set 'example_input_array' for ONNX export initialization
@@ -84,7 +84,14 @@ class WorldModelModule(BaseLightningModule):
         )
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        if self.optimizer_cfg is None:
+            optimizer = torch.optim.Adam(self.model.parameters())
+        else:
+            optimizer = instantiate(
+                self.optimizer_cfg,
+                params=self.model.parameters(),
+                _convert_="all",
+            )
 
         if self.lr_scheduler_cfg is None:
             return optimizer
