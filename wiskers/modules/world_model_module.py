@@ -4,10 +4,10 @@ import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from wiskers.common.base_module import BaseLightningModule
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
+from wiskers.modules.base_module import BaseLightningModule
 
 
 class WorldModelModule(BaseLightningModule):

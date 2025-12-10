@@ -3,9 +3,9 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.base_module import BaseLightningModule
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.vae_2d import VAE2D
+from wiskers.modules.base_module import BaseLightningModule
 
 
 class VAEModule(BaseLightningModule):

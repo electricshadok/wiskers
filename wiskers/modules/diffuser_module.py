@@ -3,10 +3,10 @@ from typing import List
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.base_module import BaseLightningModule
 from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.models.diffusion.schedulers.registry import Schedulers
 from wiskers.models.diffusion.unet_2d import UNet2D
+from wiskers.modules.base_module import BaseLightningModule
 
 
 class DiffuserModule(BaseLightningModule):
