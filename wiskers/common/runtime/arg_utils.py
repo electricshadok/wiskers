@@ -1,4 +1,3 @@
-import importlib
 from typing import Any, Dict, List, Tuple, Union
 
 from hydra.utils import instantiate as hydra_instantiate
@@ -7,30 +6,18 @@ from omegaconf import DictConfig
 
 def instantiate(target: Union[str, Dict[str, Any], DictConfig], **kwargs):
     """
-    Instantiate an object either from a dotted string path or a Hydra config dict.
+    Instantiate an object using Hydra. Strings are converted into a Hydra dict.
 
     Args:
-        target: Dotted path string (e.g., 'torch.nn.GELU') or Hydra config
-            mapping (dict/DictConfig).
+        target: Dotted path string (e.g., 'torch.nn.GELU') or Hydra config mapping
+            (dict/DictConfig).
         **kwargs: Optional keyword arguments forwarded to the instantiation call.
 
     Returns:
         The instantiated object.
     """
     if isinstance(target, str):
-        try:
-            module_path, attr_name = target.rsplit(".", 1)
-            module = importlib.import_module(module_path)
-            attr = getattr(module, attr_name)
-        except (ImportError, AttributeError) as e:
-            raise ValueError(f"Unknown import target: '{target}'") from e
-
-        try:
-            return attr(**kwargs)
-        except TypeError as e:
-            raise ValueError(
-                f"Cannot instantiate '{target}' with provided arguments"
-            ) from e
+        target = {"_target_": target}
 
     if isinstance(target, (dict, DictConfig)):
         return hydra_instantiate(target, **kwargs)
