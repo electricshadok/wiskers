@@ -1,7 +1,7 @@
 import streamlit as st
 
-import streamlit_ui.dataset.ui as dataset_ui
-import streamlit_ui.diffusion.ui as diffusion_ui
+import webui.dataset.ui as dataset_ui
+import webui.diffusion.ui as diffusion_ui
 
 
 if __name__ == "__main__":

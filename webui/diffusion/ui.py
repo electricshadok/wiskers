@@ -3,7 +3,7 @@ from typing import List
 
 import streamlit as st
 
-from streamlit_ui.diffusion.noise_debug_ui import noise_debug_ui
+from webui.diffusion.noise_debug_ui import noise_debug_ui
 
 
 def get_config_files() -> List[str]:

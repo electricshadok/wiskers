@@ -4,7 +4,7 @@ from typing import List
 import streamlit as st
 from hydra.utils import instantiate
 
-from streamlit_ui.utils import dataset_ui
+from webui.utils import dataset_ui
 from wiskers.cli.utils import load_config
 
 

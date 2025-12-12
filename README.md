@@ -78,7 +78,7 @@ python wiskers/cli/inspect_dataset.py --config configs/datasets/cifar10.yaml
 Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.
 
 ```
-streamlit run streamlit_ui/main.py
+streamlit run webui/main.py
 ```
 
 <details>
