@@ -39,3 +39,20 @@ class MixedL1L2Loss(nn.Module):
         l1 = F.l1_loss(input, target, reduction=self.reduction)
         l2 = F.mse_loss(input, target, reduction=self.reduction)
         return self.alpha * l1 + (1.0 - self.alpha) * l2
+
+
+def kl_divergence_standard_normal(
+    mu: torch.Tensor, logvar: torch.Tensor
+) -> torch.Tensor:
+    """
+    KL divergence between q(z|x) = N(mu, sigma^2) and p(z) = N(0, I).
+
+    Args:
+        mu (torch.Tensor): Mean tensor with shape (batch_size, latent_dim, ...).
+        logvar (torch.Tensor): Log-variance tensor with the same shape as `mu`.
+
+    Returns:
+        torch.Tensor: Scalar tensor with the batch mean KL divergence.
+    """
+    kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=-1)
+    return kl.mean()

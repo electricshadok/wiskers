@@ -3,6 +3,7 @@ from typing import List, Tuple, Union
 import torch
 import torch.nn.functional as F
 
+from wiskers.common.losses import kl_divergence_standard_normal
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.vae_2d import VAE2D
 from wiskers.modules.base_module import BaseLightningModule
@@ -81,11 +82,7 @@ class VAEModule(BaseLightningModule):
 
         prediction, mu, logvar = self.model(images)
 
-        # kl loss between (mu, logva)r and normal distribution (P)
-        # Latex equation for D_{KL}(q_\phi(z|x) || p(z))
-        #  D_{KL} = -\frac{1}{2} \sum_{j=1}^{J} \left(1 + \log(\sigma_j^2) - \mu_j^2 - \sigma_j^2\right)
-        kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), axis=-1)
-        kl_loss = kl_loss.mean()
+        kl_loss = kl_divergence_standard_normal(mu, logvar)
 
         # reconstruction loss
         reconstruction_loss = F.mse_loss(images, prediction)
