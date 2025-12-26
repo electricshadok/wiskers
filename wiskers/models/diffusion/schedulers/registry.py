@@ -1,6 +1,6 @@
-from wiskers.diffusion.schedulers.base_scheduler import BaseScheduler
-from wiskers.diffusion.schedulers.ddim_scheduler import DDIMScheduler
-from wiskers.diffusion.schedulers.ddpm_scheduler import DDPMScheduler
+from wiskers.models.diffusion.schedulers.base_scheduler import BaseScheduler
+from wiskers.models.diffusion.schedulers.ddim_scheduler import DDIMScheduler
+from wiskers.models.diffusion.schedulers.ddpm_scheduler import DDPMScheduler
 
 
 class Schedulers:

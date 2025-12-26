@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.diffusion.schedulers.beta_schedule import linear_beta_schedule
+from wiskers.models.diffusion.schedulers.beta_schedule import linear_beta_schedule
 
 
 @pytest.mark.parametrize(

@@ -133,3 +133,14 @@ class GANModule(BaseLightningModule):
     def test_step(self, batch, batch_idx):
         # Not Implemented
         pass
+
+    @torch.no_grad()
+    def generate_samples(self, num_samples: int, labels: torch.Tensor | None = None):
+        """
+        Generates samples from the generator for inference/visualization.
+        """
+        device = next(self.parameters()).device
+        noise = torch.randn(num_samples, self.hparams.image_embedding, device=device)
+        if labels is None:
+            labels = torch.zeros(num_samples, dtype=torch.long, device=device)
+        return self.gen(noise, labels)
