@@ -27,9 +27,10 @@ module:
   _target_: wiskers.modules.ae_module.AEModule
   # model
   in_channels: 3
+  stem_channels: 32
   out_channels: 3
   num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
-  widths: [32, 64, 128, 256]
+  widths: [64, 128, 256]
   attentions: [True, True, True]
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
   activation: "torch.nn.ReLU"

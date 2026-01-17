@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -44,6 +44,8 @@ class VAE2D(nn.Module):
 
     Args:
         in_channels (int): Number of input channels.
+        stem_channels (Optional[int]): Channels produced by the encoder stem
+            before entering the first down block.
         out_channels (int): Number of output channels.
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
@@ -59,16 +61,17 @@ class VAE2D(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
+        stem_channels: Optional[int] = None,
         out_channels: int = 3,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128, 256],
+        widths: List[int] = [32, 64, 128],
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) - 1 != len(attentions):
-            raise ValueError("Wrong input len(widths)-1 != len(attentions)")
+        if len(widths) != len(attentions):
+            raise ValueError("len(widths) must equal len(attentions)")
 
         self.num_levels = len(attentions)
         self.in_channels = in_channels
@@ -78,6 +81,7 @@ class VAE2D(nn.Module):
 
         self._encoder = Encoder(
             in_channels=in_channels,
+            stem_channels=stem_channels,
             num_heads=num_heads,
             widths=widths,
             attentions=attentions,

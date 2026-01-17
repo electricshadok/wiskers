@@ -33,9 +33,10 @@ module:
   _recursive_: false  # keep nested configs (e.g., lr_scheduler) as dicts
   # model
   in_channels: 3
+  stem_channels: 8
   out_channels: 3
   num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
-  widths: [8, 16, 32, 64, 128, 256]
+  widths: [16, 32, 64, 128, 256]
   attentions: [False, False, False, False, False]
   image_size: ${data_module.transform.image_size}  # Use a reference to data_module.image_size
   activation: "torch.nn.ReLU"

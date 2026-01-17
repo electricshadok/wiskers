@@ -15,7 +15,7 @@ from wiskers.models.autoencoder.vae_2d import VAE2D
     ],
 )
 def test_vae2D(batch_size, in_channels, out_channels, height, width):
-    net = VAE2D(in_channels, out_channels, num_heads=2)
+    net = VAE2D(in_channels=in_channels, out_channels=out_channels, num_heads=2)
     x = torch.randn(batch_size, in_channels, height, width)
     out_x, mu, logvar = net(x)
 
@@ -40,7 +40,9 @@ def test_vae2D(batch_size, in_channels, out_channels, height, width):
     ],
 )
 def test_vae2D_to_onnx(batch_size, in_channels, out_channels, height, width, tmp_path):
-    net = VAE2D(in_channels, out_channels, num_heads=2)
+    net = VAE2D(
+        in_channels=in_channels, out_channels=out_channels, num_heads=2
+    )
     x = torch.randn(batch_size, in_channels, height, width)
 
     # Export the model

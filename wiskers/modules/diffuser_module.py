@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import torch
 import torch.nn.functional as F
@@ -38,10 +38,11 @@ class DiffuserModule(BaseLightningModule):
         self,
         # Model Configuration
         in_channels: int = 3,
+        stem_channels: Optional[int] = None,
         out_channels: int = 3,
         time_dim: int = 256,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128, 256],
+        widths: List[int] = [32, 64, 128],
         attentions: List[bool] = [True, True, True],
         image_size: int = 32,
         activation: str = "torch.nn.ReLU",
@@ -61,6 +62,7 @@ class DiffuserModule(BaseLightningModule):
         self.image_size = image_size
         self.model = UNet2D(
             in_channels=in_channels,
+            stem_channels=stem_channels,
             out_channels=out_channels,
             time_dim=time_dim,
             num_heads=num_heads,

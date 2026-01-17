@@ -15,7 +15,12 @@ from wiskers.models.diffusion.unet_2d import UNet2D
     ],
 )
 def test_unet2D(batch_size, in_channels, out_channels, height, width, time_dim):
-    net = UNet2D(in_channels, out_channels, time_dim, num_heads=2)
+    net = UNet2D(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        time_dim=time_dim,
+        num_heads=2,
+    )
     x = torch.randn(batch_size, in_channels, height, width)
     t = torch.randint(0, 10, (batch_size,), dtype=torch.long)
     out_x = net(x, t)
@@ -37,7 +42,12 @@ def test_unet2D(batch_size, in_channels, out_channels, height, width, time_dim):
     ],
 )
 def test_unet2D_to_onnx(batch_size, in_channels, out_channels, height, width, time_dim, tmp_path):
-    net = UNet2D(in_channels, out_channels, time_dim, num_heads=2)
+    net = UNet2D(
+        in_channels=in_channels,
+        out_channels=out_channels,
+        time_dim=time_dim,
+        num_heads=2,
+    )
     x = torch.randn(batch_size, in_channels, height, width)
     t = torch.randint(0, 10, (batch_size,), dtype=torch.long)
 

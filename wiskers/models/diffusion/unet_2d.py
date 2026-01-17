@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import torch.nn as nn
 
@@ -21,6 +21,9 @@ class UNet2D(nn.Module):
 
     Args:
         in_channels (int): Number of input channels.
+        stem_channels (Optional[int]): Channels produced by the stem projection
+            before entering the first down block. Defaults to the first entry
+            in widths when not provided.
         out_channels (int): Number of output channels.
         time_dim (int): Size of the time dimension.
         num_heads (int): Number of self-attention heads.
@@ -53,34 +56,40 @@ class UNet2D(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
+        stem_channels: Optional[int] = None,
         out_channels: int = 3,
         time_dim: int = 256,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128, 256],
+        widths: List[int] = [32, 64, 128],
         attentions: List[bool] = [True, True, True],
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) - 1 != len(attentions):
-            raise ValueError("Wrong input len(widths)-1 != len(attentions)")
+        if len(widths) != len(attentions):
+            raise ValueError("len(widths) must equal len(attentions)")
 
         self.num_levels = len(attentions)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.time_dim = time_dim
+        block_channels = widths
+        stem_out_channels = stem_channels if stem_channels is not None else block_channels[0]
 
         # Positional embedding
         self.pe = SinusoidalPositionEmbedding(time_dim)
 
         # Input
         self.input = DoubleConv2D(
-            in_channels=in_channels, out_channels=widths[0], activation=activation
+            in_channels=in_channels,
+            out_channels=stem_out_channels,
+            activation=activation,
         )
 
         # Encoder (Down blocks and self-attention blocks)
         self.down_blocks = []
+        current_channels = stem_out_channels
         for level_idx in range(self.num_levels):
-            up_filters, low_filters = widths[level_idx], widths[level_idx + 1]
+            up_filters, low_filters = current_channels, block_channels[level_idx]
             if attentions[level_idx]:
                 down_block = AttnDownBlock2D(
                     up_filters, low_filters, time_dim, activation, num_heads
@@ -88,15 +97,19 @@ class UNet2D(nn.Module):
             else:
                 down_block = DownBlock2D(up_filters, low_filters, time_dim, activation)
             self.down_blocks.append(down_block)
+            current_channels = low_filters
         self.down_blocks = nn.ModuleList(self.down_blocks)
 
         # Bottleneck
-        self.bot = ResDoubleConv2D(widths[-1], activation)
+        self.bot = ResDoubleConv2D(current_channels, activation)
 
         # Decoder (Up blocks and self-attention blocks)
         self.up_blocks = []
         for level_idx in reversed(range(self.num_levels)):
-            low_filters, up_filters = widths[level_idx + 1], widths[level_idx]
+            skip_channels = (
+                block_channels[level_idx - 1] if level_idx > 0 else stem_out_channels
+            )
+            low_filters, up_filters = current_channels, skip_channels
             if attentions[level_idx]:
                 up_block = AttnUpBlock2D(
                     low_filters, up_filters, up_filters, time_dim, activation, num_heads
@@ -106,10 +119,11 @@ class UNet2D(nn.Module):
                     low_filters, up_filters, up_filters, time_dim, activation
                 )
             self.up_blocks.append(up_block)
+            current_channels = up_filters
         self.up_blocks = nn.ModuleList(self.up_blocks)
 
         # Output
-        self.pointwise = nn.Conv2d(widths[0], out_channels, kernel_size=1)
+        self.pointwise = nn.Conv2d(current_channels, out_channels, kernel_size=1)
 
     def forward(self, x, t):
         """

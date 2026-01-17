@@ -39,9 +39,10 @@ class WorldModelModule(BaseLightningModule):
         self,
         # Model Configuration
         in_channels: int = 3,
+        stem_channels: Optional[int] = None,
         out_channels: int = 3,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128, 256],
+        widths: List[int] = [32, 64, 128],
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: str = "torch.nn.ReLU",
@@ -61,6 +62,7 @@ class WorldModelModule(BaseLightningModule):
         self.image_size = image_size
         self.model = VQ_VAE2D(
             in_channels=in_channels,
+            stem_channels=stem_channels,
             out_channels=out_channels,
             num_heads=num_heads,
             widths=widths,

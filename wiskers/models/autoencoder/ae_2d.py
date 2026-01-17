@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -19,6 +19,9 @@ class Encoder(nn.Module):
 
     Args:
         in_channels (int): Number of input channels.
+        stem_channels (Optional[int]): Channels produced by the stem projection
+            before entering the first block. Defaults to the first entry in
+            widths if not provided.
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
@@ -32,23 +35,29 @@ class Encoder(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
+        stem_channels: Optional[int] = None,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128, 256],
+        widths: List[int] = [32, 64, 128],
         attentions: List[bool] = [True, True, True],
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) - 1 != len(attentions):
-            raise ValueError("Wrong input len(widths)-1 != len(attentions)")
+        if len(widths) != len(attentions):
+            raise ValueError("len(widths) must equal len(attentions)")
+
+        # If stem_channels is not provided, we project the input directly
+        # to the size required by the first block.
+        block_channels = widths
+        current_channels = stem_channels if stem_channels is not None else block_channels[0]
 
         # Input and Encoder (Down blocks and self-attention blocks)
         num_levels = len(attentions)
         self.input = DoubleConv2D(
-            in_channels=in_channels, out_channels=widths[0], activation=activation
+            in_channels=in_channels, out_channels=current_channels, activation=activation
         )
         down_blocks = []
         for level_idx in range(num_levels):
-            up_filters, low_filters = widths[level_idx], widths[level_idx + 1]
+            up_filters, low_filters = (current_channels, block_channels[level_idx])
             if attentions[level_idx]:
                 down_block = AttnDownBlock2D(
                     up_filters, low_filters, activation, num_heads
@@ -56,6 +65,7 @@ class Encoder(nn.Module):
             else:
                 down_block = DownBlock2D(up_filters, low_filters, activation)
             down_blocks.append(down_block)
+            current_channels = low_filters
         self.down_blocks = nn.Sequential(*down_blocks)
 
     def forward(self, x):
@@ -67,7 +77,10 @@ class Decoder(nn.Module):
     Decoder for VAE
 
     Args:
-        in_channels (int): Number of input channels.
+        out_channels (int): Number of output channels.
+        stem_channels (Optional[int]): Channels expected at the decoder input
+            before the first up block. Defaults to the first entry in widths
+            when not set.
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
         attentions (List[bool]) : Enable attention per level.
@@ -81,19 +94,22 @@ class Decoder(nn.Module):
     def __init__(
         self,
         out_channels: int = 3,
+        stem_channels: Optional[int] = None,
         num_heads: int = 8,
-        widths: List[int] = [256, 128, 64, 32],
+        widths: List[int] = [128, 64, 32],
         attentions: List[bool] = [True, True, True],
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) - 1 != len(attentions):
-            raise ValueError("Wrong input len(widths)-1 != len(attentions)")
+        if len(widths) != len(attentions):
+            raise ValueError("len(widths) must equal len(attentions)")
 
-        num_levels = len(attentions)
+        block_channels = widths
+        current_channels = stem_channels if stem_channels is not None else block_channels[0]
+
         up_blocks = []
-        for level_idx in range(num_levels):
-            low_filters, up_filters = widths[level_idx], widths[level_idx + 1]
+        for level_idx in range(len(attentions)):
+            low_filters, up_filters = (current_channels, block_channels[level_idx])
             if attentions[level_idx]:
                 up_block = AttnUpBlock2D(
                     low_filters, 0, up_filters, activation, num_heads
@@ -101,7 +117,8 @@ class Decoder(nn.Module):
             else:
                 up_block = UpBlock2D(low_filters, 0, up_filters, activation)
             up_blocks.append(up_block)
-        up_blocks.append(nn.Conv2d(widths[-1], out_channels, kernel_size=1))
+            current_channels = up_filters
+        up_blocks.append(nn.Conv2d(current_channels, out_channels, kernel_size=1))
         self.up_blocks = nn.Sequential(*up_blocks)
 
     def forward(self, x):
@@ -114,6 +131,8 @@ class Autoencoder2D(nn.Module):
 
     Args:
         in_channels (int): Number of input channels.
+        stem_channels (Optional[int]): Channels produced by the encoder stem
+            before entering the first down block.
         out_channels (int): Number of output channels.
         num_heads (int): Number of self-attention heads.
         widths (List[int]): Filter width per level.
@@ -129,16 +148,17 @@ class Autoencoder2D(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
+        stem_channels: Optional[int] = None,
         out_channels: int = 3,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128, 256],
+        widths: List[int] = [32, 64, 128],
         attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) - 1 != len(attentions):
-            raise ValueError("Wrong input len(widths)-1 != len(attentions)")
+        if len(widths) != len(attentions):
+            raise ValueError("len(widths) must equal len(attentions)")
 
         self.num_levels = len(attentions)
         self.in_channels = in_channels
@@ -148,6 +168,7 @@ class Autoencoder2D(nn.Module):
 
         self._encoder = Encoder(
             in_channels=in_channels,
+            stem_channels=stem_channels,
             num_heads=num_heads,
             widths=widths,
             attentions=attentions,

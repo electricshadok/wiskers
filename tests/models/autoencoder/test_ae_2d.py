@@ -15,7 +15,9 @@ from wiskers.models.autoencoder.ae_2d import Autoencoder2D
     ],
 )
 def test_autoencoder2D(batch_size, in_channels, out_channels, height, width):
-    net = Autoencoder2D(in_channels, out_channels, num_heads=2)
+    net = Autoencoder2D(
+        in_channels=in_channels, out_channels=out_channels, num_heads=2
+    )
     x = torch.randn(batch_size, in_channels, height, width)
     out_x = net(x)
 
@@ -37,7 +39,9 @@ def test_autoencoder2D(batch_size, in_channels, out_channels, height, width):
 def test_autoencoder2D_to_onnx(
     batch_size, in_channels, out_channels, height, width, tmp_path
 ):
-    net = Autoencoder2D(in_channels, out_channels, num_heads=2)
+    net = Autoencoder2D(
+        in_channels=in_channels, out_channels=out_channels, num_heads=2
+    )
     x = torch.randn(batch_size, in_channels, height, width)
 
     # Export the model
