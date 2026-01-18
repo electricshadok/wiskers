@@ -48,8 +48,8 @@ class VAE2D(nn.Module):
             before entering the first down block.
         out_channels (int): Number of output channels.
         num_heads (int): Number of self-attention heads.
-        widths (List[int]): Filter width per level.
-        attentions (List[bool]) : Enable attention per level.
+        block_channels (List[int]): Filter width per level.
+        block_attentions (List[bool]) : Enable attention per level.
         image_size (int or tuple): Input image size (H, W).
         activation (nn.Module): Activation function.
 
@@ -64,37 +64,37 @@ class VAE2D(nn.Module):
         stem_channels: Optional[int] = None,
         out_channels: int = 3,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128],
-        attentions: List[bool] = [True, True, True],
+        block_channels: List[int] = [32, 64, 128],
+        block_attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) != len(attentions):
-            raise ValueError("len(widths) must equal len(attentions)")
+        if len(block_channels) != len(block_attentions):
+            raise ValueError("len(block_channels) must equal len(block_attentions)")
 
-        self.num_levels = len(attentions)
+        self.num_levels = len(block_attentions)
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.widths = widths
+        self.block_channels = block_channels
         self.image_size = format_image_size(image_size)
 
         self._encoder = Encoder(
             in_channels=in_channels,
             stem_channels=stem_channels,
             num_heads=num_heads,
-            widths=widths,
-            attentions=attentions,
+            block_channels=block_channels,
+            block_attentions=block_attentions,
             activation=activation,
         )
 
-        self._bottleneck = BottleneckVAE(widths[-1])
+        self._bottleneck = BottleneckVAE(block_channels[-1])
 
         self._decoder = Decoder(
             out_channels=out_channels,
             num_heads=num_heads,
-            widths=list(reversed(widths)),
-            attentions=attentions,
+            block_channels=list(reversed(block_channels)),
+            block_attentions=block_attentions,
             activation=activation,
         )
 
@@ -102,7 +102,7 @@ class VAE2D(nn.Module):
         # downsampled 2^num_levels times in each dimension
         mid_h = self.image_size[0] // (2**self.num_levels)
         mid_w = self.image_size[1] // (2**self.num_levels)
-        mid_c = self.widths[-1]
+        mid_c = self.block_channels[-1]
         return mid_c, mid_h, mid_w
 
     def decoder(self, z):

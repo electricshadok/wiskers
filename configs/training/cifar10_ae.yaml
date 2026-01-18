@@ -30,8 +30,8 @@ module:
   stem_channels: 32
   out_channels: 3
   num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
-  widths: [64, 128, 256]
-  attentions: [True, True, True]
+  block_channels: [64, 128, 256]
+  block_attentions: [True, True, True]
   image_size: ${data_module.image_size}  # Use a reference to data_module.image_size
   activation: "torch.nn.ReLU"
   # optimizer

@@ -23,12 +23,12 @@ class UNet2D(nn.Module):
         in_channels (int): Number of input channels.
         stem_channels (Optional[int]): Channels produced by the stem projection
             before entering the first down block. Defaults to the first entry
-            in widths when not provided.
+            in block_channels when not provided.
         out_channels (int): Number of output channels.
         time_dim (int): Size of the time dimension.
         num_heads (int): Number of self-attention heads.
-        widths (List[int]): Filter width per level.
-        attentions (List[bool]) : Enable attention per level.
+        block_channels (List[int]): Filter width per level.
+        block_attentions (List[bool]) : Enable attention per level.
         activation (nn.Module): Activation function.
 
     Shapes:
@@ -60,19 +60,18 @@ class UNet2D(nn.Module):
         out_channels: int = 3,
         time_dim: int = 256,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128],
-        attentions: List[bool] = [True, True, True],
+        block_channels: List[int] = [32, 64, 128],
+        block_attentions: List[bool] = [True, True, True],
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
-        if len(widths) != len(attentions):
-            raise ValueError("len(widths) must equal len(attentions)")
+        if len(block_channels) != len(block_attentions):
+            raise ValueError("len(block_channels) must equal len(block_attentions)")
 
-        self.num_levels = len(attentions)
+        self.num_levels = len(block_attentions)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.time_dim = time_dim
-        block_channels = widths
         stem_out_channels = stem_channels if stem_channels is not None else block_channels[0]
 
         # Positional embedding
@@ -90,7 +89,7 @@ class UNet2D(nn.Module):
         current_channels = stem_out_channels
         for level_idx in range(self.num_levels):
             up_filters, low_filters = current_channels, block_channels[level_idx]
-            if attentions[level_idx]:
+            if block_attentions[level_idx]:
                 down_block = AttnDownBlock2D(
                     up_filters, low_filters, time_dim, activation, num_heads
                 )
@@ -110,7 +109,7 @@ class UNet2D(nn.Module):
                 block_channels[level_idx - 1] if level_idx > 0 else stem_out_channels
             )
             low_filters, up_filters = current_channels, skip_channels
-            if attentions[level_idx]:
+            if block_attentions[level_idx]:
                 up_block = AttnUpBlock2D(
                     low_filters, up_filters, up_filters, time_dim, activation, num_heads
                 )

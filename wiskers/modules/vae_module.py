@@ -18,8 +18,8 @@ class VAEModule(BaseLightningModule):
         in_channels (int): Number of input channels.
         out_channels (int): Number of output channels.
         num_heads (int): Number of self-attention heads.
-        widths (List[int]): Filter width per level.
-        attentions (List[bool]) : Enable attention per level.
+        block_channels (List[int]): Filter width per level.
+        block_attentions (List[bool]) : Enable attention per level.
         image_size (int or tuple): Input image size (H, W).
         activation (str): Activation function.
         # Optimizer configuration
@@ -33,8 +33,8 @@ class VAEModule(BaseLightningModule):
         stem_channels: Optional[int] = None,
         out_channels: int = 3,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128],
-        attentions: List[bool] = [True, True, True],
+        block_channels: List[int] = [32, 64, 128],
+        block_attentions: List[bool] = [True, True, True],
         image_size: Union[int, Tuple[int, int]] = 32,
         activation: str = "torch.nn.ReLU",
         # Optimizer Configuration
@@ -48,8 +48,8 @@ class VAEModule(BaseLightningModule):
             stem_channels=stem_channels,
             out_channels=out_channels,
             num_heads=num_heads,
-            widths=widths,
-            attentions=attentions,
+            block_channels=block_channels,
+            block_attentions=block_attentions,
             image_size=image_size,
             activation=instantiate(activation),
         )

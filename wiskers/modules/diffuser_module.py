@@ -19,8 +19,8 @@ class DiffuserModule(BaseLightningModule):
         out_channels (int): Number of output channels.
         time_dim (int): Time dimension.
         num_heads (int): Number of attention heads.
-        widths (List[int]): Filter width per level.
-        attentions (List[bool]) : Enable attention per level.
+        block_channels (List[int]): Filter width per level.
+        block_attentions (List[bool]) : Enable attention per level.
         image_size (int): Size of the image.
         activation (str): Activation function.
         # Scheduler Configuration
@@ -42,8 +42,8 @@ class DiffuserModule(BaseLightningModule):
         out_channels: int = 3,
         time_dim: int = 256,
         num_heads: int = 8,
-        widths: List[int] = [32, 64, 128],
-        attentions: List[bool] = [True, True, True],
+        block_channels: List[int] = [32, 64, 128],
+        block_attentions: List[bool] = [True, True, True],
         image_size: int = 32,
         activation: str = "torch.nn.ReLU",
         # Scheduler Configuration
@@ -66,8 +66,8 @@ class DiffuserModule(BaseLightningModule):
             out_channels=out_channels,
             time_dim=time_dim,
             num_heads=num_heads,
-            widths=widths,
-            attentions=attentions,
+            block_channels=block_channels,
+            block_attentions=block_attentions,
             activation=instantiate(activation),
         )
         self.learning_rate = learning_rate
