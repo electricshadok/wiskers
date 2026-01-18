@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchmetrics.functional.image.ssim import structural_similarity_index_measure
 
 
 class L1Loss(nn.Module):
@@ -56,3 +57,19 @@ def kl_divergence_standard_normal(
     """
     kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=-1)
     return kl.mean()
+
+
+def ssim_with_loss(
+    input: torch.Tensor, target: torch.Tensor, data_range: float = 1.0
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Compute Structural Similarity Index (SSIM) and its complementary loss.
+
+    Returns:
+        ssim_value: SSIM in [0, 1], higher is better.
+        ssim_loss: (1 - SSIM), suitable for minimization.
+    """
+    ssim_value = structural_similarity_index_measure(
+        input, target, data_range=data_range
+    )
+    return ssim_value, 1 - ssim_value

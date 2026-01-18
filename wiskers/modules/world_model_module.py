@@ -4,6 +4,7 @@ import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
+from wiskers.common.losses import ssim_with_loss
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
@@ -30,6 +31,10 @@ class WorldModelModule(BaseLightningModule):
         use_ema (bool): Whether to use EMA updates for the codebook.
         decay (float): EMA decay factor (only used if use_ema=True).
         eps (float): Small constant for numerical stability.
+        losses (dict): Loss configuration with optional keys:
+            - reconstruction (str): Dotted path to reconstruction loss callable.
+            - reconstruction_weight (float): Scale for reconstruction loss.
+            - ssim_weight (float): Weight for (1 - SSIM) loss component.
         # Optimizer configuration
         optimizer (dict, optional): Hydra config for an optimizer. Defaults to Adam if not provided.
         lr_scheduler (dict, optional): Hydra config for a torch LR scheduler.
@@ -52,7 +57,7 @@ class WorldModelModule(BaseLightningModule):
         use_ema: bool = True,
         decay: float = 0.99,
         eps: float = 1e-5,
-        reconstruction_loss: str = "wiskers.common.losses.MixedL1L2Loss",
+        losses: Optional[dict] = None,
         # Optimizer Configuration
         optimizer: Optional[dict] = None,
         lr_scheduler: Optional[dict] = None,
@@ -75,7 +80,13 @@ class WorldModelModule(BaseLightningModule):
             decay=decay,
             eps=eps,
         )
+        loss_cfg = losses or {}
+        reconstruction_loss = loss_cfg.get(
+            "reconstruction", "wiskers.common.losses.MixedL1L2Loss"
+        )
         self.reconstruction_loss_fn = instantiate(reconstruction_loss)
+        self.reconstruction_weight = float(loss_cfg.get("reconstruction_weight", 1.0))
+        self.ssim_weight = float(loss_cfg.get("ssim_weight", 0.0))
         self.optimizer_cfg = optimizer
         self.lr_scheduler_cfg = lr_scheduler
 
@@ -128,11 +139,23 @@ class WorldModelModule(BaseLightningModule):
 
         # Losses
         rec_loss = self.reconstruction_loss_fn(images, recon_x)
-        loss = vq_loss + rec_loss
+        if self.ssim_weight > 0.0:
+            ssim_val, ssim_loss = ssim_with_loss(recon_x, images, data_range=1.0)
+        else:
+            ssim_val = torch.tensor(0.0, device=images.device)
+            ssim_loss = torch.tensor(0.0, device=images.device)
+
+        loss = (
+            vq_loss
+            + self.reconstruction_weight * rec_loss
+            + self.ssim_weight * ssim_loss
+        )
         losses = {
             "loss": loss,
             "vq_loss": vq_loss,
             "reconstruction_loss": rec_loss,
+            "ssim": ssim_val,
+            "ssim_loss": ssim_loss,
         }
 
         self._log_tensor(losses, stage, prog_bar=True)

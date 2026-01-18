@@ -40,7 +40,10 @@ module:
   block_attentions: [False, False, False, False, False]
   image_size: ${data_module.transform.image_size}  # Use a reference to data_module.image_size
   activation: "torch.nn.ReLU"
-  reconstruction_loss: "wiskers.common.losses.MixedL1L2Loss"
+  losses:
+    reconstruction: "wiskers.common.losses.MixedL1L2Loss"
+    reconstruction_weight: 1.0
+    ssim_weight: 0.3
   # codebook
   num_codes: 128
   beta: 0.1
