@@ -68,6 +68,7 @@ python wiskers/cli/predict.py --config configs/inference/clevrer_stg1.yaml
 Inspect and test the dataloaders.
 
 ```
+python wiskers/cli/inspect_dataset.py --config configs/training/clevrer_stg1.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/cifar10.yaml

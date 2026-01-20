@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import os
 import zipfile
 from glob import glob
@@ -260,6 +261,40 @@ def extract_video_chunks_to_numpy(
     return chunk_idx
 
 
+def _process_single_video(args: tuple[str, str, str, int, int, tuple[int, int] | None]):
+    """
+    Helper to process a single video in a multiprocessing pool.
+    Returns the video id, relative chunk paths, and whether the work was skipped.
+    """
+    (
+        video_path,
+        processed_split_dir,
+        processed_video_dir,
+        chunk_size,
+        stride,
+        resize,
+    ) = args
+
+    video_id = os.path.splitext(os.path.basename(video_path))[0]
+    output_dir = os.path.join(processed_split_dir, video_id)
+
+    status = "skipped"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+        extract_video_chunks_to_numpy(
+            video_path=video_path,
+            output_dir=output_dir,
+            chunk_size=chunk_size,
+            stride=stride,
+            resize=resize,
+        )
+        status = "processed"
+
+    chunk_files = sorted(glob(os.path.join(output_dir, "*.npy")))
+    rel_files = [os.path.relpath(p, processed_video_dir) for p in chunk_files]
+    return video_id, rel_files, status
+
+
 def prepare_and_extract_clevrer_videos(
     raw_video_dir: str,
     processed_video_dir: str,
@@ -268,6 +303,7 @@ def prepare_and_extract_clevrer_videos(
     stride: int = 4,
     resize: tuple[int, int] | None = None,
     limit: int | None = None,
+    num_workers: int | None = None,
 ) -> str:
     """
     Preprocess CLEVRER videos by extracting fixed-length chunks and saving them as numpy arrays.
@@ -280,8 +316,7 @@ def prepare_and_extract_clevrer_videos(
         stride (int): Step between chunks (stride = chunk_size → no overlap).
         resize (tuple or None): Resize (H, W) for frames, or None to keep original size.
         limit (int or None): Limit the number of videos to process.
-
-    TODO: Add multiprocessing support to speed up processing across multiple CPU cores.
+        num_workers (int or None): Number of worker processes (defaults to CPU count).
     """
     index_filename = f"{split}_index.json"
     index_path = os.path.join(processed_video_dir, index_filename)
@@ -295,37 +330,52 @@ def prepare_and_extract_clevrer_videos(
     video_paths = sorted(get_all_video_paths(raw_video_dir))
 
     print(f"{len(video_paths)} videos found in {raw_video_dir}")
-    print("Example:", video_paths[0])
+    if video_paths:
+        print("Example:", video_paths[0])
+    else:
+        raise ValueError(f"No .mp4 videos found in {raw_video_dir}")
 
     if limit is not None:
         video_paths = video_paths[:limit]
 
     # Collect all chunk paths (relative to processed_video_dir) if we’re writing an index
     all_rel_paths = []
+    task_args = [
+        (
+            video_path,
+            processed_split_dir,
+            processed_video_dir,
+            chunk_size,
+            stride,
+            resize,
+        )
+        for video_path in video_paths
+    ]
 
-    for video_path in tqdm(video_paths, desc="Processing videos"):
-        video_id = os.path.splitext(os.path.basename(video_path))[0]
-        print(f"Start processing {video_id} ...")
+    resolved_workers = num_workers or (os.cpu_count() or 1)
+    resolved_workers = max(1, min(resolved_workers, len(video_paths)))
 
-        output_dir = os.path.join(processed_split_dir, video_id)
-
-        if os.path.exists(output_dir):
-            print(f"{video_id} is already processed.")
-        else:
-            os.makedirs(output_dir, exist_ok=True)
-
-            extract_video_chunks_to_numpy(
-                video_path=video_path,
-                output_dir=output_dir,
-                chunk_size=chunk_size,
-                stride=stride,
-                resize=resize,
-            )
-
-        # After extraction, list chunks we just created and add them (relative) to the index
-        chunk_files = sorted(glob(os.path.join(output_dir, "*.npy")))
-        rel_files = [os.path.relpath(p, processed_video_dir) for p in chunk_files]
-        all_rel_paths.extend(rel_files)
+    if resolved_workers > 1:
+        with multiprocessing.Pool(processes=resolved_workers) as pool:
+            results_iter = pool.imap(_process_single_video, task_args)
+            for video_id, rel_files, status in tqdm(
+                results_iter,
+                total=len(video_paths),
+                desc="Processing videos",
+            ):
+                all_rel_paths.extend(rel_files)
+                if status == "skipped":
+                    tqdm.write(f"{video_id} is already processed.")
+                else:
+                    tqdm.write(f"Finished processing {video_id}.")
+    else:
+        for args in tqdm(task_args, desc="Processing videos"):
+            video_id, rel_files, status = _process_single_video(args)
+            all_rel_paths.extend(rel_files)
+            if status == "skipped":
+                tqdm.write(f"{video_id} is already processed.")
+            else:
+                tqdm.write(f"Finished processing {video_id}.")
 
     payload = {
         "root": ".",  # paths are relative to this JSON
