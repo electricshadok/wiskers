@@ -7,11 +7,24 @@ from torch.utils.data import DataLoader
 
 import wiskers.datasets.clevrer.datasets as datasets
 from wiskers.datasets.clevrer.prepare import (
+    bundle_clevrer_for_upload,
     download_annotations,
     download_qa,
     download_videos,
     prepare_and_extract_clevrer_videos,
+    upload_file_to_gdrive,
 )
+
+
+@dataclass
+class GDriveUploadConfig:
+    enabled: bool = False
+    folder_id: Optional[str] = None
+    credentials_path: Optional[str] = None
+    archive_name: str = "clevrer_processed.zip"
+
+    def resolve_credentials_path(self) -> Optional[str]:
+        return self.credentials_path or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 
 
 @dataclass
@@ -20,6 +33,11 @@ class PreprocessingConfig:
     stride: int = 16
     resize: List[int] = field(default_factory=lambda: [160, 240])
     limit: Optional[int] = None  # Optional limit on number of videos processed
+    gdrive_upload: Optional[GDriveUploadConfig] = None
+
+    def __post_init__(self):
+        if isinstance(self.gdrive_upload, dict):
+            self.gdrive_upload = GDriveUploadConfig(**self.gdrive_upload)
 
 
 @dataclass
@@ -98,6 +116,8 @@ class ClevrerMedia(L.LightningDataModule):
             self.video_index_paths[split] = video_index_path
             print(f"CLEVRER Video Index ({split}) {video_index_path}")
 
+        self._maybe_upload_to_gdrive()
+
     def _make_dataloader(self, split: str, dataset_cls):
         dataset = dataset_cls(
             video_index_path=self.video_index_paths[split],
@@ -111,6 +131,34 @@ class ClevrerMedia(L.LightningDataModule):
             shuffle=(split == "train"),
             num_workers=self.num_workers,
             persistent_workers=True,
+        )
+
+    def _maybe_upload_to_gdrive(self):
+        upload_cfg = getattr(self.preprocessing, "gdrive_upload", None)
+        if not upload_cfg or not upload_cfg.enabled:
+            return
+
+        if not upload_cfg.folder_id:
+            raise ValueError(
+                "upload_to_gdrive is enabled but no destination folder_id was provided."
+            )
+
+        credentials_path = upload_cfg.resolve_credentials_path()
+        if not credentials_path:
+            raise ValueError(
+                "upload_to_gdrive is enabled but no credentials_path was provided and "
+                "GOOGLE_APPLICATION_CREDENTIALS is not set."
+            )
+
+        archive_path = bundle_clevrer_for_upload(
+            dataset_root=self.data_dir,
+            archive_name=upload_cfg.archive_name,
+            compress=False,
+        )
+        upload_file_to_gdrive(
+            file_path=archive_path,
+            folder_id=upload_cfg.folder_id,
+            credentials_path=credentials_path,
         )
 
 

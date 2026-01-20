@@ -11,6 +11,95 @@ import numpy as np
 from tqdm import tqdm
 
 
+def bundle_clevrer_for_upload(
+    dataset_root: str, archive_name: str, compress: bool = False
+) -> str:
+    """
+    Package the processed CLEVRER assets (videos + annotations + QA) into a zip archive.
+    """
+    compression_mode = "deflated" if compress else "stored"
+    print(
+        f"Starting CLEVRER bundle: root={dataset_root}, archive={archive_name}, compression={compression_mode}"
+    )
+    archive_path = os.path.join(dataset_root, archive_name)
+    if os.path.exists(archive_path):
+        os.remove(archive_path)
+    include_paths = [
+        os.path.join(dataset_root, "video"),
+        os.path.join(dataset_root, "annotations"),
+        os.path.join(dataset_root, "question_answer"),
+    ]
+
+    os.makedirs(os.path.dirname(archive_path) or ".", exist_ok=True)
+    compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
+    with zipfile.ZipFile(archive_path, "w", compression=compression) as zf:
+        for path in include_paths:
+            if not os.path.exists(path):
+                continue
+            if os.path.isdir(path):
+                for root, _, files in os.walk(path):
+                    for file in files:
+                        abs_path = os.path.join(root, file)
+                        rel_path = os.path.relpath(abs_path, dataset_root)
+                        zf.write(abs_path, rel_path)
+            else:
+                rel_path = os.path.relpath(path, dataset_root)
+                zf.write(path, rel_path)
+
+    print(f"Created upload bundle at {archive_path}")
+    return archive_path
+
+
+def upload_file_to_gdrive(
+    file_path: str, folder_id: str, credentials_path: str
+) -> Optional[str]:
+    """
+    Upload a local file to Google Drive using a service account JSON key.
+
+    Args:
+        file_path: Path to the file to upload.
+        folder_id: Destination Drive folder ID.
+        credentials_path: Path to the service account credentials JSON.
+    Returns:
+        The uploaded file id, if available.
+    """
+    try:
+        from google.oauth2.service_account import Credentials
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+    except ImportError as exc:  # pragma: no cover - optional dependency
+        raise ImportError(
+            "Google Drive upload requested but required packages are missing. "
+            "Install with `pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib`."
+        ) from exc
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found for upload: {file_path}")
+
+    print(
+        f"Starting Google Drive upload: file={file_path}, folder_id={folder_id}, credentials={credentials_path}"
+    )
+
+    scopes = ["https://www.googleapis.com/auth/drive.file"]
+    creds = Credentials.from_service_account_file(credentials_path, scopes=scopes)
+    service = build("drive", "v3", credentials=creds, cache_discovery=False)
+
+    file_metadata = {"name": os.path.basename(file_path), "parents": [folder_id]}
+    media = MediaFileUpload(file_path, resumable=True)
+
+    request = service.files().create(
+        body=file_metadata, media_body=media, fields="id"
+    )
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            print(f"Upload progress: {int(status.progress() * 100)}%")
+    file_id = response.get("id")
+    print(f"Uploaded {file_path} to Google Drive with file id {file_id}")
+    return file_id
+
+
 QA_URLS = {
     "train": (
         "http://data.csail.mit.edu/clevrer/questions/train.json",

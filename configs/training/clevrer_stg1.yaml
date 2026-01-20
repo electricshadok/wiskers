@@ -13,6 +13,12 @@ data_module:
     stride: 16
     resize: [160, 240]
     limit: null
+    # Optional: enable to upload processed CLEVRER assets to Google Drive
+    gdrive_upload:
+      enabled: false
+      folder_id: null
+      credentials_path: null
+      archive_name: clevrer_processed.zip
   transform:
     _target_: wiskers.datasets.clevrer.data_module.TransformConfig
     image_size: [64,64] # squared image required to work properly (FIXME)
