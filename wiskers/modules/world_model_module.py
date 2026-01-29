@@ -33,6 +33,7 @@ class WorldModelModule(BaseLightningModule):
         eps (float): Small constant for numerical stability.
         losses (dict): Loss configuration with optional keys:
             - reconstruction (str): Dotted path to reconstruction loss callable.
+            - vq_weight (float): Scale for the vector-quantization loss.
             - reconstruction_weight (float): Scale for reconstruction loss.
             - ssim_weight (float): Weight for (1 - SSIM) loss component.
         # Optimizer configuration
@@ -85,6 +86,7 @@ class WorldModelModule(BaseLightningModule):
             "reconstruction", "wiskers.common.losses.MixedL1L2Loss"
         )
         self.reconstruction_loss_fn = instantiate(reconstruction_loss)
+        self.vq_weight = float(loss_cfg.get("vq_weight", 1.0))
         self.reconstruction_weight = float(loss_cfg.get("reconstruction_weight", 1.0))
         self.ssim_weight = float(loss_cfg.get("ssim_weight", 0.0))
         self.optimizer_cfg = optimizer
@@ -146,13 +148,14 @@ class WorldModelModule(BaseLightningModule):
             ssim_loss = torch.tensor(0.0, device=images.device)
 
         loss = (
-            vq_loss
+            self.vq_weight * vq_loss
             + self.reconstruction_weight * rec_loss
             + self.ssim_weight * ssim_loss
         )
         losses = {
             "loss": loss,
             "vq_loss": vq_loss,
+            "vq_loss_weighted": self.vq_weight * vq_loss,
             "reconstruction_loss": rec_loss,
             "ssim": ssim_val,
             "ssim_loss": ssim_loss,
