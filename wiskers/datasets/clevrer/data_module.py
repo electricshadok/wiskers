@@ -72,6 +72,7 @@ class ClevrerMedia(L.LightningDataModule):
     ):
         super().__init__()
         self.data_dir = os.path.join(data_dir, "clevrer")
+        self.preprocessed_root = os.path.join(self.data_dir, "preprocessed")
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.preprocessing = preprocessing
@@ -83,11 +84,12 @@ class ClevrerMedia(L.LightningDataModule):
 
     def prepare_data(self):
         os.makedirs(self.data_dir, exist_ok=True)
+        os.makedirs(self.preprocessed_root, exist_ok=True)
         for split in self.splits:
-            qa_root = os.path.join(self.data_dir, "question_answer")
-            annotation_root = os.path.join(self.data_dir, "annotations")
+            qa_root = os.path.join(self.preprocessed_root, "question_answer")
+            annotation_root = os.path.join(self.preprocessed_root, "annotations")
             video_raw_root = os.path.join(self.data_dir, "video_raw")
-            processed_video_dir = os.path.join(self.data_dir, "video")
+            processed_video_dir = os.path.join(self.preprocessed_root, "video")
 
             # Download QA JSON
             qa_path = download_qa(qa_root, split)
@@ -151,7 +153,7 @@ class ClevrerMedia(L.LightningDataModule):
             )
 
         archive_path = bundle_clevrer_for_upload(
-            dataset_root=self.data_dir,
+            processed_root=self.preprocessed_root,
             archive_name=upload_cfg.archive_name,
             compress=False,
         )

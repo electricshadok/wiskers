@@ -12,39 +12,30 @@ from tqdm import tqdm
 
 
 def bundle_clevrer_for_upload(
-    dataset_root: str, archive_name: str, compress: bool = False
+    processed_root: str, archive_name: str, compress: bool = False
 ) -> str:
     """
-    Package the processed CLEVRER assets (videos + annotations + QA) into a zip archive.
+    Package all processed CLEVRER assets under ``processed_root`` into a zip archive.
     """
     compression_mode = "deflated" if compress else "stored"
     print(
-        f"Starting CLEVRER bundle: root={dataset_root}, archive={archive_name}, compression={compression_mode}"
+        f"Starting CLEVRER bundle: root={processed_root}, archive={archive_name}, compression={compression_mode}"
     )
-    archive_path = os.path.join(dataset_root, archive_name)
+    archive_path = os.path.join(processed_root, archive_name)
     if os.path.exists(archive_path):
         os.remove(archive_path)
-    include_paths = [
-        os.path.join(dataset_root, "video"),
-        os.path.join(dataset_root, "annotations"),
-        os.path.join(dataset_root, "question_answer"),
-    ]
 
     os.makedirs(os.path.dirname(archive_path) or ".", exist_ok=True)
     compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
     with zipfile.ZipFile(archive_path, "w", compression=compression) as zf:
-        for path in include_paths:
-            if not os.path.exists(path):
-                continue
-            if os.path.isdir(path):
-                for root, _, files in os.walk(path):
-                    for file in files:
-                        abs_path = os.path.join(root, file)
-                        rel_path = os.path.relpath(abs_path, dataset_root)
-                        zf.write(abs_path, rel_path)
-            else:
-                rel_path = os.path.relpath(path, dataset_root)
-                zf.write(path, rel_path)
+        for root, _, files in os.walk(processed_root):
+            for file in files:
+                abs_path = os.path.join(root, file)
+                # Avoid bundling the archive into itself if rerun
+                if abs_path == archive_path:
+                    continue
+                rel_path = os.path.relpath(abs_path, processed_root)
+                zf.write(abs_path, rel_path)
 
     print(f"Created upload bundle at {archive_path}")
     return archive_path
@@ -162,8 +153,14 @@ def download_videos(video_dir: str, split: str) -> str:
         with zipfile.ZipFile(local_path, "r") as zip_ref:
             print(f"CLEVRER Unzip Video ({split}).")
             zip_ref.extractall(raw_video_dir)
+        # Remove the zip to avoid storing both compressed and extracted copies
+        if os.path.exists(local_path):
+            os.remove(local_path)
     else:
         print(f"CLEVRER Video ({split}) already unzipped.")
+        # If the archive still exists from a previous run, clean it up
+        if local_path and os.path.exists(local_path):
+            os.remove(local_path)
 
     return raw_video_dir
 
@@ -214,8 +211,14 @@ def download_annotations(annotation_dir: str, split: str) -> str:
                 print(f"CLEVRER Unzip Annotation ({split}).")
                 zip_ref.extractall(output_dir)
             build_annotation_index(output_dir, index_file)
+            # Remove archive after successful extraction to avoid duplicates
+            if os.path.exists(local_path):
+                os.remove(local_path)
         else:
             print(f"CLEVRER Annotation ({split}) already unzipped.")
+            # Clean up any lingering archive from previous runs
+            if os.path.exists(local_path):
+                os.remove(local_path)
 
         return index_file
 
