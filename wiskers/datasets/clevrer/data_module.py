@@ -104,7 +104,13 @@ class ClevrerMedia(L.LightningDataModule):
             print(f"CLEVRER Annotation Index ({split}) {annotation_index_path}")
 
             # Download & extract videos
-            raw_video_dir = download_videos(video_raw_root, split)
+            if os.path.isdir(processed_video_dir) and os.listdir(processed_video_dir):
+                print(
+                    f"CLEVRER Videos already processed in {processed_video_dir}; skipping download."
+                )
+                raw_video_dir = ""  # Not needed since videos are already processed"
+            else:
+                raw_video_dir = download_videos(video_raw_root, split)
 
             video_index_path = prepare_and_extract_clevrer_videos(
                 raw_video_dir=raw_video_dir,

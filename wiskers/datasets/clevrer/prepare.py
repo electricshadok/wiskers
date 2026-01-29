@@ -78,9 +78,7 @@ def upload_file_to_gdrive(
     file_metadata = {"name": os.path.basename(file_path), "parents": [folder_id]}
     media = MediaFileUpload(file_path, resumable=True)
 
-    request = service.files().create(
-        body=file_metadata, media_body=media, fields="id"
-    )
+    request = service.files().create(body=file_metadata, media_body=media, fields="id")
     response = None
     while response is None:
         status, response = request.next_chunk()
@@ -187,6 +185,14 @@ def download_qa(qa_dir: str, split: str) -> str:
 def download_annotations(annotation_dir: str, split: str) -> str:
     os.makedirs(annotation_dir, exist_ok=True)
     url_path, local_path = ANNOTATION_URLS[split]
+    index_file = os.path.join(annotation_dir, f"{split}_index.json")
+    output_dir = os.path.join(annotation_dir, split)
+
+    # Fast-path: index already present → nothing to do
+    if os.path.exists(index_file):
+        print(f"CLEVRER Annotation ({split}) already prepared; skipping download.")
+        return index_file
+
     if url_path and local_path:
         local_path = os.path.join(annotation_dir, local_path)
         if not os.path.exists(local_path):
@@ -202,23 +208,14 @@ def download_annotations(annotation_dir: str, split: str) -> str:
 
     # unzip and create index file
     if local_path:
-        index_file = os.path.join(annotation_dir, f"{split}_index.json")
-
-        if not os.path.exists(index_file):
-            output_dir = os.path.join(annotation_dir, split)
-            os.makedirs(output_dir, exist_ok=True)
-            with zipfile.ZipFile(local_path, "r") as zip_ref:
-                print(f"CLEVRER Unzip Annotation ({split}).")
-                zip_ref.extractall(output_dir)
-            build_annotation_index(output_dir, index_file)
-            # Remove archive after successful extraction to avoid duplicates
-            if os.path.exists(local_path):
-                os.remove(local_path)
-        else:
-            print(f"CLEVRER Annotation ({split}) already unzipped.")
-            # Clean up any lingering archive from previous runs
-            if os.path.exists(local_path):
-                os.remove(local_path)
+        os.makedirs(output_dir, exist_ok=True)
+        with zipfile.ZipFile(local_path, "r") as zip_ref:
+            print(f"CLEVRER Unzip Annotation ({split}).")
+            zip_ref.extractall(output_dir)
+        build_annotation_index(output_dir, index_file)
+        # Remove archive after successful extraction to avoid duplicates
+        if os.path.exists(local_path):
+            os.remove(local_path)
 
         return index_file
 
