@@ -12,8 +12,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def bundle_clevrer_for_upload(
-    processed_root: str, archive_name: str) -> str:
+def bundle_clevrer_for_upload(processed_root: str, archive_name: str) -> str:
     """
     Package all processed CLEVRER assets under ``processed_root`` into a zip archive.
     """
