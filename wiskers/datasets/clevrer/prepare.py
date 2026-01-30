@@ -1,6 +1,7 @@
 import json
 import multiprocessing
 import os
+import shutil
 import zipfile
 from glob import glob
 from typing import Optional
@@ -12,30 +13,29 @@ from tqdm import tqdm
 
 
 def bundle_clevrer_for_upload(
-    processed_root: str, archive_name: str, compress: bool = False
-) -> str:
+    processed_root: str, archive_name: str) -> str:
     """
     Package all processed CLEVRER assets under ``processed_root`` into a zip archive.
     """
-    compression_mode = "deflated" if compress else "stored"
-    print(
-        f"Starting CLEVRER bundle: root={processed_root}, archive={archive_name}, compression={compression_mode}"
-    )
-    archive_path = os.path.join(processed_root, archive_name)
+    print(f"Starting CLEVRER bundle: root={processed_root}, archive={archive_name}")
+
+    # Derive base name without .zip for shutil.make_archive
+    base_name, ext = os.path.splitext(archive_name)
+    if not base_name:
+        base_name = "clevrer_processed"
+    archive_base = os.path.join(processed_root, base_name)
+    archive_path = f"{archive_base}.zip"
+
+    # Remove existing archive to avoid self-inclusion or stale bundles
     if os.path.exists(archive_path):
         os.remove(archive_path)
 
     os.makedirs(os.path.dirname(archive_path) or ".", exist_ok=True)
-    compression = zipfile.ZIP_DEFLATED if compress else zipfile.ZIP_STORED
-    with zipfile.ZipFile(archive_path, "w", compression=compression) as zf:
-        for root, _, files in os.walk(processed_root):
-            for file in files:
-                abs_path = os.path.join(root, file)
-                # Avoid bundling the archive into itself if rerun
-                if abs_path == archive_path:
-                    continue
-                rel_path = os.path.relpath(abs_path, processed_root)
-                zf.write(abs_path, rel_path)
+    shutil.make_archive(
+        base_name=archive_base,
+        format="zip",
+        root_dir=processed_root,
+    )
 
     print(f"Created upload bundle at {archive_path}")
     return archive_path

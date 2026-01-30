@@ -161,7 +161,6 @@ class ClevrerMedia(L.LightningDataModule):
         archive_path = bundle_clevrer_for_upload(
             processed_root=self.preprocessed_root,
             archive_name=upload_cfg.archive_name,
-            compress=False,
         )
         upload_file_to_gdrive(
             file_path=archive_path,
