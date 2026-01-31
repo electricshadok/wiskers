@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 
 from wiskers.common.blocks.quantizer import VectorQuantizer
-from wiskers.common.runtime.arg_utils import format_image_size
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 
 
@@ -51,15 +50,6 @@ class VQ_VAE2D(nn.Module):
     ):
         super().__init__()
 
-        if len(block_channels) != len(block_attentions):
-            raise ValueError("len(block_channels) must equal len(block_attentions)")
-
-        self.num_levels = len(block_attentions)
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.block_channels = block_channels
-        self.image_size = format_image_size(image_size)
-
         self._encoder = CNNEncoder(
             in_channels=in_channels,
             stem_channels=stem_channels,
@@ -68,6 +58,7 @@ class VQ_VAE2D(nn.Module):
             block_attentions=block_attentions,
             activation=activation,
         )
+        self._latent_shape = self._encoder.get_latent_shape(image_size)
 
         self._quantizer = VectorQuantizer(
             num_codes=num_codes,
@@ -88,10 +79,7 @@ class VQ_VAE2D(nn.Module):
 
     def get_latent_shape(self):
         # downsampled 2^num_levels times in each dimension
-        mid_h = self.image_size[0] // (2**self.num_levels)
-        mid_w = self.image_size[1] // (2**self.num_levels)
-        mid_c = self.block_channels[-1]
-        return mid_c, mid_h, mid_w
+        return self._latent_shape
 
     def decoder(self, z):
         if not torch.jit.is_tracing():

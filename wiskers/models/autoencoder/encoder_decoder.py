@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
 
 import torch.nn as nn
 
@@ -9,6 +9,7 @@ from wiskers.common.blocks.conv_blocks_2d import (
     DownBlock2D,
     UpBlock2D,
 )
+from wiskers.common.runtime.arg_utils import format_image_size
 
 
 class CNNEncoder(nn.Module):
@@ -48,14 +49,14 @@ class CNNEncoder(nn.Module):
         )
 
         # Input and Encoder (Down blocks and self-attention blocks)
-        num_levels = len(block_attentions)
+        self._num_levels = len(block_attentions)
         self.input = DoubleConv2D(
             in_channels=in_channels,
             out_channels=current_channels,
             activation=activation,
         )
         down_blocks = []
-        for level_idx in range(num_levels):
+        for level_idx in range(self._num_levels):
             up_filters, low_filters = (current_channels, block_channels[level_idx])
             if block_attentions[level_idx]:
                 down_block = AttnDownBlock2D(
@@ -65,10 +66,19 @@ class CNNEncoder(nn.Module):
                 down_block = DownBlock2D(up_filters, low_filters, activation)
             down_blocks.append(down_block)
             current_channels = low_filters
+        self._latent_channels = current_channels
         self.down_blocks = nn.Sequential(*down_blocks)
 
     def forward(self, x):
         return self.down_blocks(self.input(x))
+
+    def get_latent_shape(
+        self, image_size: Union[int, Tuple[int, int]]
+    ) -> Tuple[int, int, int]:
+        """Compute latent tensor shape given the input image size."""
+        h, w = format_image_size(image_size)
+        factor = 2**self._num_levels
+        return self._latent_channels, h // factor, w // factor
 
 
 class CNNDecoder(nn.Module):
