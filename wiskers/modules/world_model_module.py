@@ -7,6 +7,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 from wiskers.common.losses import ssim_with_loss
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
+from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 from wiskers.modules.base_module import BaseLightningModule
 
@@ -19,6 +20,7 @@ class WorldModelModule(BaseLightningModule):
     Args:
         # Model configuration
         in_channels (int): Number of input channels.
+        stem_channels (Optional[int]): Channels produced by the encoder stem; defaults to first block width when None.
         out_channels (int): Number of output channels.
         num_heads (int): Number of self-attention heads.
         block_channels (List[int]): Filter width per level.
@@ -66,20 +68,30 @@ class WorldModelModule(BaseLightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.image_size = image_size
-        self.model = VQ_VAE2D(
+        encoder = CNNEncoder(
             in_channels=in_channels,
             stem_channels=stem_channels,
-            out_channels=out_channels,
             num_heads=num_heads,
             block_channels=block_channels,
             block_attentions=block_attentions,
-            image_size=image_size,
             activation=instantiate(activation),
+        )
+        decoder = CNNDecoder(
+            out_channels=out_channels,
+            num_heads=num_heads,
+            block_channels=list(reversed(block_channels)),
+            block_attentions=block_attentions,
+            activation=instantiate(activation),
+        )
+        self.model = VQ_VAE2D(
+            image_size=image_size,
             num_codes=num_codes,
             beta=beta,
             use_ema=use_ema,
             decay=decay,
             eps=eps,
+            encoder=encoder,
+            decoder=decoder,
         )
         loss_cfg = losses or {}
         reconstruction_loss = loss_cfg.get(

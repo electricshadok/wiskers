@@ -83,7 +83,7 @@ class Autoencoder2D(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass of the U-Net diffusion model.
+        Forward pass of the AE model.
 
         Args:
             x (torch.FloatTensor): Input tensor of shape (N, in_C, H, W).

@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 from wiskers.common.losses import kl_divergence_standard_normal
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
+from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vae_2d import VAE2D
 from wiskers.modules.base_module import BaseLightningModule
 
@@ -43,15 +44,26 @@ class VAEModule(BaseLightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.image_size = image_size
-        self.model = VAE2D(
+
+        encoder = CNNEncoder(
             in_channels=in_channels,
             stem_channels=stem_channels,
-            out_channels=out_channels,
             num_heads=num_heads,
             block_channels=block_channels,
             block_attentions=block_attentions,
-            image_size=image_size,
             activation=instantiate(activation),
+        )
+        decoder = CNNDecoder(
+            out_channels=out_channels,
+            num_heads=num_heads,
+            block_channels=list(reversed(block_channels)),
+            block_attentions=block_attentions,
+            activation=instantiate(activation),
+        )
+        self.model = VAE2D(
+            image_size=image_size,
+            encoder=encoder,
+            decoder=decoder,
         )
         self.learning_rate = learning_rate
 

@@ -4,6 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
+from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 
 
@@ -15,11 +16,23 @@ from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
     ],
 )
 def test_vqvae2D(batch_size, in_channels, out_channels, height, width, use_ema):
-    net = VQ_VAE2D(
+    encoder = CNNEncoder(
         in_channels=in_channels,
+        num_heads=2,
+        block_channels=[32, 64, 128],
+        block_attentions=[True, True, True],
+    )
+    decoder = CNNDecoder(
         out_channels=out_channels,
         num_heads=2,
+        block_channels=[128, 64, 32],
+        block_attentions=[True, True, True],
+    )
+    net = VQ_VAE2D(
         use_ema=use_ema,
+        image_size=(height, width),
+        encoder=encoder,
+        decoder=decoder,
     )
     x = torch.randn(batch_size, in_channels, height, width)
     recon_x, vq_loss, indices = net(x)
@@ -40,11 +53,23 @@ def test_vqvae2D(batch_size, in_channels, out_channels, height, width, use_ema):
 def test_vqvae2D_to_onnx(
     batch_size, in_channels, out_channels, height, width, tmp_path, use_ema
 ):
-    net = VQ_VAE2D(
+    encoder = CNNEncoder(
         in_channels=in_channels,
+        num_heads=2,
+        block_channels=[32, 64, 128],
+        block_attentions=[True, True, True],
+    )
+    decoder = CNNDecoder(
         out_channels=out_channels,
         num_heads=2,
+        block_channels=[128, 64, 32],
+        block_attentions=[True, True, True],
+    )
+    net = VQ_VAE2D(
         use_ema=use_ema,
+        image_size=(height, width),
+        encoder=encoder,
+        decoder=decoder,
     )
     x = torch.randn(batch_size, in_channels, height, width)
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -12,15 +12,9 @@ class VQ_VAE2D(nn.Module):
     VAE architecture.
 
     Args:
-        in_channels (int): Number of input channels.
-        stem_channels (Optional[int]): Channels produced by the encoder stem
-            before entering the first down block.
-        out_channels (int): Number of output channels.
-        num_heads (int): Number of self-attention heads.
-        block_channels (List[int]): Filter width per level.
-        block_attentions (List[bool]) : Enable attention per level.
+        encoder (CNNEncoder): Prebuilt encoder module.
+        decoder (CNNDecoder): Prebuilt decoder module.
         image_size (int or tuple): Input image size (H, W).
-        activation (nn.Module): Activation function.
         num_codes (int): Number of discrete embeddings in the codebook (K).
         beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
         use_ema (bool): Whether to use EMA updates for the codebook.
@@ -34,14 +28,9 @@ class VQ_VAE2D(nn.Module):
 
     def __init__(
         self,
-        in_channels: int = 3,
-        stem_channels: Optional[int] = None,
-        out_channels: int = 3,
-        num_heads: int = 8,
-        block_channels: List[int] = [32, 64, 128],
-        block_attentions: List[bool] = [True, True, True],
+        encoder: CNNEncoder,
+        decoder: CNNDecoder,
         image_size: Union[int, Tuple[int, int]] = 32,
-        activation: nn.Module = nn.ReLU(),
         num_codes: int = 512,
         beta: float = 0.25,
         use_ema: bool = True,
@@ -50,32 +39,20 @@ class VQ_VAE2D(nn.Module):
     ):
         super().__init__()
 
-        self._encoder = CNNEncoder(
-            in_channels=in_channels,
-            stem_channels=stem_channels,
-            num_heads=num_heads,
-            block_channels=block_channels,
-            block_attentions=block_attentions,
-            activation=activation,
-        )
+        self._encoder = encoder
         self._latent_shape = self._encoder.get_latent_shape(image_size)
+        latent_channels = self._latent_shape[0]
 
         self._quantizer = VectorQuantizer(
             num_codes=num_codes,
-            code_dim=block_channels[-1],
+            code_dim=latent_channels,
             beta=beta,
             use_ema=use_ema,
             decay=decay,
             eps=eps,
         )
 
-        self._decoder = CNNDecoder(
-            out_channels=out_channels,
-            num_heads=num_heads,
-            block_channels=list(reversed(block_channels)),
-            block_attentions=block_attentions,
-            activation=activation,
-        )
+        self._decoder = decoder
 
     def get_latent_shape(self):
         # downsampled 2^num_levels times in each dimension
@@ -96,7 +73,7 @@ class VQ_VAE2D(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass of the U-Net diffusion model.
+        Forward pass of the VQ-VAE model.
 
         Args:
             x (torch.FloatTensor): Input tensor of shape (N, in_C, H, W).

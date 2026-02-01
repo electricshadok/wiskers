@@ -4,6 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
+from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vae_2d import VAE2D
 
 
@@ -15,7 +16,23 @@ from wiskers.models.autoencoder.vae_2d import VAE2D
     ],
 )
 def test_vae2D(batch_size, in_channels, out_channels, height, width):
-    net = VAE2D(in_channels=in_channels, out_channels=out_channels, num_heads=2)
+    encoder = CNNEncoder(
+        in_channels=in_channels,
+        num_heads=2,
+        block_channels=[32, 64, 128],
+        block_attentions=[True, True, True],
+    )
+    decoder = CNNDecoder(
+        out_channels=out_channels,
+        num_heads=2,
+        block_channels=[128, 64, 32],
+        block_attentions=[True, True, True],
+    )
+    net = VAE2D(
+        image_size=(height, width),
+        encoder=encoder,
+        decoder=decoder,
+    )
     x = torch.randn(batch_size, in_channels, height, width)
     out_x, mu, logvar = net(x)
 
@@ -40,8 +57,22 @@ def test_vae2D(batch_size, in_channels, out_channels, height, width):
     ],
 )
 def test_vae2D_to_onnx(batch_size, in_channels, out_channels, height, width, tmp_path):
+    encoder = CNNEncoder(
+        in_channels=in_channels,
+        num_heads=2,
+        block_channels=[32, 64, 128],
+        block_attentions=[True, True, True],
+    )
+    decoder = CNNDecoder(
+        out_channels=out_channels,
+        num_heads=2,
+        block_channels=[128, 64, 32],
+        block_attentions=[True, True, True],
+    )
     net = VAE2D(
-        in_channels=in_channels, out_channels=out_channels, num_heads=2
+        image_size=(height, width),
+        encoder=encoder,
+        decoder=decoder,
     )
     x = torch.randn(batch_size, in_channels, height, width)
 
