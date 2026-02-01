@@ -37,15 +37,24 @@ export_safetensors: False
 module:
   _target_: wiskers.modules.world_model_module.WorldModelModule
   _recursive_: false  # keep nested configs (e.g., lr_scheduler) as dicts
-  # model
-  in_channels: 3
-  stem_channels: 8
-  out_channels: 3
-  num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
-  block_channels: [16, 32, 64, 128, 256]
-  block_attentions: [False, False, False, False, False]
-  image_size: ${data_module.transform.image_size}  # Use a reference to data_module.image_size
-  activation: "torch.nn.ReLU"
+  image_size: ${data_module.transform.image_size}
+  encoder:
+    _target_: wiskers.models.autoencoder.encoder_decoder.CNNEncoder
+    in_channels: 3
+    stem_channels: 8
+    num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
+    block_channels: [16, 32, 64, 128, 256]
+    block_attentions: [False, False, False, False, False]
+    activation:
+      _target_: torch.nn.ReLU
+  decoder:
+    _target_: wiskers.models.autoencoder.encoder_decoder.CNNDecoder
+    out_channels: 3
+    num_heads: 0
+    block_channels: [256, 128, 64, 32, 16]
+    block_attentions: [False, False, False, False, False]
+    activation:
+      _target_: torch.nn.ReLU
   losses:
     reconstruction: "wiskers.common.losses.MixedL1L2Loss"
     vq_weight: 1.0

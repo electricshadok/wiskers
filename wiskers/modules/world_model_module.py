@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import torch
 import torchvision.utils as vutils
@@ -19,14 +19,9 @@ class WorldModelModule(BaseLightningModule):
 
     Args:
         # Model configuration
-        in_channels (int): Number of input channels.
-        stem_channels (Optional[int]): Channels produced by the encoder stem; defaults to first block width when None.
-        out_channels (int): Number of output channels.
-        num_heads (int): Number of self-attention heads.
-        block_channels (List[int]): Filter width per level.
-        block_attentions (List[bool]) : Enable attention per level.
         image_size (int or tuple): Input image size (H, W).
-        activation (str): Activation function.
+        encoder (dict or nn.Module): Hydra config or instance of CNNEncoder (required).
+        decoder (dict or nn.Module): Hydra config or instance of CNNDecoder (required).
         # Codebook configuration
         num_codes (int): Number of discrete embeddings in the codebook (K).
         beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
@@ -46,14 +41,9 @@ class WorldModelModule(BaseLightningModule):
     def __init__(
         self,
         # Model Configuration
-        in_channels: int = 3,
-        stem_channels: Optional[int] = None,
-        out_channels: int = 3,
-        num_heads: int = 8,
-        block_channels: List[int] = [32, 64, 128],
-        block_attentions: List[bool] = [True, True, True],
+        encoder: Union[dict, CNNEncoder],
+        decoder: Union[dict, CNNDecoder],
         image_size: Union[int, Tuple[int, int]] = 32,
-        activation: str = "torch.nn.ReLU",
         # Codebook Configuration
         num_codes: int = 512,
         beta: float = 0.25,
@@ -68,21 +58,15 @@ class WorldModelModule(BaseLightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.image_size = image_size
-        encoder = CNNEncoder(
-            in_channels=in_channels,
-            stem_channels=stem_channels,
-            num_heads=num_heads,
-            block_channels=block_channels,
-            block_attentions=block_attentions,
-            activation=instantiate(activation),
-        )
-        decoder = CNNDecoder(
-            out_channels=out_channels,
-            num_heads=num_heads,
-            block_channels=list(reversed(block_channels)),
-            block_attentions=block_attentions,
-            activation=instantiate(activation),
-        )
+        if isinstance(encoder, dict):
+            encoder = instantiate(encoder, _convert_="all")
+
+        if isinstance(decoder, dict):
+            decoder = instantiate(decoder, _convert_="all")
+
+        if encoder is None or decoder is None:
+            raise ValueError("Encoder and decoder must be provided or constructible.")
+
         self.model = VQ_VAE2D(
             image_size=image_size,
             num_codes=num_codes,
@@ -105,6 +89,7 @@ class WorldModelModule(BaseLightningModule):
         self.lr_scheduler_cfg = lr_scheduler
 
         # Set 'example_input_array' for ONNX export initialization
+        in_channels = encoder.get_in_channels()
         image_size = format_image_size(image_size)
         self.example_input_array = torch.randn(
             1, in_channels, image_size[0], image_size[1]

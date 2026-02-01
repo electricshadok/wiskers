@@ -44,6 +44,7 @@ class CNNEncoder(nn.Module):
         if len(block_channels) != len(block_attentions):
             raise ValueError("len(block_channels) must equal len(block_attentions)")
 
+        self.in_channels = in_channels
         current_channels = (
             stem_channels if stem_channels is not None else block_channels[0]
         )
@@ -79,6 +80,10 @@ class CNNEncoder(nn.Module):
         h, w = format_image_size(image_size)
         factor = 2**self._num_levels
         return self._latent_channels, h // factor, w // factor
+
+    def get_in_channels(self) -> int:
+        """Return the expected number of input channels."""
+        return self.in_channels
 
 
 class CNNDecoder(nn.Module):
