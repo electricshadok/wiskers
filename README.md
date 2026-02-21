@@ -2,8 +2,6 @@
 
 ![Wiskers Logo](https://raw.githubusercontent.com/electricshadok/wiskers/refs/heads/main/docs/wiskers_logo.png)
 
---------------------------------------------------------------------------------
-
 Wiskers is an experimental sandbox for building and testing diverse world models that learn to predict and reason about dynamic environments. It serves as a modular playground to explore latent dynamics, acting as the predictive engine for physical AI and reinforcement learning agents.
 
 
