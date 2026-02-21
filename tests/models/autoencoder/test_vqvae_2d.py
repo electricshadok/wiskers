@@ -4,6 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
+from wiskers.common.blocks.quantizer import VectorQuantizer
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 
@@ -28,11 +29,19 @@ def test_vqvae2D(batch_size, in_channels, out_channels, height, width, use_ema):
         block_channels=[128, 64, 32],
         block_attentions=[True, True, True],
     )
-    net = VQ_VAE2D(
+    latent_shape = encoder.get_latent_shape((height, width))
+    latent_channels = latent_shape[0]
+    quantizer = VectorQuantizer(
+        num_codes=128,
+        code_dim=latent_channels,
+        beta=0.25,
         use_ema=use_ema,
-        image_size=(height, width),
+    )
+    net = VQ_VAE2D(
         encoder=encoder,
         decoder=decoder,
+        quantizer=quantizer,
+        latent_shape=latent_shape,
     )
     x = torch.randn(batch_size, in_channels, height, width)
     recon_x, vq_loss, indices = net(x)
@@ -65,11 +74,19 @@ def test_vqvae2D_to_onnx(
         block_channels=[128, 64, 32],
         block_attentions=[True, True, True],
     )
-    net = VQ_VAE2D(
+    latent_shape = encoder.get_latent_shape((height, width))
+    latent_channels = latent_shape[0]
+    quantizer = VectorQuantizer(
+        num_codes=128,
+        code_dim=latent_channels,
+        beta=0.25,
         use_ema=use_ema,
-        image_size=(height, width),
+    )
+    net = VQ_VAE2D(
         encoder=encoder,
         decoder=decoder,
+        quantizer=quantizer,
+        latent_shape=latent_shape,
     )
     x = torch.randn(batch_size, in_channels, height, width)
 

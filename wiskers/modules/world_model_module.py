@@ -4,6 +4,7 @@ import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
+from wiskers.common.blocks.quantizer import VectorQuantizer
 from wiskers.common.losses import ssim_with_loss
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
@@ -22,12 +23,7 @@ class WorldModelModule(BaseLightningModule):
         image_size (int or tuple): Input image size (H, W).
         encoder (dict or nn.Module): Hydra config or instance of CNNEncoder (required).
         decoder (dict or nn.Module): Hydra config or instance of CNNDecoder (required).
-        # Codebook configuration
-        num_codes (int): Number of discrete embeddings in the codebook (K).
-        beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
-        use_ema (bool): Whether to use EMA updates for the codebook.
-        decay (float): EMA decay factor (only used if use_ema=True).
-        eps (float): Small constant for numerical stability.
+        quantizer (dict or VectorQuantizer): Hydra config or instance of a VectorQuantizer.
         losses (dict): Loss configuration with optional keys:
             - reconstruction (str): Dotted path to reconstruction loss callable.
             - vq_weight (float): Scale for the vector-quantization loss.
@@ -44,19 +40,15 @@ class WorldModelModule(BaseLightningModule):
         encoder: Union[dict, CNNEncoder],
         decoder: Union[dict, CNNDecoder],
         image_size: Union[int, Tuple[int, int]] = 32,
-        # Codebook Configuration
-        num_codes: int = 512,
-        beta: float = 0.25,
-        use_ema: bool = True,
-        decay: float = 0.99,
-        eps: float = 1e-5,
+        quantizer: Union[dict, VectorQuantizer] = None,
         losses: Optional[dict] = None,
         # Optimizer Configuration
         optimizer: Optional[dict] = None,
         lr_scheduler: Optional[dict] = None,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters()
+        # Avoid storing the quantizer module in hparams; keep config via checkpoint if needed.
+        self.save_hyperparameters(ignore=["quantizer"])
         self.image_size = image_size
         if isinstance(encoder, dict):
             encoder = instantiate(encoder, _convert_="all")
@@ -67,15 +59,27 @@ class WorldModelModule(BaseLightningModule):
         if encoder is None or decoder is None:
             raise ValueError("Encoder and decoder must be provided or constructible.")
 
+        latent_shape = encoder.get_latent_shape(image_size)
+
+        # Build quantizer from config or validate provided instance
+        if quantizer is None:
+            raise ValueError("quantizer must be provided as config or instance.")
+        if isinstance(quantizer, dict):
+            quantizer_cfg = dict(quantizer)
+            quantizer_cfg.setdefault("code_dim", latent_shape[0])
+            quantizer = instantiate(quantizer_cfg, _convert_="all")
+        if not isinstance(quantizer, VectorQuantizer):
+            raise TypeError("quantizer must be a VectorQuantizer instance.")
+        if quantizer.code_dim != latent_shape[0]:
+            raise ValueError(
+                f"quantizer.code_dim must match encoder latent channels: {latent_shape[0]}"
+            )
+
         self.model = VQ_VAE2D(
-            image_size=image_size,
-            num_codes=num_codes,
-            beta=beta,
-            use_ema=use_ema,
-            decay=decay,
-            eps=eps,
             encoder=encoder,
             decoder=decoder,
+            quantizer=quantizer,
+            latent_shape=latent_shape,
         )
         loss_cfg = losses or {}
         reconstruction_loss = loss_cfg.get(

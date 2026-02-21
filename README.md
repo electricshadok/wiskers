@@ -1,13 +1,10 @@
+# Wiskers: World Models Playground 
 
-![PyTorch Logo](https://raw.githubusercontent.com/electricshadok/wiskers/refs/heads/main/docs/wiskers_logo.png)
+![Wiskers Logo](https://raw.githubusercontent.com/electricshadok/wiskers/refs/heads/main/docs/wiskers_logo.png)
 
 --------------------------------------------------------------------------------
 
-
-**Wiskers: DL and  Generative AI Study**
-
-
-**Wiskers** is a framework for **video prediction and reasoning** — learning latent world models that can **understand** and **anticipate** dynamic scenes. 
+Wiskers is an experimental sandbox for building and testing diverse world models that learn to predict and reason about dynamic environments. It serves as a modular playground to explore latent dynamics, acting as the predictive engine for physical AI and reinforcement learning agents.
 
 
 > 📘 For the full philosophy and system blueprint, see [PROJECT.md](https://github.com/vincentbonnetai/wiskers/blob/main/PROJECT.md)

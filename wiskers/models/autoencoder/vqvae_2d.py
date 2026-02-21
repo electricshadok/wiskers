@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -14,12 +14,8 @@ class VQ_VAE2D(nn.Module):
     Args:
         encoder (CNNEncoder): Prebuilt encoder module.
         decoder (CNNDecoder): Prebuilt decoder module.
-        image_size (int or tuple): Input image size (H, W).
-        num_codes (int): Number of discrete embeddings in the codebook (K).
-        beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
-        use_ema (bool): Whether to use EMA updates for the codebook.
-        decay (float): EMA decay factor (only used if use_ema=True).
-        eps (float): Small constant for numerical stability.
+        quantizer (VectorQuantizer): Instantiated vector quantizer for the latent space.
+        latent_shape (tuple): (C, H, W) latent tensor shape produced by the encoder.
 
     Shapes:
         in: [N, in_C, H, W]
@@ -30,27 +26,22 @@ class VQ_VAE2D(nn.Module):
         self,
         encoder: CNNEncoder,
         decoder: CNNDecoder,
-        image_size: Union[int, Tuple[int, int]] = 32,
-        num_codes: int = 512,
-        beta: float = 0.25,
-        use_ema: bool = True,
-        decay: float = 0.99,
-        eps: float = 1e-5,
+        quantizer: VectorQuantizer,
+        latent_shape: Tuple[int, int, int],
     ):
         super().__init__()
 
         self._encoder = encoder
-        self._latent_shape = self._encoder.get_latent_shape(image_size)
+        self._latent_shape = latent_shape
         latent_channels = self._latent_shape[0]
 
-        self._quantizer = VectorQuantizer(
-            num_codes=num_codes,
-            code_dim=latent_channels,
-            beta=beta,
-            use_ema=use_ema,
-            decay=decay,
-            eps=eps,
-        )
+        if quantizer.code_dim != latent_channels:
+            raise ValueError(
+                "quantizer.code_dim must match encoder latent channels: "
+                f"expected {latent_channels}, got {quantizer.code_dim}"
+            )
+
+        self._quantizer = quantizer
 
         self._decoder = decoder
 
