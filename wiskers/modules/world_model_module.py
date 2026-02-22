@@ -5,28 +5,12 @@ import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from wiskers.common.blocks.quantizer import VectorQuantizer
-from wiskers.common.losses import ssim_with_loss
+from wiskers.common.losses import Losses
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 from wiskers.modules.base_module import BaseLightningModule
-
-
-class LossesConfig:
-    """Container for loss configuration so it can be Hydra-instantiated."""
-
-    def __init__(
-        self,
-        reconstruction: Union[str, dict] = "wiskers.common.losses.MixedL1L2Loss",
-        vq_weight: float = 1.0,
-        reconstruction_weight: float = 1.0,
-        ssim_weight: float = 0.0,
-    ) -> None:
-        self.reconstruction = instantiate(reconstruction)
-        self.vq_weight = float(vq_weight)
-        self.reconstruction_weight = float(reconstruction_weight)
-        self.ssim_weight = float(ssim_weight)
 
 
 class WorldModelModule(BaseLightningModule):
@@ -57,7 +41,7 @@ class WorldModelModule(BaseLightningModule):
         decoder: Union[dict, CNNDecoder],
         image_size: Union[int, Tuple[int, int]] = 32,
         quantizer: Union[dict, VectorQuantizer] = None,
-        losses: Union[dict, "LossesConfig"] = None,
+        losses: Union[dict, "Losses"] = None,
         # Optimizer Configuration
         optimizer: Optional[dict] = None,
         lr_scheduler: Optional[dict] = None,
@@ -97,10 +81,10 @@ class WorldModelModule(BaseLightningModule):
         )
         if isinstance(losses, dict):
             losses_cfg = instantiate(losses, _convert_="all")
-        elif isinstance(losses, LossesConfig):
+        elif isinstance(losses, Losses):
             losses_cfg = losses
         else:
-            raise TypeError("losses must be a dict or LossesConfig.")
+            raise TypeError("losses must be a dict or Losses.")
 
         self.losses = losses_cfg
         self.optimizer_cfg = optimizer
@@ -155,26 +139,8 @@ class WorldModelModule(BaseLightningModule):
         recon_x, vq_loss, indices = self.model(images)
 
         # Losses
-        rec_loss = self.losses.reconstruction(images, recon_x)
-        if self.losses.ssim_weight > 0.0:
-            ssim_val, ssim_loss = ssim_with_loss(recon_x, images, data_range=1.0)
-        else:
-            ssim_val = torch.tensor(0.0, device=images.device)
-            ssim_loss = torch.tensor(0.0, device=images.device)
-
-        loss = (
-            self.losses.vq_weight * vq_loss
-            + self.losses.reconstruction_weight * rec_loss
-            + self.losses.ssim_weight * ssim_loss
-        )
-        losses = {
-            "loss": loss,
-            "vq_loss": vq_loss,
-            "vq_loss_weighted": self.losses.vq_weight * vq_loss,
-            "reconstruction_loss": rec_loss,
-            "ssim": ssim_val,
-            "ssim_loss": ssim_loss,
-        }
+        losses = self.losses(images, recon_x, vq_loss)
+        loss = losses["loss"]
 
         self._log_tensor(losses, stage, prog_bar=True)
 

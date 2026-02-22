@@ -1,7 +1,11 @@
+from typing import Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics.functional.image.ssim import structural_similarity_index_measure
+
+from wiskers.common.runtime.arg_utils import instantiate
 
 
 class L1Loss(nn.Module):
@@ -73,3 +77,42 @@ def ssim_with_loss(
         input, target, data_range=data_range
     )
     return ssim_value, 1 - ssim_value
+
+
+class Losses:
+    """Container for loss configuration so it can be Hydra-instantiated."""
+
+    def __init__(
+        self,
+        reconstruction: Union[str, dict] = "wiskers.common.losses.MixedL1L2Loss",
+        vq_weight: float = 1.0,
+        reconstruction_weight: float = 1.0,
+        ssim_weight: float = 0.0,
+    ) -> None:
+        self.reconstruction = instantiate(reconstruction)
+        self.vq_weight = vq_weight
+        self.reconstruction_weight = reconstruction_weight
+        self.ssim_weight = ssim_weight
+
+    def __call__(self, images: torch.Tensor, recon_x: torch.Tensor, vq_loss: torch.Tensor) -> dict:
+        rec_loss = self.reconstruction(images, recon_x)
+        if self.ssim_weight > 0.0:
+            ssim_val, ssim_loss = ssim_with_loss(recon_x, images, data_range=1.0)
+        else:
+            ssim_val = torch.tensor(0.0, device=images.device)
+            ssim_loss = torch.tensor(0.0, device=images.device)
+
+        loss = (
+            self.vq_weight * vq_loss
+            + self.reconstruction_weight * rec_loss
+            + self.ssim_weight * ssim_loss
+        )
+        losses = {
+            "loss": loss,
+            "vq_loss": vq_loss,
+            "vq_loss_weighted": self.vq_weight * vq_loss,
+            "reconstruction_loss": rec_loss,
+            "ssim": ssim_val,
+            "ssim_loss": ssim_loss,
+        }
+        return losses

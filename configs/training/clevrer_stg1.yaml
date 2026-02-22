@@ -56,7 +56,7 @@ module:
     activation:
       _target_: torch.nn.ReLU
   losses:
-    _target_: wiskers.modules.world_model_module.LossesConfig
+    _target_: wiskers.common.losses.Losses
     reconstruction: wiskers.common.losses.MixedL1L2Loss
     vq_weight: 1.0
     reconstruction_weight: 1.0
