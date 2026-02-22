@@ -13,6 +13,22 @@ from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 from wiskers.modules.base_module import BaseLightningModule
 
 
+class LossesConfig:
+    """Container for loss configuration so it can be Hydra-instantiated."""
+
+    def __init__(
+        self,
+        reconstruction: Union[str, dict] = "wiskers.common.losses.MixedL1L2Loss",
+        vq_weight: float = 1.0,
+        reconstruction_weight: float = 1.0,
+        ssim_weight: float = 0.0,
+    ) -> None:
+        self.reconstruction = instantiate(reconstruction)
+        self.vq_weight = float(vq_weight)
+        self.reconstruction_weight = float(reconstruction_weight)
+        self.ssim_weight = float(ssim_weight)
+
+
 class WorldModelModule(BaseLightningModule):
     """
     A LightningModule that combines spatial and temporal modeling for video or physics prediction.
@@ -41,7 +57,7 @@ class WorldModelModule(BaseLightningModule):
         decoder: Union[dict, CNNDecoder],
         image_size: Union[int, Tuple[int, int]] = 32,
         quantizer: Union[dict, VectorQuantizer] = None,
-        losses: Optional[dict] = None,
+        losses: Union[dict, "LossesConfig"] = None,
         # Optimizer Configuration
         optimizer: Optional[dict] = None,
         lr_scheduler: Optional[dict] = None,
@@ -62,8 +78,6 @@ class WorldModelModule(BaseLightningModule):
         latent_shape = encoder.get_latent_shape(image_size)
 
         # Build quantizer from config or validate provided instance
-        if quantizer is None:
-            raise ValueError("quantizer must be provided as config or instance.")
         if isinstance(quantizer, dict):
             quantizer_cfg = dict(quantizer)
             quantizer_cfg.setdefault("code_dim", latent_shape[0])
@@ -81,14 +95,14 @@ class WorldModelModule(BaseLightningModule):
             quantizer=quantizer,
             latent_shape=latent_shape,
         )
-        loss_cfg = losses or {}
-        reconstruction_loss = loss_cfg.get(
-            "reconstruction", "wiskers.common.losses.MixedL1L2Loss"
-        )
-        self.reconstruction_loss_fn = instantiate(reconstruction_loss)
-        self.vq_weight = float(loss_cfg.get("vq_weight", 1.0))
-        self.reconstruction_weight = float(loss_cfg.get("reconstruction_weight", 1.0))
-        self.ssim_weight = float(loss_cfg.get("ssim_weight", 0.0))
+        if isinstance(losses, dict):
+            losses_cfg = instantiate(losses, _convert_="all")
+        elif isinstance(losses, LossesConfig):
+            losses_cfg = losses
+        else:
+            raise TypeError("losses must be a dict or LossesConfig.")
+
+        self.losses = losses_cfg
         self.optimizer_cfg = optimizer
         self.lr_scheduler_cfg = lr_scheduler
 
@@ -141,22 +155,22 @@ class WorldModelModule(BaseLightningModule):
         recon_x, vq_loss, indices = self.model(images)
 
         # Losses
-        rec_loss = self.reconstruction_loss_fn(images, recon_x)
-        if self.ssim_weight > 0.0:
+        rec_loss = self.losses.reconstruction(images, recon_x)
+        if self.losses.ssim_weight > 0.0:
             ssim_val, ssim_loss = ssim_with_loss(recon_x, images, data_range=1.0)
         else:
             ssim_val = torch.tensor(0.0, device=images.device)
             ssim_loss = torch.tensor(0.0, device=images.device)
 
         loss = (
-            self.vq_weight * vq_loss
-            + self.reconstruction_weight * rec_loss
-            + self.ssim_weight * ssim_loss
+            self.losses.vq_weight * vq_loss
+            + self.losses.reconstruction_weight * rec_loss
+            + self.losses.ssim_weight * ssim_loss
         )
         losses = {
             "loss": loss,
             "vq_loss": vq_loss,
-            "vq_loss_weighted": self.vq_weight * vq_loss,
+            "vq_loss_weighted": self.losses.vq_weight * vq_loss,
             "reconstruction_loss": rec_loss,
             "ssim": ssim_val,
             "ssim_loss": ssim_loss,
