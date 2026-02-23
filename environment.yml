@@ -1,4 +1,4 @@
-name: wiskers_dev
+name: wiskers
 channels:
   - conda-forge
 dependencies:
