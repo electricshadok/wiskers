@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from wiskers.common.blocks.quantizer import VectorQuantizer
+from wiskers.common.latent_base import LatentModelBase
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 
 
@@ -14,7 +14,7 @@ class VQ_VAE2D(nn.Module):
     Args:
         encoder (CNNEncoder): Prebuilt encoder module.
         decoder (CNNDecoder): Prebuilt decoder module.
-        quantizer (VectorQuantizer): Instantiated vector quantizer for the latent space.
+        latent_model (LatentModelBase): Instantiated latent bottleneck (e.g. VectorQuantizer or VAE).
         latent_shape (tuple): (C, H, W) latent tensor shape produced by the encoder.
 
     Shapes:
@@ -26,7 +26,7 @@ class VQ_VAE2D(nn.Module):
         self,
         encoder: CNNEncoder,
         decoder: CNNDecoder,
-        quantizer: VectorQuantizer,
+        latent_model: LatentModelBase,
         latent_shape: Tuple[int, int, int],
     ):
         super().__init__()
@@ -35,13 +35,13 @@ class VQ_VAE2D(nn.Module):
         self._latent_shape = latent_shape
         latent_channels = self._latent_shape[0]
 
-        if quantizer.code_dim != latent_channels:
+        if latent_model.code_dim != latent_channels:
             raise ValueError(
-                "quantizer.code_dim must match encoder latent channels: "
-                f"expected {latent_channels}, got {quantizer.code_dim}"
+                "latent_model.code_dim must match encoder latent channels: "
+                f"expected {latent_channels}, got {latent_model.code_dim}"
             )
 
-        self._quantizer = quantizer
+        self._latent_model = latent_model
 
         self._decoder = decoder
 
@@ -80,6 +80,6 @@ class VQ_VAE2D(nn.Module):
             out: [N, out_C, H, W]
         """
         z_e = self._encoder(x)
-        z_q_st, vq_loss, indices = self._quantizer(z_e)
+        z_q_st, vq_loss, indices = self._latent_model(z_e)
         recon_x = self._decoder(z_q_st)
         return recon_x, vq_loss, indices

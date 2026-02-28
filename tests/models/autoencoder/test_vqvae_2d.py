@@ -40,7 +40,7 @@ def test_vqvae2D(batch_size, in_channels, out_channels, height, width, use_ema):
     net = VQ_VAE2D(
         encoder=encoder,
         decoder=decoder,
-        quantizer=quantizer,
+        latent_model=quantizer,
         latent_shape=latent_shape,
     )
     x = torch.randn(batch_size, in_channels, height, width)
@@ -85,7 +85,7 @@ def test_vqvae2D_to_onnx(
     net = VQ_VAE2D(
         encoder=encoder,
         decoder=decoder,
-        quantizer=quantizer,
+        latent_model=quantizer,
         latent_shape=latent_shape,
     )
     x = torch.randn(batch_size, in_channels, height, width)

@@ -4,7 +4,7 @@ import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from wiskers.common.blocks.quantizer import VectorQuantizer
+from wiskers.common.latent_base import LatentModelBase
 from wiskers.common.losses import Losses
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
@@ -23,7 +23,7 @@ class WorldModelModule(BaseLightningModule):
         image_size (int or tuple): Input image size (H, W).
         encoder (dict or nn.Module): Hydra config or instance of CNNEncoder (required).
         decoder (dict or nn.Module): Hydra config or instance of CNNDecoder (required).
-        quantizer (dict or VectorQuantizer): Hydra config or instance of a VectorQuantizer.
+        latent_model (dict or LatentModelBase): Hydra config or instance of a latent bottleneck (VQVAE or VAE).
         losses (dict): Loss configuration with optional keys:
             - reconstruction (str): Dotted path to reconstruction loss callable.
             - vq_weight (float): Scale for the vector-quantization loss.
@@ -40,43 +40,31 @@ class WorldModelModule(BaseLightningModule):
         encoder: Union[dict, CNNEncoder],
         decoder: Union[dict, CNNDecoder],
         image_size: Union[int, Tuple[int, int]] = 32,
-        quantizer: Union[dict, VectorQuantizer] = None,
+        latent_model: Union[dict, LatentModelBase] = None,
         losses: Union[dict, "Losses"] = None,
         # Optimizer Configuration
         optimizer: Optional[dict] = None,
         lr_scheduler: Optional[dict] = None,
     ) -> None:
         super().__init__()
-        # Avoid storing the quantizer module in hparams; keep config via checkpoint if needed.
-        self.save_hyperparameters(ignore=["quantizer"])
+        # Avoid storing the latent model module in hparams; keep config via checkpoint if needed.
+        self.save_hyperparameters(ignore=["latent_model"])
         self.image_size = image_size
-        if isinstance(encoder, dict):
-            encoder = instantiate(encoder, _convert_="all")
 
-        if isinstance(decoder, dict):
-            decoder = instantiate(decoder, _convert_="all")
+        encoder = instantiate(encoder, _convert_="all")
+        decoder = instantiate(decoder, _convert_="all")
 
         if encoder is None or decoder is None:
             raise ValueError("Encoder and decoder must be provided or constructible.")
 
         latent_shape = encoder.get_latent_shape(image_size)
 
-        # Build quantizer from config or validate provided instance
-        if isinstance(quantizer, dict):
-            quantizer_cfg = dict(quantizer)
-            quantizer_cfg.setdefault("code_dim", latent_shape[0])
-            quantizer = instantiate(quantizer_cfg, _convert_="all")
-        if not isinstance(quantizer, VectorQuantizer):
-            raise TypeError("quantizer must be a VectorQuantizer instance.")
-        if quantizer.code_dim != latent_shape[0]:
-            raise ValueError(
-                f"quantizer.code_dim must match encoder latent channels: {latent_shape[0]}"
-            )
+        latent_model = instantiate(latent_model, _convert_="all")
 
         self.model = VQ_VAE2D(
             encoder=encoder,
             decoder=decoder,
-            quantizer=quantizer,
+            latent_model=latent_model,
             latent_shape=latent_shape,
         )
         if isinstance(losses, dict):
@@ -98,14 +86,9 @@ class WorldModelModule(BaseLightningModule):
         )
 
     def configure_optimizers(self):
-        if self.optimizer_cfg is None:
-            optimizer = torch.optim.Adam(self.model.parameters())
-        else:
-            optimizer = instantiate(
-                self.optimizer_cfg,
-                params=self.model.parameters(),
-                _convert_="all",
-            )
+        optimizer = instantiate(
+            self.optimizer_cfg, params=self.model.parameters(), _convert_="all"
+        )
 
         if self.lr_scheduler_cfg is None:
             return optimizer
@@ -146,11 +129,12 @@ class WorldModelModule(BaseLightningModule):
 
         # Metrics (codebook usage)
         with torch.no_grad():
-            metrics = codebook_usage_metrics(
-                indices=indices,
-                num_codes=self.model._quantizer.num_codes,  # type: ignore[attr-defined]
-            )
-            self._log_tensor(metrics, stage, prog_bar=False)
+            if hasattr(self.model._latent_model, "num_codes"):
+                metrics = codebook_usage_metrics(
+                    indices=indices,
+                    num_codes=self.model._latent_model.num_codes,  # type: ignore[attr-defined]
+                )
+                self._log_tensor(metrics, stage, prog_bar=False)
 
         # Log statistics on tensors
         self._log_tensor_stats(stage, "image", images)

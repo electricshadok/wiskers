@@ -61,10 +61,11 @@ module:
     vq_weight: 1.0
     reconstruction_weight: 1.0
     ssim_weight: 0.3
-  # quantizer
-  quantizer:
+  # latent model (e.g. VQ or VAE)
+  latent_model:
     _target_: wiskers.common.blocks.quantizer.VectorQuantizer
     num_codes: 128
+    code_dim: 256 # matches encoder's latent channels
     beta: 0.1
     use_ema: True
     decay: 0.99
