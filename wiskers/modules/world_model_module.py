@@ -1,15 +1,12 @@
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from wiskers.common.latent_base import LatentModelBase
 from wiskers.common.losses import Losses
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import format_image_size, instantiate
-from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
-from wiskers.models.autoencoder.vqvae_2d import VQ_VAE2D
 from wiskers.modules.base_module import BaseLightningModule
 
 
@@ -21,9 +18,7 @@ class WorldModelModule(BaseLightningModule):
     Args:
         # Model configuration
         image_size (int or tuple): Input image size (H, W).
-        encoder (dict or nn.Module): Hydra config or instance of CNNEncoder (required).
-        decoder (dict or nn.Module): Hydra config or instance of CNNDecoder (required).
-        latent_model (dict or LatentModelBase): Hydra config or instance of a latent bottleneck (VQVAE or VAE).
+        model (dict or nn.Module): Hydra config or instance of the full autoencoder model (e.g. VQ_VAE2D).
         losses (dict): Loss configuration with optional keys:
             - reconstruction (str): Dotted path to reconstruction loss callable.
             - vq_weight (float): Scale for the vector-quantization loss.
@@ -37,49 +32,25 @@ class WorldModelModule(BaseLightningModule):
     def __init__(
         self,
         # Model Configuration
-        encoder: Union[dict, CNNEncoder],
-        decoder: Union[dict, CNNDecoder],
-        image_size: Union[int, Tuple[int, int]] = 32,
-        latent_model: Union[dict, LatentModelBase] = None,
-        losses: Union[dict, "Losses"] = None,
+        image_size: Union[int, Tuple[int, int]],
+        model: Union[dict, torch.nn.Module],
+        losses: Union[dict, Losses] = None,
         # Optimizer Configuration
-        optimizer: Optional[dict] = None,
-        lr_scheduler: Optional[dict] = None,
+        optimizer: dict = None,
+        lr_scheduler: dict = None,
     ) -> None:
         super().__init__()
-        # Avoid storing the latent model module in hparams; keep config via checkpoint if needed.
-        self.save_hyperparameters(ignore=["latent_model"])
+        self.save_hyperparameters(ignore=["model"])
         self.image_size = image_size
 
-        encoder = instantiate(encoder, _convert_="all")
-        decoder = instantiate(decoder, _convert_="all")
+        self.model = instantiate(model, _convert_="all")
 
-        if encoder is None or decoder is None:
-            raise ValueError("Encoder and decoder must be provided or constructible.")
-
-        latent_shape = encoder.get_latent_shape(image_size)
-
-        latent_model = instantiate(latent_model, _convert_="all")
-
-        self.model = VQ_VAE2D(
-            encoder=encoder,
-            decoder=decoder,
-            latent_model=latent_model,
-            latent_shape=latent_shape,
-        )
-        if isinstance(losses, dict):
-            losses_cfg = instantiate(losses, _convert_="all")
-        elif isinstance(losses, Losses):
-            losses_cfg = losses
-        else:
-            raise TypeError("losses must be a dict or Losses.")
-
-        self.losses = losses_cfg
+        self.losses = instantiate(losses, _convert_="all")
         self.optimizer_cfg = optimizer
         self.lr_scheduler_cfg = lr_scheduler
 
         # Set 'example_input_array' for ONNX export initialization
-        in_channels = encoder.get_in_channels()
+        in_channels = self.model._encoder.get_in_channels()
         image_size = format_image_size(image_size)
         self.example_input_array = torch.randn(
             1, in_channels, image_size[0], image_size[1]

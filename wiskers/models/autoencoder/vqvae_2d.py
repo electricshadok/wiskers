@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -15,7 +15,7 @@ class VQ_VAE2D(nn.Module):
         encoder (CNNEncoder): Prebuilt encoder module.
         decoder (CNNDecoder): Prebuilt decoder module.
         latent_model (LatentModelBase): Instantiated latent bottleneck (e.g. VectorQuantizer or VAE).
-        latent_shape (tuple): (C, H, W) latent tensor shape produced by the encoder.
+        image_size (int or tuple): Input image size (H, W).
 
     Shapes:
         in: [N, in_C, H, W]
@@ -27,12 +27,12 @@ class VQ_VAE2D(nn.Module):
         encoder: CNNEncoder,
         decoder: CNNDecoder,
         latent_model: LatentModelBase,
-        latent_shape: Tuple[int, int, int],
+        image_size: Union[int, Tuple[int, int]],
     ):
         super().__init__()
 
         self._encoder = encoder
-        self._latent_shape = latent_shape
+        self._latent_shape = self._encoder.get_latent_shape(image_size)
         latent_channels = self._latent_shape[0]
 
         if latent_model.code_dim != latent_channels:

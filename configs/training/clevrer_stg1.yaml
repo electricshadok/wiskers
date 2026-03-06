@@ -38,38 +38,43 @@ module:
   _target_: wiskers.modules.world_model_module.WorldModelModule
   _recursive_: false  # keep nested configs (e.g., lr_scheduler) as dicts
   image_size: ${data_module.transform.image_size}
-  encoder:
-    _target_: wiskers.models.autoencoder.encoder_decoder.CNNEncoder
-    in_channels: 3
-    stem_channels: 8
-    num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
-    block_channels: [16, 32, 64, 128, 256]
-    block_attentions: [False, False, False, False, False]
-    activation:
-      _target_: torch.nn.ReLU
-  decoder:
-    _target_: wiskers.models.autoencoder.encoder_decoder.CNNDecoder
-    out_channels: 3
-    num_heads: 0
-    block_channels: [256, 128, 64, 32, 16]
-    block_attentions: [False, False, False, False, False]
-    activation:
-      _target_: torch.nn.ReLU
+  # The actual autoencoder (e.g. VQ_VAE2D)
+  model:
+    _target_: wiskers.models.autoencoder.vqvae_2d.VQ_VAE2D
+    image_size: ${data_module.transform.image_size}
+    encoder:
+      _target_: wiskers.models.autoencoder.encoder_decoder.CNNEncoder
+      in_channels: 3
+      stem_channels: 8
+      num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
+      block_channels: [16, 32, 64, 128, 256]
+      block_attentions: [False, False, False, False, False]
+      activation:
+        _target_: torch.nn.ReLU
+    decoder:
+      _target_: wiskers.models.autoencoder.encoder_decoder.CNNDecoder
+      out_channels: 3
+      num_heads: 0
+      block_channels: [256, 128, 64, 32, 16]
+      block_attentions: [False, False, False, False, False]
+      activation:
+        _target_: torch.nn.ReLU
+    # latent model (e.g. VQ or VAE)
+    latent_model:
+      _target_: wiskers.common.blocks.quantizer.VectorQuantizer
+      num_codes: 128
+      code_dim: 256 # matches encoder's latent channels
+      beta: 0.1
+      use_ema: True
+      decay: 0.99
+      eps: 1e-5
+  # Losses
   losses:
     _target_: wiskers.common.losses.Losses
     reconstruction: wiskers.common.losses.MixedL1L2Loss
     vq_weight: 1.0
     reconstruction_weight: 1.0
     ssim_weight: 0.3
-  # latent model (e.g. VQ or VAE)
-  latent_model:
-    _target_: wiskers.common.blocks.quantizer.VectorQuantizer
-    num_codes: 128
-    code_dim: 256 # matches encoder's latent channels
-    beta: 0.1
-    use_ema: True
-    decay: 0.99
-    eps: 1e-5
   # optimizer
   optimizer:
     _target_: torch.optim.AdamW
