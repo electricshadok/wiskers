@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -44,7 +44,7 @@ class DiffuserModule(BaseLightningModule):
         num_heads: int = 8,
         block_channels: List[int] = [32, 64, 128],
         block_attentions: List[bool] = [True, True, True],
-        image_size: int = 32,
+        image_size: Tuple[int, int] = (32, 32),
         activation: str = "torch.nn.ReLU",
         # Scheduler Configuration
         scheduler_type: str = "ddpm",
@@ -82,7 +82,7 @@ class DiffuserModule(BaseLightningModule):
 
         # Set 'example_input_array' for ONNX export initialization
         self.example_input_array = (
-            torch.randn(1, in_channels, image_size, image_size),
+            torch.randn(1, in_channels, *image_size),
             torch.zeros((1)).long(),
         )
 
@@ -161,8 +161,7 @@ class DiffuserModule(BaseLightningModule):
         samples = torch.randn(
             num_samples,
             self.model.in_channels,
-            self.image_size,
-            self.image_size,
+            *self.image_size,
             device=self.device,
         )
 

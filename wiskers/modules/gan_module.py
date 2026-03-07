@@ -21,7 +21,7 @@ class GANModule(BaseLightningModule):
     def __init__(
         self,
         # Model Configuration
-        image_size: int = 32,
+        image_size: tuple[int, int] = (32, 32),
         in_channels: int = 3,
         num_classes: int = 10,
         image_embedding: int = 100,
@@ -42,7 +42,7 @@ class GANModule(BaseLightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.gen = Generator(
-            img_size=image_size,
+            image_size=image_size,
             num_classes=num_classes,
             image_embedding=image_embedding,
             class_embedding=class_embedding,
@@ -50,7 +50,7 @@ class GANModule(BaseLightningModule):
             activations=gen_activations,
         )
         self.disc = Discriminator(
-            img_size=image_size,
+            image_size=image_size,
             num_classes=num_classes,
             class_embedding=class_embedding,
             filters=disc_filters,

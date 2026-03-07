@@ -14,7 +14,7 @@ from wiskers.models.gan.discriminator import Discriminator
 def test_gan_discriminator(batch_size, in_channels, img_size, num_classes, class_embedding):
     filters = [in_channels, 8, 16, 32]
     net = Discriminator(img_size, num_classes, class_embedding, filters)
-    img = torch.randn(batch_size, in_channels, *img_size)
+    img = torch.randn(batch_size, in_channels, img_size[0], img_size[1])
     labels = torch.randint(0, num_classes, (batch_size,))
     out = net(img, labels)
 

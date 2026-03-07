@@ -33,7 +33,11 @@ class Discriminator(nn.Module):
             down_block = DownBlock(filters[i], filters[i + 1], activations[i])
             self.downsampling.append(down_block)
 
-        self.flatten_size = (image_size[0] // (2**num_downsampling)) * (image_size[1] // (2**num_downsampling)) * filters[-1]
+        self.flatten_size = (
+            (image_size[0] // (2**num_downsampling))
+            * (image_size[1] // (2**num_downsampling))
+            * filters[-1]
+        )
         self.fc = nn.Linear(self.flatten_size + class_embedding, 1)
         # Note: No sigmoid since we using BCEWithLogitsLoss()
         # self.sigmoid = nn.Sigmoid()
