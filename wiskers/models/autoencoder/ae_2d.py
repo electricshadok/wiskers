@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -35,7 +35,7 @@ class Autoencoder2D(nn.Module):
         num_heads: int = 8,
         block_channels: List[int] = [32, 64, 128],
         block_attentions: List[bool] = [True, True, True],
-        image_size: Union[int, Tuple[int, int]] = 32,
+        image_size: Tuple[int, int] = (32, 32),
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()

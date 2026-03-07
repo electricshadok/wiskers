@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -27,7 +27,7 @@ class VQ_VAE2D(nn.Module):
         encoder: CNNEncoder,
         decoder: CNNDecoder,
         latent_model: LatentModelBase,
-        image_size: Union[int, Tuple[int, int]],
+        image_size: Tuple[int, int],
     ):
         super().__init__()
 

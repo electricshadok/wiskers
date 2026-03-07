@@ -7,8 +7,8 @@ from wiskers.models.gan.generator import Generator
 @pytest.mark.parametrize(
     "batch_size, n_channels, img_size, num_classes, image_embedding, class_embedding",
     [
-        (4, 3, 32, 10, 16, 16),
-        (8, 3, 16, 10, 8, 8),
+        (4, 3, (32, 32), 10, 16, 16),
+        (8, 3, (16, 16), 10, 8, 8),
     ],
 )
 def test_gan_generator(batch_size, n_channels, img_size, num_classes, image_embedding, class_embedding):
@@ -20,5 +20,5 @@ def test_gan_generator(batch_size, n_channels, img_size, num_classes, image_embe
 
     out = net(noise, labels)
 
-    assert out.shape == (batch_size, n_channels, img_size, img_size)
+    assert out.shape == (batch_size, n_channels, *img_size)
     assert out.dtype == noise.dtype

@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 
@@ -13,7 +15,7 @@ class Discriminator(nn.Module):
 
     def __init__(
         self,
-        img_size: int = 32,
+        image_size: Tuple[int, int] = (32, 32),
         num_classes: int = 10,
         class_embedding: int = 16,
         filters: list[int] = [3, 8, 16, 32],
@@ -31,7 +33,7 @@ class Discriminator(nn.Module):
             down_block = DownBlock(filters[i], filters[i + 1], activations[i])
             self.downsampling.append(down_block)
 
-        self.flatten_size = (img_size // (2**num_downsampling)) ** 2 * filters[-1]
+        self.flatten_size = (image_size[0] // (2**num_downsampling)) * (image_size[1] // (2**num_downsampling)) * filters[-1]
         self.fc = nn.Linear(self.flatten_size + class_embedding, 1)
         # Note: No sigmoid since we using BCEWithLogitsLoss()
         # self.sigmoid = nn.Sigmoid()

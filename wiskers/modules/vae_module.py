@@ -1,10 +1,10 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
 
 from wiskers.common.losses import kl_divergence_standard_normal
-from wiskers.common.runtime.arg_utils import format_image_size, instantiate
+from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vae_2d import VAE2D
 from wiskers.modules.base_module import BaseLightningModule
@@ -36,7 +36,7 @@ class VAEModule(BaseLightningModule):
         num_heads: int = 8,
         block_channels: List[int] = [32, 64, 128],
         block_attentions: List[bool] = [True, True, True],
-        image_size: Union[int, Tuple[int, int]] = 32,
+        image_size: Tuple[int, int] = (32, 32),
         activation: str = "torch.nn.ReLU",
         # Optimizer Configuration
         learning_rate: float = 1e-4,
@@ -68,7 +68,6 @@ class VAEModule(BaseLightningModule):
         self.learning_rate = learning_rate
 
         # Set 'example_input_array' for ONNX export initialization
-        image_size = format_image_size(image_size)
         self.example_input_array = torch.randn(
             1, in_channels, image_size[0], image_size[1]
         )

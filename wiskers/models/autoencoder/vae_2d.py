@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -55,7 +55,7 @@ class VAE2D(nn.Module):
         self,
         encoder: CNNEncoder,
         decoder: CNNDecoder,
-        image_size: Union[int, Tuple[int, int]] = 32,
+        image_size: Tuple[int, int] = (32, 32),
     ):
         super().__init__()
 

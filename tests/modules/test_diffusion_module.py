@@ -14,7 +14,7 @@ def config_module():
         "out_channels": 3,
         "time_dim": 256,
         "num_heads": 8,
-        "image_size": 32,
+        "image_size": [32, 32],
         # Scheduler Configuration
         "scheduler_type": "ddpm",
         "num_steps": 1000,
@@ -34,7 +34,7 @@ def test_training_diffuser_module(config_module):
     image_size = config_module["image_size"]
     batch_size = 8
 
-    images = torch.randn(batch_size, in_channels, image_size, image_size)
+    images = torch.randn(batch_size, in_channels, *image_size)
     labels = torch.zeros(batch_size, dtype=torch.long)
     dataset = TensorDataset(images, labels)
     loader = DataLoader(dataset, batch_size=batch_size)
@@ -52,5 +52,5 @@ def test_sample_generation(config_module):
     img_data = diffuser.generate_samples(num_samples, num_inference_steps)
 
     assert isinstance(img_data, torch.Tensor)
-    assert img_data.shape == (num_samples, in_channels, image_size, image_size)
+    assert img_data.shape == (num_samples, in_channels, *image_size)
     assert img_data.dtype == torch.float32

@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 
@@ -13,7 +15,7 @@ class Generator(nn.Module):
 
     def __init__(
         self,
-        img_size: int = 32,
+        image_size: Tuple[int, int] = (32, 32),
         num_classes: int = 10,
         image_embedding: int = 100,
         class_embedding: int = 16,
@@ -26,8 +28,9 @@ class Generator(nn.Module):
 
         self.label_emb = ClassEmbedding(num_classes, class_embedding)
         self.filters = filters
-        self.init_size = img_size // 2**num_upsampling
-        self.fc = nn.Linear(image_embedding + class_embedding, filters[0] * self.init_size * self.init_size)
+        self.init_h = image_size[0] // 2**num_upsampling
+        self.init_w = image_size[1] // 2**num_upsampling
+        self.fc = nn.Linear(image_embedding + class_embedding, filters[0] * self.init_h * self.init_w)
 
         self.batch_norm = nn.BatchNorm2d(filters[0])
         self.upsampling = nn.ModuleList()
@@ -46,7 +49,7 @@ class Generator(nn.Module):
         batch_size = z.shape[0]  # (batch_size, )
 
         out = self.fc(z)  # (batch_size, init_features * init_size^2)
-        out = out.view(batch_size, self.filters[0], self.init_size, self.init_size)
+        out = out.view(batch_size, self.filters[0], self.init_h, self.init_w)
 
         out = self.batch_norm(out)
         for up in self.upsampling:

@@ -13,7 +13,7 @@ def config_module():
         "in_channels": 3,
         "out_channels": 3,
         "num_heads": 8,
-        "image_size": 32,
+        "image_size": [32, 32],
         # Optimizer Configuration
         "learning_rate": 1e-4,
     }
@@ -27,7 +27,7 @@ def test_training_vae_module(config_module):
     image_size = config_module["image_size"]
     batch_size = 8
 
-    images = torch.randn(batch_size, in_channels, image_size, image_size)
+    images = torch.randn(batch_size, in_channels, *image_size)
     labels = torch.zeros(batch_size, dtype=torch.long)
     dataset = TensorDataset(images, labels)
     loader = DataLoader(dataset, batch_size=batch_size)

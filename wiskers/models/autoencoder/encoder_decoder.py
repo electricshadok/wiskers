@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import torch.nn as nn
 
@@ -9,7 +9,6 @@ from wiskers.common.blocks.conv_blocks_2d import (
     DownBlock2D,
     UpBlock2D,
 )
-from wiskers.common.runtime.arg_utils import format_image_size
 
 
 class CNNEncoder(nn.Module):
@@ -74,10 +73,10 @@ class CNNEncoder(nn.Module):
         return self.down_blocks(self.input(x))
 
     def get_latent_shape(
-        self, image_size: Union[int, Tuple[int, int]]
+        self, image_size: Tuple[int, int]
     ) -> Tuple[int, int, int]:
         """Compute latent tensor shape given the input image size."""
-        h, w = format_image_size(image_size)
+        h, w = image_size
         factor = 2**self._num_levels
         return self._latent_channels, h // factor, w // factor
 

@@ -6,7 +6,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 
 from wiskers.common.losses import Losses
 from wiskers.common.metrics import codebook_usage_metrics
-from wiskers.common.runtime.arg_utils import format_image_size, instantiate
+from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.modules.base_module import BaseLightningModule
 
 
@@ -32,7 +32,7 @@ class WorldModelModule(BaseLightningModule):
     def __init__(
         self,
         # Model Configuration
-        image_size: Union[int, Tuple[int, int]],
+        image_size: Tuple[int, int],
         model: Union[dict, torch.nn.Module],
         losses: Union[dict, Losses] = None,
         # Optimizer Configuration
@@ -51,7 +51,6 @@ class WorldModelModule(BaseLightningModule):
 
         # Set 'example_input_array' for ONNX export initialization
         in_channels = self.model._encoder.get_in_channels()
-        image_size = format_image_size(image_size)
         self.example_input_array = torch.randn(
             1, in_channels, image_size[0], image_size[1]
         )
