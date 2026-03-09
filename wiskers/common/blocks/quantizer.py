@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from wiskers.common.latent_base import LatentModelBase
-
 
 class Codebook(nn.Module):
     """
@@ -118,7 +116,7 @@ class EMA_Codebook(Codebook):
 
 
 
-class VectorQuantizer(LatentModelBase):
+class VectorQuantizer(nn.Module):
     """
     Implementation of the Vector Quantization (VQ) layer used in VQ-VAE models.
     This module discretizes continuous latent representations by mapping each latent
@@ -156,7 +154,8 @@ class VectorQuantizer(LatentModelBase):
         decay=0.99,
         eps=1e-5,
     ):
-        super().__init__(code_dim=code_dim)
+        super().__init__()
+        self.code_dim = code_dim
         self.num_codes = num_codes  # Number of embeddings in the codebook (K)
         self.beta = beta  # Commitment loss weight
         self.use_ema = use_ema

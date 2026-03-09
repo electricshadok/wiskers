@@ -99,10 +99,10 @@ class WorldModelModule(BaseLightningModule):
 
         # Metrics (codebook usage)
         with torch.no_grad():
-            if hasattr(self.model._latent_model, "num_codes"):
+            if hasattr(self.model._quantizer, "num_codes"):
                 metrics = codebook_usage_metrics(
                     indices=indices,
-                    num_codes=self.model._latent_model.num_codes,  # type: ignore[attr-defined]
+                    num_codes=self.model._quantizer.num_codes,  # type: ignore[attr-defined]
                 )
                 self._log_tensor(metrics, stage, prog_bar=False)
 

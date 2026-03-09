@@ -60,7 +60,7 @@ module:
       activation:
         _target_: torch.nn.ReLU
     # latent model (e.g. VQ or VAE)
-    latent_model:
+    quantizer:
       _target_: wiskers.common.blocks.quantizer.VectorQuantizer
       num_codes: 128
       code_dim: 256 # matches encoder's latent channels

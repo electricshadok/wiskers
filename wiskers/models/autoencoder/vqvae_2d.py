@@ -3,7 +3,6 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from wiskers.common.latent_base import LatentModelBase
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 
 
@@ -14,7 +13,7 @@ class VQ_VAE2D(nn.Module):
     Args:
         encoder (CNNEncoder): Prebuilt encoder module.
         decoder (CNNDecoder): Prebuilt decoder module.
-        latent_model (LatentModelBase): Instantiated latent bottleneck (e.g. VectorQuantizer or VAE).
+        quantizer (nn.Module): Instantiated latent bottleneck (e.g. VectorQuantizer or VAE).
         image_size (int or tuple): Input image size (H, W).
 
     Shapes:
@@ -26,7 +25,7 @@ class VQ_VAE2D(nn.Module):
         self,
         encoder: CNNEncoder,
         decoder: CNNDecoder,
-        latent_model: LatentModelBase,
+        quantizer: nn.Module,
         image_size: Tuple[int, int],
     ):
         super().__init__()
@@ -35,13 +34,13 @@ class VQ_VAE2D(nn.Module):
         self._latent_shape = self._encoder.get_latent_shape(image_size)
         latent_channels = self._latent_shape[0]
 
-        if latent_model.code_dim != latent_channels:
+        if quantizer.code_dim != latent_channels:
             raise ValueError(
-                "latent_model.code_dim must match encoder latent channels: "
-                f"expected {latent_channels}, got {latent_model.code_dim}"
+                "quantizer.code_dim must match encoder latent channels: "
+                f"expected {latent_channels}, got {quantizer.code_dim}"
             )
 
-        self._latent_model = latent_model
+        self._quantizer = quantizer
 
         self._decoder = decoder
 
@@ -80,6 +79,6 @@ class VQ_VAE2D(nn.Module):
             out: [N, out_C, H, W]
         """
         z_e = self._encoder(x)
-        z_q_st, vq_loss, indices = self._latent_model(z_e)
+        z_q_st, vq_loss, indices = self._quantizer(z_e)
         recon_x = self._decoder(z_q_st)
         return recon_x, vq_loss, indices
