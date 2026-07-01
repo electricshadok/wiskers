@@ -131,7 +131,7 @@ class VectorQuantizer(nn.Module):
     Args:
         num_codes (int): Number of discrete embeddings in the codebook (K).
         code_dim (int): Dimensionality of each embedding vector (D).
-        beta (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
+        commitment_weight (float): Weight for the commitment loss term, typically between 0.1 and 0.5.
         use_ema (bool): Whether to use EMA updates for the codebook.
         decay (float): EMA decay factor (only used if use_ema=True).
         eps (float): Small constant for numerical stability.
@@ -149,7 +149,7 @@ class VectorQuantizer(nn.Module):
         self,
         num_codes=1024,
         code_dim=64,
-        beta=0.25,
+        commitment_weight=0.25,
         use_ema=False,
         decay=0.99,
         eps=1e-5,
@@ -157,7 +157,7 @@ class VectorQuantizer(nn.Module):
         super().__init__()
         self.code_dim = code_dim
         self.num_codes = num_codes  # Number of embeddings in the codebook (K)
-        self.beta = beta  # Commitment loss weight
+        self.commitment_weight = commitment_weight
         self.use_ema = use_ema
 
         # Learnable embedding matrix serving as the discrete codebook (K, D)
@@ -214,7 +214,7 @@ class VectorQuantizer(nn.Module):
             # Updates codebook only
             self.codebook.update(z_encoder, encoding_indices)
             # Only commitment loss (encoder training)
-            loss_commitment = self.beta * F.mse_loss(z_e, z_q.detach())
+            loss_commitment = self.commitment_weight * F.mse_loss(z_e, z_q.detach())
             vq_loss = loss_commitment
         else:
             # codebook loss (updates codebook only)
@@ -222,7 +222,7 @@ class VectorQuantizer(nn.Module):
             loss_codebook = F.mse_loss(z_q, z_e.detach())
             # commitment loss (updates encoder only)
             # intuition: force encoder to stay near its chosen codebook vector
-            loss_commitment = self.beta * F.mse_loss(z_e, z_q.detach())
+            loss_commitment = self.commitment_weight * F.mse_loss(z_e, z_q.detach())
             # Total VQ loss
             vq_loss = loss_codebook + loss_commitment
 

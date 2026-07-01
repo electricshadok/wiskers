@@ -34,7 +34,7 @@ def test_vqvae2D(batch_size, in_channels, out_channels, height, width, use_ema):
     quantizer = VectorQuantizer(
         num_codes=128,
         code_dim=latent_channels,
-        beta=0.25,
+        commitment_weight=0.25,
         use_ema=use_ema,
     )
     net = VQ_VAE2D(
@@ -79,7 +79,7 @@ def test_vqvae2D_to_onnx(
     quantizer = VectorQuantizer(
         num_codes=128,
         code_dim=latent_channels,
-        beta=0.25,
+        commitment_weight=0.25,
         use_ema=use_ema,
     )
     net = VQ_VAE2D(
