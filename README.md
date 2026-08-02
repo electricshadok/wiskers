@@ -15,7 +15,7 @@ mamba env create -f environment.yml
 ```
 
 ```
-mamba activate wiskers_dev
+mamba activate wiskers
 ```
 
 ## Tests
