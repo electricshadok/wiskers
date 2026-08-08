@@ -1,8 +1,7 @@
-from typing import Any, Optional
+from typing import Any
 
 import streamlit as st
 import torch
-import torchvision
 
 
 def _unbatch(sample: Any) -> Any:
@@ -47,52 +46,104 @@ def prep_image(x: torch.Tensor) -> torch.Tensor:
     return x
 
 
-def dataset_ui(
-    dataset: torch.utils.data.Dataset,
-    num_rows: int = 6,
-    num_cols: int = 10,
-    max_items: Optional[int] = None,
-):
-    total_cells = num_rows * num_cols
-    limit = max_items or total_cells
-    n = min(len(dataset), limit)
+def dataset_ui(data_module: Any):
+    import os
+
+    st.markdown("#### 📂 Rollout Explorer")
+
+    col_split, col_rollout = st.columns(2)
+
+    with col_split:
+        split = st.selectbox("Split", ["Train", "Validation", "Test"])
+
+    if split == "Train":
+        data_module.setup("fit")
+        dataset = data_module.train_dataloader().dataset
+    elif split == "Validation":
+        data_module.setup("fit")
+        dataset = data_module.val_dataloader().dataset
+    else:  # Test
+        data_module.setup("test")
+        dataset = data_module.test_dataloader().dataset
 
     first = _unbatch(dataset[0])
 
-    if _is_image(first):
-        st.markdown("**Mode:** Image dataset")
-        imgs_chw = [prep_image(_unbatch(dataset[i])) for i in range(n)]
-        st.write(
-            f"Sample image shape: {imgs_chw[0].shape}, "
-            f"dtype: {imgs_chw[0].dtype}, "
-            f"range: ({imgs_chw[0].min().item():.3f}, {imgs_chw[0].max().item():.3f})"
-        )
-        grid = torchvision.utils.make_grid(
-            imgs_chw, nrow=num_cols, padding=2, pad_value=1.0
-        )
-        grid = grid.permute(1, 2, 0).numpy()  # HWC float [0,1]
+    if not isinstance(first, dict):
+        raise ValueError(f"Expected a dictionary sample, got {type(first)}")
 
-        st.image(grid, caption=f"{len(imgs_chw)} images", use_container_width=True)
+    required_keys = {"media", "media_next", "action", "done"}
+    missing_keys = required_keys - set(first.keys())
+    if missing_keys:
+        raise KeyError(f"Sample is missing required keys: {missing_keys}")
 
-    elif _is_video(first):
-        st.markdown("**Mode:** Video dataset")
-        idx = st.number_input(
-            "Select video index", min_value=0, max_value=len(dataset) - 1, value=0
-        )
-        video = _unbatch(dataset[idx])  # (T,C,H,W)
+    # Group transitions by rollout file for sequential viewing
+    rollouts = {}
+    if hasattr(dataset, "transitions"):
+        for idx, (fpath, step_idx) in enumerate(dataset.transitions):
+            fname = os.path.basename(fpath)
+            rollouts.setdefault(fname, []).append((idx, step_idx))
 
-        T = video.shape[0]
-        frame_idx = st.slider("Frame", min_value=0, max_value=T - 1, value=0, step=1)
-        frame = video[frame_idx]  # (C,H,W)
-        frame = prep_image(video[frame_idx])  # CHW float
-        st.write(
-            f"Sample image shape: {frame.shape}, "
-            f"dtype: {frame.dtype}, "
-            f"range: ({frame.min().item():.3f}, {frame.max().item():.3f})"
+    with col_rollout:
+        if rollouts:
+            selected_rollout = st.selectbox("Select Rollout File", list(rollouts.keys()))
+            rollout_steps = rollouts[selected_rollout]
+
+            # Sort steps by step_idx
+            rollout_steps = sorted(rollout_steps, key=lambda x: x[1])
+        else:
+            selected_rollout = None
+
+    if selected_rollout and rollouts:
+        step_selection = st.slider(
+            "Step Index",
+            min_value=0,
+            max_value=len(rollout_steps) - 1,
+            value=0,
+            format="Step %d"
         )
-        img_hwc = (frame * 255).round().to(torch.uint8).permute(1, 2, 0).numpy()
-        st.image(
-            img_hwc,
-            caption=f"Video {idx}, Frame {frame_idx}/{T-1}",
-            use_container_width=True,
-        )
+
+        global_idx, step_idx = rollout_steps[step_selection]
+        sample = dataset[global_idx]
+    else:
+        st.markdown("#### 🔍 Sample Viewer")
+        idx = st.slider("Select Sample Index", 0, len(dataset) - 1, 0)
+        sample = dataset[idx]
+
+    # Display frames and action side-by-side
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**Current Observation (`media`)**")
+        img = prep_image(sample["media"]).permute(1, 2, 0).numpy()
+        st.image(img, width="stretch")
+
+    with col2:
+        st.markdown("**Next Observation (`media_next`)**")
+        img_next = prep_image(sample["media_next"]).permute(1, 2, 0).numpy()
+        st.image(img_next, width="stretch")
+
+    # Action details
+    st.markdown("#### 🕹️ Control Action & Status")
+    action = sample["action"].cpu().numpy()
+
+    # Show steering, gas, brake metrics and bars
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.metric("Steering (Left ◀ / ▶ Right)", f"{action[0]:.3f}")
+        # Scale from [-1, 1] to [0, 100] for progress bar
+        steer_val = float((action[0] + 1.0) / 2.0)
+        st.progress(steer_val)
+    with c2:
+        st.metric("Gas (Accelerate)", f"{action[1]:.3f}")
+        st.progress(float(action[1]))
+    with c3:
+        st.metric("Brake", f"{action[2]:.3f}")
+        st.progress(float(action[2]))
+    with c4:
+        done_val = bool(sample["done"].item())
+        st.metric("Done State", "True" if done_val else "False")
+        if done_val:
+            st.error("🚨 Episode Terminated")
+        else:
+            st.success("🟢 Episode Active")
+

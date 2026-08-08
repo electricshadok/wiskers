@@ -66,6 +66,7 @@ Inspect and test the dataloaders.
 python wiskers/cli/inspect_dataset.py --config configs/training/clevrer_stg1.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
+python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/cifar10.yaml
 ```
 

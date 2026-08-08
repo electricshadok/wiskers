@@ -137,6 +137,7 @@ class CIFAR10Subset(CIFAR10):
         category_name (str): Name of the category (e.g., 'airplane', 'automobile') to create a subset for.
     """
 
+
     def __init__(
         self,
         data_dir: str,
@@ -166,7 +167,7 @@ class CIFAR10Subset(CIFAR10):
         """
         indices = [
             i
-            for i, (_, label) in enumerate(self.train_dataset)
+            for i, (_, label) in enumerate(dataset)
             if label == self.category_index
         ]
         return Subset(dataset, indices)

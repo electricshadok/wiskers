@@ -1,0 +1,16 @@
+seed: 0
+
+data_module:
+  _target_: wiskers.datasets.gym.car_racing.CarRacingDataModule
+  data_dir: "./datasets"
+  batch_size: 4
+  num_workers: 2
+  preprocessing:
+    _target_: wiskers.datasets.gym.car_racing.PreprocessingConfig
+    num_train_rollouts: 10
+    num_val_rollouts: 2
+    num_test_rollouts: 2
+    max_steps_per_rollout: 200
+  transform:
+    _target_: wiskers.datasets.gym.car_racing.TransformConfig
+    image_size: [64, 64]

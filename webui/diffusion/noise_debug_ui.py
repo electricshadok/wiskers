@@ -70,4 +70,4 @@ def noise_debug_ui(config_path: str):
         noisy_images, nrow=len(noisy_images), padding=2, pad_value=1
     )
     grid = grid.permute(1, 2, 0).numpy()
-    st.image(grid, caption=f"idx: {index}, label{label}", use_container_width=True)
+    st.image(grid, caption=f"idx: {index}, label{label}", width="stretch")
