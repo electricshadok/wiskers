@@ -10,10 +10,8 @@ import torchvision.transforms.functional as TF
 from torch.utils.data import DataLoader, Dataset
 
 
-try:
-    import gymnasium as gym
-except ImportError:
-    import gym
+import gymnasium as gym
+from gymnasium.envs.box2d.car_racing import CarRacing
 
 
 @dataclass
@@ -89,6 +87,23 @@ class CarRacingDataset(Dataset):
         }
 
 
+class NoZoomCarRacing(CarRacing):
+    def reset(self, **kwargs):
+        obs_info = super().reset(**kwargs)
+        if isinstance(obs_info, tuple) and len(obs_info) == 2:
+            obs, info = obs_info
+        else:
+            obs, info = obs_info, {}
+        
+        # Lock camera zoom immediately to standard gameplay scale (bypass zoom-in animation)
+        self.t = 1.0
+        obs = self._render("state_pixels")
+        
+        if isinstance(obs_info, tuple) and len(obs_info) == 2:
+            return obs, info
+        return obs
+
+
 class CarRacingDataModule(L.LightningDataModule):
     """
     DataModule for CarRacing-v3 Gym dataset preparation and loading.
@@ -148,11 +163,7 @@ class CarRacingDataModule(L.LightningDataModule):
             print(f"Collecting {target - existing} rollouts for split '{split}' using CarRacing...")
 
             # Initialize environment
-            try:
-                env = gym.make("CarRacing-v3", render_mode="rgb_array")
-            except Exception as e:
-                print(f"Error creating Gym CarRacing-v3 environment: {e}")
-                raise e
+            env = NoZoomCarRacing(render_mode="rgb_array")
 
             for idx in range(existing, target):
                 observations = []
