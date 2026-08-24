@@ -3,40 +3,53 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+import ale_py
+import gymnasium as gym
 import lightning as L
 import numpy as np
 import torch
 import torchvision.transforms.functional as TF
-from gymnasium.envs.box2d.car_racing import CarRacing
 from torch.utils.data import DataLoader, Dataset
+
+
+# Register all ALE (Atari) environments so the ALE/ namespace is available
+gym.register_envs(ale_py)
 
 
 @dataclass
 class PreprocessingConfig:
-    num_train_rollouts: int = 10
-    num_val_rollouts: int = 2
-    num_test_rollouts: int = 2
-    max_steps_per_rollout: int = 200
+    num_train_rollouts: int = 20
+    num_val_rollouts: int = 4
+    num_test_rollouts: int = 4
+    max_steps_per_rollout: int = 500
 
 
 @dataclass
 class TransformConfig:
     image_size: List[int] = field(default_factory=lambda: [64, 64])
+    grayscale: bool = True
 
 
-class CarRacingDataset(Dataset):
+class BreakoutDataset(Dataset):
     """
     Yields transition step dictionaries for world model training:
     (image, action) -> next_image
+
+    Raw RGB frames are stored on disk at native resolution (210x160).
+    Grayscale conversion and resizing are applied on-the-fly in __getitem__,
+    consistent with CarRacingDataset.
     """
+
     def __init__(
         self,
         split_dir: str,
         image_size: Tuple[int, int],
+        grayscale: bool = True,
     ):
         super().__init__()
         self.split_dir = split_dir
         self.image_size = image_size
+        self.grayscale = grayscale
         self.file_paths = sorted(glob.glob(os.path.join(split_dir, "*.npz")))
 
         if not self.file_paths:
@@ -44,12 +57,10 @@ class CarRacingDataset(Dataset):
 
         self.transitions = []
 
-        # Build index of all transition steps across all rollout files
+        # Build flat index of all transition steps across all rollout files
         for file_path in self.file_paths:
             with np.load(file_path) as data:
                 seq_len = len(data["observations"])
-            # With seq_len frames, we can form seq_len - 1 transition steps:
-            # (frame_t, action_t) -> frame_t+1
             for step_idx in range(seq_len - 1):
                 self.transitions.append((file_path, step_idx))
 
@@ -59,22 +70,25 @@ class CarRacingDataset(Dataset):
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         file_path, step_idx = self.transitions[idx]
         with np.load(file_path) as data:
-            frame_t = data["observations"][step_idx]       # (H, W, C)
-            frame_next = data["observations"][step_idx + 1] # (H, W, C)
-            action_t = data["actions"][step_idx]           # (3,)
-            reward_t = data["rewards"][step_idx]           # scalar
-            done_t = data["dones"][step_idx]               # scalar bool
+            frame_t = data["observations"][step_idx]        # (H, W, C) RGB
+            frame_next = data["observations"][step_idx + 1] # (H, W, C) RGB
+            action_t = data["actions"][step_idx]            # scalar int
+            reward_t = data["rewards"][step_idx]            # scalar float
+            done_t = data["dones"][step_idx]                # scalar bool
 
-        # Helper to convert a single frame to (C, H, W) normalized [0, 1] tensor resized to target size
         def process_frame(frame: np.ndarray) -> torch.Tensor:
-            frame_t = torch.from_numpy(frame).float() / 255.0  # (H, W, C)
-            frame_t = frame_t.permute(2, 0, 1)                  # (C, H, W)
-            frame_t = TF.resize(frame_t, self.image_size, antialias=True)
-            return frame_t
+            # RGB (H, W, C) -> (C, H, W), normalized to [0, 1]
+            t = torch.from_numpy(frame).float() / 255.0
+            t = t.permute(2, 0, 1)
+            if self.grayscale:
+                # On-the-fly grayscale: (3, H, W) -> (1, H, W) using luminance weights
+                t = 0.2989 * t[0:1] + 0.5870 * t[1:2] + 0.1140 * t[2:3]
+            t = TF.resize(t, list(self.image_size), antialias=True)
+            return t
 
         media = process_frame(frame_t)
         media_next = process_frame(frame_next)
-        action = torch.from_numpy(action_t).float()
+        action = torch.tensor([float(action_t)]).float()
         reward = torch.tensor([float(reward_t)]).float()
         done = torch.tensor([float(done_t)]).float()
 
@@ -87,26 +101,13 @@ class CarRacingDataset(Dataset):
         }
 
 
-class NoZoomCarRacing(CarRacing):
-    def reset(self, **kwargs):
-        obs_info = super().reset(**kwargs)
-        if isinstance(obs_info, tuple) and len(obs_info) == 2:
-            obs, info = obs_info
-        else:
-            obs, info = obs_info, {}
-
-        # Lock camera zoom immediately to standard gameplay scale (bypass zoom-in animation)
-        self.t = 1.0
-        obs = self._render("state_pixels")
-
-        if isinstance(obs_info, tuple) and len(obs_info) == 2:
-            return obs, info
-        return obs
-
-
-class CarRacingDataModule(L.LightningDataModule):
+class BreakoutDataModule(L.LightningDataModule):
     """
-    DataModule for CarRacing-v3 Gym dataset preparation and loading.
+    DataModule for ALE/Breakout-v5 Gym dataset preparation and loading.
+
+    Rollouts are collected using a uniformly random discrete policy.
+    Each rollout file contains max_steps_per_rollout frames, spanning
+    multiple internal lives/episodes via auto-reset.
     """
 
     def __init__(
@@ -119,12 +120,11 @@ class CarRacingDataModule(L.LightningDataModule):
         splits: Optional[List[str]] = None,
     ):
         super().__init__()
-        self.data_root = os.path.join(data_dir, "carracing")
+        self.data_root = os.path.join(data_dir, "breakout")
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.splits = splits or ["train", "val", "test"]
 
-        # Parse configs
         if isinstance(preprocessing, dict):
             self.preprocessing = PreprocessingConfig(**preprocessing)
         else:
@@ -137,7 +137,10 @@ class CarRacingDataModule(L.LightningDataModule):
 
     def prepare_data(self) -> None:
         """
-        Check if rollout files exist. If not, generate them by running the simulator.
+        Check if rollout files exist. If not, generate them via the simulator.
+        Uses a uniformly random discrete policy — sufficient for Breakout.
+        Each rollout file spans multiple internal lives via auto-reset until
+        max_steps_per_rollout frames are collected.
         """
         os.makedirs(self.data_root, exist_ok=True)
 
@@ -156,15 +159,14 @@ class CarRacingDataModule(L.LightningDataModule):
 
             if existing >= target:
                 print(
-                    f"CarRacing dataset split '{split}' already has {existing} "
+                    f"Breakout dataset split '{split}' already has {existing} "
                     f"rollouts (target: {target}). Skipping."
                 )
                 continue
 
-            print(f"Collecting {target - existing} rollouts for split '{split}' using CarRacing...")
+            print(f"Collecting {target - existing} rollouts for split '{split}' using Breakout...")
 
-            # Initialize environment
-            env = NoZoomCarRacing(render_mode="rgb_array")
+            env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
 
             # Unique base seed per split so train/val/test never overlap
             split_seed_offset = {"train": 0, "val": 100_000, "test": 200_000}.get(split, 0)
@@ -175,48 +177,47 @@ class CarRacingDataModule(L.LightningDataModule):
                 rewards = []
                 dones = []
 
-                # Fix 2: unique seed per rollout → different procedural track each time
+                # Unique seed per rollout -> different initial random state
                 rollout_seed = split_seed_offset + idx
-                reset_res = env.reset(seed=rollout_seed)
-                if isinstance(reset_res, tuple) and len(reset_res) == 2:
-                    obs, info = reset_res
-                else:
-                    obs = reset_res
+                obs, _ = env.reset(seed=rollout_seed)
 
+                # FIRE once to launch the ball after reset
+                obs, _, _, _, _ = env.step(1)
+
+                # Save raw RGB — grayscale/resize applied on-the-fly in __getitem__
                 observations.append(obs)
 
                 step_count = 0
-                done = False
 
-                # Fix 1: heuristic policy — mean-reverting steering keeps the car on track
-                steering = 0.0
-                while not done and step_count < self.preprocessing.max_steps_per_rollout:
-                    # Ornstein-Uhlenbeck-style random walk: decay toward 0 + small noise
-                    # The 0.8 factor pulls steering back to center each step,
-                    # preventing the car from drifting permanently to one side.
-                    steering = steering * 0.8 + np.random.uniform(-0.2, 0.2)
-                    steering = float(np.clip(steering, -1.0, 1.0))
-                    gas = float(np.random.uniform(0.4, 0.8))   # moderate gas
-                    brake = float(np.random.uniform(0.0, 0.05)) # almost never brake
-                    action = np.array([steering, gas, brake], dtype=np.float32)
+                while step_count < self.preprocessing.max_steps_per_rollout:
+                    action = env.action_space.sample()
 
                     step_res = env.step(action)
                     if len(step_res) == 5:
                         next_obs, reward, terminated, truncated, info = step_res
-                        done = terminated or truncated
+                        episode_done = terminated or truncated
                     else:
-                        next_obs, reward, done, info = step_res
+                        next_obs, reward, episode_done, info = step_res
 
                     observations.append(next_obs)
                     actions.append(action)
                     rewards.append(reward)
-                    dones.append(done)
+                    dones.append(episode_done)
 
                     step_count += 1
 
-                # Trim last observation to match action/reward/done sequence length
-                observations = np.array(observations[:-1], dtype=np.uint8)
-                actions = np.array(actions, dtype=np.float32)
+                    # Auto-reset: when a life/episode ends, reset and keep collecting
+                    # into the same rollout file until max_steps_per_rollout is reached
+                    if episode_done and step_count < self.preprocessing.max_steps_per_rollout:
+                        obs, _ = env.reset()
+                        # FIRE to launch ball on new life
+                        obs, _, _, _, _ = env.step(1)
+                        # Replace last obs with post-reset frame for continuity
+                        observations[-1] = obs
+
+                # Trim last observation to match action/reward/done length
+                observations = np.array(observations[:-1])
+                actions = np.array(actions, dtype=np.int32)
                 rewards = np.array(rewards, dtype=np.float32)
                 dones = np.array(dones, dtype=bool)
 
@@ -232,14 +233,20 @@ class CarRacingDataModule(L.LightningDataModule):
 
             env.close()
 
+    @staticmethod
+    def _to_grayscale(frame: np.ndarray) -> np.ndarray:
+        """Convert (H, W, 3) RGB frame to (H, W) grayscale using luminance weights."""
+        return np.dot(frame[..., :3], [0.2989, 0.5870, 0.1140]).astype(np.uint8)
+
     def setup(self, stage: Optional[str] = None) -> None:
         self.datasets = {}
         for split in self.splits:
             split_dir = os.path.join(self.data_root, split)
             image_size = tuple(self.transform.image_size)
-            self.datasets[split] = CarRacingDataset(
+            self.datasets[split] = BreakoutDataset(
                 split_dir=split_dir,
                 image_size=image_size,
+                grayscale=self.transform.grayscale,
             )
 
     def train_dataloader(self) -> DataLoader:
@@ -252,7 +259,7 @@ class CarRacingDataModule(L.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
-        split_key = "val" if "val" in self.datasets else ("valid" if "valid" in self.datasets else "train")
+        split_key = "val" if "val" in self.datasets else "train"
         return DataLoader(
             self.datasets[split_key],
             batch_size=self.batch_size,

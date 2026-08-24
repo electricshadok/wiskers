@@ -67,6 +67,7 @@ python wiskers/cli/inspect_dataset.py --config configs/training/clevrer_stg1.yam
 python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
+python wiskers/cli/inspect_dataset.py --config configs/datasets/breakout.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/cifar10.yaml
 ```
 

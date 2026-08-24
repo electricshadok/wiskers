@@ -28,3 +28,4 @@ dependencies:
       - google-auth-httplib2
       - google-auth-oauthlib
       - gymnasium[box2d]
+      - ale-py

@@ -3,6 +3,8 @@ from typing import Any
 import streamlit as st
 import torch
 
+from webui.dataset.adapters import get_adapter
+
 
 def _unbatch(sample: Any) -> Any:
     if isinstance(sample, (tuple, list)) and len(sample) >= 1:
@@ -71,7 +73,7 @@ def dataset_ui(data_module: Any):
     if not isinstance(first, dict):
         raise ValueError(f"Expected a dictionary sample, got {type(first)}")
 
-    required_keys = {"media", "media_next", "action", "done"}
+    required_keys = {"media", "media_next", "action", "done", "reward"}
     missing_keys = required_keys - set(first.keys())
     if missing_keys:
         raise KeyError(f"Sample is missing required keys: {missing_keys}")
@@ -122,28 +124,27 @@ def dataset_ui(data_module: Any):
         img_next = prep_image(sample["media_next"]).permute(1, 2, 0).numpy()
         st.image(img_next, width="stretch")
 
-    # Action details
+    # ── Action & Status ──────────────────────────────────────────────────────
     st.markdown("#### 🕹️ Control Action & Status")
-    action = sample["action"].cpu().numpy()
+    action = sample["action"].cpu()
+    reward_val = float(sample["reward"].item())
+    done_val = bool(sample["done"].item())
 
-    # Show steering, gas, brake metrics and bars
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.metric("Steering (Left ◀ / ▶ Right)", f"{action[0]:.3f}")
-        # Scale from [-1, 1] to [0, 100] for progress bar
-        steer_val = float((action[0] + 1.0) / 2.0)
-        st.progress(steer_val)
-    with c2:
-        st.metric("Gas (Accelerate)", f"{action[1]:.3f}")
-        st.progress(float(action[1]))
-    with c3:
-        st.metric("Brake", f"{action[2]:.3f}")
-        st.progress(float(action[2]))
-    with c4:
-        done_val = bool(sample["done"].item())
-        st.metric("Done State", "True" if done_val else "False")
-        if done_val:
-            st.error("🚨 Episode Terminated")
-        else:
-            st.success("🟢 Episode Active")
+    adapter = get_adapter(data_module)
+    step_info = adapter.describe_step(action, reward_val, done_val)
+
+    cols = st.columns(len(step_info))
+    for col, (label, info) in zip(cols, step_info.items()):
+        with col:
+            st.metric(label, info["value"])
+            if info.get("bar") is not None:
+                st.progress(float(info["bar"]))
+            note = info.get("note")
+            status = info.get("status")
+            if note and status:
+                getattr(st, status)(note)
+            elif note:
+                st.caption(note)
+
+
 

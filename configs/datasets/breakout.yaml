@@ -1,0 +1,17 @@
+seed: 0
+
+data_module:
+  _target_: wiskers.datasets.gym.breakout.BreakoutDataModule
+  data_dir: "./datasets"
+  batch_size: 16
+  num_workers: 2
+  preprocessing:
+    _target_: wiskers.datasets.gym.breakout.PreprocessingConfig
+    num_train_rollouts: 20
+    num_val_rollouts: 4
+    num_test_rollouts: 4
+    max_steps_per_rollout: 500
+  transform:
+    _target_: wiskers.datasets.gym.breakout.TransformConfig
+    image_size: [84, 84]
+    grayscale: false
