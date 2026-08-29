@@ -3,14 +3,14 @@ from typing import Tuple, Union
 import torch
 import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.utilities.types import OptimizerLRScheduler
 
-from wiskers.common.losses import Losses
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.modules.base_module import BaseLightningModule
 
 
-class WorldModelModule(BaseLightningModule):
+class VQVAEModule(BaseLightningModule):
     """
     A LightningModule that combines spatial and temporal modeling for video or physics prediction.
     Encodes input frames into a latent space (via VAE/VQ-VAE) and predicts their temporal evolution.
@@ -34,10 +34,10 @@ class WorldModelModule(BaseLightningModule):
         # Model Configuration
         image_size: Tuple[int, int],
         model: Union[dict, torch.nn.Module],
-        losses: Union[dict, Losses] = None,
+        losses: dict,
         # Optimizer Configuration
-        optimizer: dict = None,
-        lr_scheduler: dict = None,
+        optimizer: dict,
+        lr_scheduler: dict,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -55,7 +55,7 @@ class WorldModelModule(BaseLightningModule):
             1, in_channels, image_size[0], image_size[1]
         )
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> OptimizerLRScheduler:
         optimizer = instantiate(
             self.optimizer_cfg, params=self.model.parameters(), _convert_="all"
         )

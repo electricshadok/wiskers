@@ -35,7 +35,7 @@ export_safetensors: False
 
 # Module Config (model, optimizer and scheduler)
 module:
-  _target_: wiskers.modules.world_model_module.WorldModelModule
+  _target_: wiskers.modules.vqvae_module.VQVAEModule
   _recursive_: false  # keep nested configs (e.g., lr_scheduler) as dicts
   image_size: ${data_module.transform.image_size}
   # The actual autoencoder (e.g. VQ_VAE2D)

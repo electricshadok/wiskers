@@ -7,7 +7,7 @@ backend_engine:
   _target_: wiskers.common.runtime.backends.CheckpointInference
   model_class:
     _target_: hydra.utils.get_class
-    path: wiskers.modules.world_model_module.WorldModelModule
+    path: wiskers.modules.vqvae_module.VQVAEModule
 
 # Data module
 data_module:
