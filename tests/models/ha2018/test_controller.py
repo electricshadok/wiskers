@@ -1,6 +1,6 @@
 import torch
 
-from wiskers.models.world_model.controller import Controller
+from wiskers.models.ha2018.controller import Controller
 
 
 # ---------------------------------------------------------------------------

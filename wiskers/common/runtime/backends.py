@@ -9,7 +9,7 @@ models saved as:
 
 from typing import Type
 
-from wiskers.modules.base_module import BaseLightningModule
+from wiskers.modules.gen.base_module import BaseLightningModule
 
 
 class ONNXInference:

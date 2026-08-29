@@ -7,7 +7,7 @@ from wiskers.common.losses import kl_divergence_standard_normal
 from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.autoencoder.vae_2d import VAE2D
-from wiskers.modules.base_module import BaseLightningModule
+from wiskers.modules.gen.base_module import BaseLightningModule
 
 
 class VAEModule(BaseLightningModule):

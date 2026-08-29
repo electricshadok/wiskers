@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.models.diffusion.schedulers.registry import Schedulers
 from wiskers.models.diffusion.unet_2d import UNet2D
-from wiskers.modules.base_module import BaseLightningModule
+from wiskers.modules.gen.base_module import BaseLightningModule
 
 
 class DiffuserModule(BaseLightningModule):
@@ -146,7 +146,7 @@ class DiffuserModule(BaseLightningModule):
 
     @torch.no_grad()
     def generate_samples(
-        self, num_samples: int, num_inference_steps: int
+        self, num_samples: int, num_inference_steps: int = 1000
     ) -> torch.Tensor:
         """
         Generates samples using diffusion model.

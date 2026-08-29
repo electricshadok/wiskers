@@ -1,6 +1,6 @@
 import torch
 
-from wiskers.models.world_model.mdn_rnn import MDNRNN, MDNHead
+from wiskers.models.ha2018.mdn_rnn import MDNRNN, MDNHead
 
 
 # ---------------------------------------------------------------------------

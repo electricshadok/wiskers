@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from wiskers.common.runtime.arg_utils import instantiate
 from wiskers.models.autoencoder.ae_2d import Autoencoder2D
-from wiskers.modules.base_module import BaseLightningModule
+from wiskers.modules.gen.base_module import BaseLightningModule
 
 
 class AEModule(BaseLightningModule):

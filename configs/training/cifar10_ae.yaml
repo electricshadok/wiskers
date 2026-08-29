@@ -24,7 +24,7 @@ export_safetensors: True
 
 # Module Config (model and optimizer)
 module:
-  _target_: wiskers.modules.ae_module.AEModule
+  _target_: wiskers.modules.gen.ae_module.AEModule
   # model
   in_channels: 3
   stem_channels: 32
