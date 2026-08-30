@@ -40,10 +40,10 @@ module:
   image_size: ${data_module.transform.image_size}
   # The actual autoencoder (e.g. VQ_VAE2D)
   model:
-    _target_: wiskers.models.autoencoder.vqvae_2d.VQ_VAE2D
+    _target_: wiskers.models.gen.autoencoder.vqvae_2d.VQ_VAE2D
     image_size: ${data_module.transform.image_size}
     encoder:
-      _target_: wiskers.models.autoencoder.encoder_decoder.CNNEncoder
+      _target_: wiskers.models.gen.autoencoder.encoder_decoder.CNNEncoder
       in_channels: 3
       stem_channels: 8
       num_heads: 0 # A value of 0 implies scaled dot-product attention instead of multihead attention.
@@ -52,7 +52,7 @@ module:
       activation:
         _target_: torch.nn.ReLU
     decoder:
-      _target_: wiskers.models.autoencoder.encoder_decoder.CNNDecoder
+      _target_: wiskers.models.gen.autoencoder.encoder_decoder.CNNDecoder
       out_channels: 3
       num_heads: 0
       block_channels: [256, 128, 64, 32, 16]

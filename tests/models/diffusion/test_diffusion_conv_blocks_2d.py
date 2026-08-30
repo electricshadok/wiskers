@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.models.diffusion.conv_blocks_2d import (
+from wiskers.models.gen.diffusion.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,
     DownBlock2D,

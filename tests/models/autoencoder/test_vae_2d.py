@@ -4,8 +4,8 @@ import onnxruntime as ort
 import pytest
 import torch
 
-from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
-from wiskers.models.autoencoder.vae_2d import VAE2D
+from wiskers.models.gen.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
+from wiskers.models.gen.autoencoder.vae_2d import VAE2D
 
 
 @pytest.mark.parametrize(

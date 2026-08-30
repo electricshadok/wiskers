@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from wiskers.models.gan.conv_blocks_2d import ClassEmbedding, UpBlock
+from wiskers.models.gen.gan.conv_blocks_2d import ClassEmbedding, UpBlock
 
 
 class Generator(nn.Module):

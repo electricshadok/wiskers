@@ -3,17 +3,47 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
+from wiskers.common.blocks.conv_blocks_2d import ResDoubleConv2D
+from wiskers.models.gen.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 
 
-class VQ_VAE2D(nn.Module):
+class BottleneckVAE(nn.Module):
+    """
+    Convolutional bottleneck for Variational Autoencoder (VAE) without flattening.
+
+    Shapes:
+        in: [N, C, H, W]
+        out: [N, C, H, W]
+    """
+
+    def __init__(self, channels: int):
+        super().__init__()
+        self.encoder_conv = ResDoubleConv2D(channels, nn.Sigmoid())
+
+        # Reparametrize using convolution instead of fully connected layers
+        self.conv_mu = nn.Conv2d(channels, channels, kernel_size=1)
+        self.conv_logvar = nn.Conv2d(channels, channels, kernel_size=1)
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
+    def forward(self, x):
+        x = self.encoder_conv(x)
+        mu = self.conv_mu(x)
+        logvar = self.conv_logvar(x)
+        z = self.reparameterize(mu, logvar)
+        return z, mu, logvar
+
+
+class VAE2D(nn.Module):
     """
     VAE architecture.
 
     Args:
         encoder (CNNEncoder): Prebuilt encoder module.
         decoder (CNNDecoder): Prebuilt decoder module.
-        quantizer (nn.Module): Instantiated latent bottleneck (e.g. VectorQuantizer or VAE).
         image_size (int or tuple): Input image size (H, W).
 
     Shapes:
@@ -25,8 +55,7 @@ class VQ_VAE2D(nn.Module):
         self,
         encoder: CNNEncoder,
         decoder: CNNDecoder,
-        quantizer: nn.Module,
-        image_size: Tuple[int, int],
+        image_size: Tuple[int, int] = (32, 32),
     ):
         super().__init__()
 
@@ -34,13 +63,7 @@ class VQ_VAE2D(nn.Module):
         self._latent_shape = self._encoder.get_latent_shape(image_size)
         latent_channels = self._latent_shape[0]
 
-        if quantizer.code_dim != latent_channels:
-            raise ValueError(
-                "quantizer.code_dim must match encoder latent channels: "
-                f"expected {latent_channels}, got {quantizer.code_dim}"
-            )
-
-        self._quantizer = quantizer
+        self._bottleneck = BottleneckVAE(latent_channels)
 
         self._decoder = decoder
 
@@ -63,22 +86,19 @@ class VQ_VAE2D(nn.Module):
 
     def forward(self, x):
         """
-        Forward pass of the VQ-VAE model.
+        Forward pass of the VAE model.
 
         Args:
             x (torch.FloatTensor): Input tensor of shape (N, in_C, H, W).
 
         Returns:
-            recon_x: reconstructed image
-            vq_loss: commitment / total VQ loss
-            encoding_indices: flattened indices of selected codes
             torch.FloatTensor: Output tensor of shape (N, out_C, H, W).
 
         Shapes:
             in: [N, in_C, H, W]
             out: [N, out_C, H, W]
         """
-        z_e = self._encoder(x)
-        z_q_st, vq_loss, indices = self._quantizer(z_e)
-        recon_x = self._decoder(z_q_st)
-        return recon_x, vq_loss, indices
+        encoder_x = self._encoder(x)
+        z, mu, logvar = self._bottleneck(encoder_x)
+        decoder_x = self.decoder(z)
+        return decoder_x, mu, logvar

@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.models.normalizing_flow.glow import ActNorm, InvertibleConv1x1
+from wiskers.models.gen.normalizing_flow.glow import ActNorm, InvertibleConv1x1
 
 
 @pytest.mark.parametrize(

@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 from torch import FloatTensor, LongTensor
 
-from wiskers.models.diffusion.schedulers.base_scheduler import (
+from wiskers.models.gen.diffusion.schedulers.base_scheduler import (
     BaseScheduler,
     extract_into_tensor,
 )

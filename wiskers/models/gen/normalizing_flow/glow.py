@@ -84,6 +84,7 @@ class ActNorm(nn.Module):
         self.logs = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
 
         # flag to indicate whether parameters were initialized from data
+        # TODO: add register_buffer for this flag so it moves to correct device and is saved in checkpoints
         self.initialized = False
 
     def initialize_parameters(self, x: torch.Tensor):
@@ -113,7 +114,7 @@ class ActNorm(nn.Module):
     def forward(
         self, x: torch.Tensor, logdet: torch.Tensor = None, reverse: bool = False
     ):
-        N, C, H, W = x.shape
+        batch, c, h, w = x.shape
 
         if not self.initialized and not reverse:
             # initialize from the first batch seen in forward pass
@@ -128,12 +129,58 @@ class ActNorm(nn.Module):
             # y = (x + bias) * scale
             y = (x + self.bias) * scale
             # change in log-det: H*W*sum(log|scale|) for each sample
-            dlogdet = H * W * torch.sum(self.logs)
+            dlogdet = h * w * torch.sum(self.logs)
             logdet = logdet + dlogdet
             return y, logdet
         else:
             # inverse: x = y / scale - bias
             x_rec = x / scale - self.bias
-            dlogdet = H * W * torch.sum(self.logs)
+            dlogdet = h * w * torch.sum(self.logs)
             logdet = logdet - dlogdet
             return x_rec, logdet
+
+
+"""
+import torch
+import torch.nn as nn
+
+class ActNorm(nn.Module):
+    def __init__(self, num_channels):
+        super().__init__()
+        self.num_channels = num_channels
+        self.register_buffer('initialized', torch.tensor(0, dtype=torch.uint8))
+        
+        # Trainable parameters
+        self.logs = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
+        self.bias = nn.Parameter(torch.zeros(1, num_channels, 1, 1))
+
+    def initialize(self, x):
+        with torch.no_grad():
+            # Flatten everything except the channel dimension
+            # x shape: [Batch, Channel, Height, Width]
+            flatten = x.transpose(0, 1).contiguous().view(self.num_channels, -1)
+            
+            # Calculate mean and std per channel
+            mean = flatten.mean(1).view(1, self.num_channels, 1, 1)
+            std = flatten.std(1).view(1, self.num_channels, 1, 1)
+
+            # Set parameters so output is N(0, 1)
+            self.bias.data.copy_(-mean)
+            self.logs.data.copy_(torch.log(1 / (std + 1e-6)))
+            self.initialized.fill_(1)
+
+    def forward(self, x, reverse=False):
+        if not reverse:
+            if self.initialized.item() == 0:
+                self.initialize(x)
+            
+            # Standard forward pass: (x + bias) * exp(logs)
+            # Log-determinant calculation
+            log_det = x.size(2) * x.size(3) * torch.sum(self.logs)
+            
+            return (x + self.bias) * torch.exp(self.logs), log_det
+        
+        else:
+            # Inverse pass: (y / exp(logs)) - bias
+            return x * torch.exp(-self.logs) - self.bias
+"""

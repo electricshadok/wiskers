@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from wiskers.models.gan.discriminator import Discriminator
-from wiskers.models.gan.generator import Generator
+from wiskers.models.gen.gan.discriminator import Discriminator
+from wiskers.models.gen.gan.generator import Generator
 from wiskers.modules.gen.base import BaseLightningModule
 
 
