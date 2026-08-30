@@ -1,11 +1,11 @@
 import lightning as L
 import torch.nn as nn
 
-from wiskers.models.ha2018.controller import Controller
-from wiskers.models.ha2018.mdn_rnn import MDNRNN
+from wiskers.models.wm2018.controller import Controller
+from wiskers.models.wm2018.mdn_rnn import MDNRNN
 
 
-class Ha2018Module(L.LightningModule):
+class WorldModels(L.LightningModule):
     """
     Lightning module for the World Models paper (Ha & Schmidhuber, 2018).
 

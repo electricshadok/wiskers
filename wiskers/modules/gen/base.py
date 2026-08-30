@@ -8,7 +8,7 @@ import torch
 class BaseLightningModule(L.LightningModule, ABC):
     """
     Base Lightning module that defines shared logging and sample-generation interface.
-    Other model modules (e.g., VAE, WorldModel) should inherit from this class.
+    Other model modules (e.g., VAE, GAN, AE, VQVAE) should inherit from this class.
     """
 
     def _log_tensor(self, tensors: dict, stage: str, prog_bar: bool):

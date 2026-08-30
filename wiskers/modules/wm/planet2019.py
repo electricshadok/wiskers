@@ -1,7 +1,7 @@
 import lightning as L
 
 
-class PlaNet2019Module(L.LightningModule):
+class PlaNet(L.LightningModule):
     """
     Lightning module for PlaNet (Hafner et al., 2019).
     "Learning Latent Dynamics for Planning from Pixels"
@@ -15,7 +15,7 @@ class PlaNet2019Module(L.LightningModule):
         Decoder  - Reconstructs observations from the latent state (s_t, h_t).
         Reward   - Predicts reward r_t from the latent state.
 
-    Key ideas vs Ha2018:
+    Key ideas vs WorldModels:
         - No separate VAE pre-training; the RSSM is trained end-to-end with
           image decoder + reward decoder as auxiliary losses.
         - Planning is done with CEM (Cross-Entropy Method) in latent space

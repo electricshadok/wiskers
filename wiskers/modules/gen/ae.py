@@ -3,16 +3,14 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.losses import kl_divergence_standard_normal
 from wiskers.common.runtime.arg_utils import instantiate
-from wiskers.models.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
-from wiskers.models.autoencoder.vae_2d import VAE2D
-from wiskers.modules.gen.base_module import BaseLightningModule
+from wiskers.models.autoencoder.ae_2d import Autoencoder2D
+from wiskers.modules.gen.base import BaseLightningModule
 
 
-class VAEModule(BaseLightningModule):
+class AE(BaseLightningModule):
     """
-    LightningModule for training and inference of a vae model.
+    LightningModule for training and inference of an autocencoder model.
 
     Args:
         # Model configuration
@@ -44,26 +42,15 @@ class VAEModule(BaseLightningModule):
         super().__init__()
         self.save_hyperparameters()
         self.image_size = image_size
-
-        encoder = CNNEncoder(
+        self.model = Autoencoder2D(
             in_channels=in_channels,
             stem_channels=stem_channels,
+            out_channels=out_channels,
             num_heads=num_heads,
             block_channels=block_channels,
             block_attentions=block_attentions,
-            activation=instantiate(activation),
-        )
-        decoder = CNNDecoder(
-            out_channels=out_channels,
-            num_heads=num_heads,
-            block_channels=list(reversed(block_channels)),
-            block_attentions=block_attentions,
-            activation=instantiate(activation),
-        )
-        self.model = VAE2D(
             image_size=image_size,
-            encoder=encoder,
-            decoder=decoder,
+            activation=instantiate(activation),
         )
         self.learning_rate = learning_rate
 
@@ -91,21 +78,16 @@ class VAEModule(BaseLightningModule):
         if stage not in valid_stages:
             raise ValueError(f"stage should {valid_stages}")
 
-        images, labels = batch
+        images = self._unpack_images(batch)
 
-        prediction, mu, logvar = self.model(images)
+        prediction = self.model(images)
 
-        kl_loss = kl_divergence_standard_normal(mu, logvar)
-
-        # reconstruction loss
         reconstruction_loss = F.mse_loss(images, prediction)
-
-        loss = kl_loss + reconstruction_loss
+        loss = reconstruction_loss
 
         # Log losses
         losses = {
             "loss": loss,
-            "kl_loss": kl_loss,
             "reconstruction_loss": reconstruction_loss,
         }
 
@@ -128,7 +110,7 @@ class VAEModule(BaseLightningModule):
     @torch.no_grad()
     def generate_samples(self, num_samples: int) -> torch.Tensor:
         """
-        Generates samples.
+        Generates samples
 
         Args:
             num_images (int): Number of images to generate.

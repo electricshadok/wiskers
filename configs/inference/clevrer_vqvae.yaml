@@ -1,6 +1,6 @@
 # Global configuration
 seed: 0
-experiment_dir: "./experiments/clevrer_stg1"
+experiment_dir: "./experiments/clevrer_vqvae"
 run_name: version_0
 num_images: 16
 backend_engine:

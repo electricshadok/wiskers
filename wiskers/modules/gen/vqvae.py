@@ -7,10 +7,10 @@ from lightning.pytorch.utilities.types import OptimizerLRScheduler
 
 from wiskers.common.metrics import codebook_usage_metrics
 from wiskers.common.runtime.arg_utils import instantiate
-from wiskers.modules.gen.base_module import BaseLightningModule
+from wiskers.modules.gen.base import BaseLightningModule
 
 
-class VQVAEModule(BaseLightningModule):
+class VQVAE(BaseLightningModule):
     """
     A LightningModule that combines spatial and temporal modeling for video or physics prediction.
     Encodes input frames into a latent space (via VAE/VQ-VAE) and predicts their temporal evolution.

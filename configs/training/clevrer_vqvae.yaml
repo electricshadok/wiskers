@@ -26,7 +26,7 @@ data_module:
 # Logger Configs
 tensor_board_logger:
   save_dir: "./experiments"
-  name: "clevrer_stg1"
+  name: "clevrer_vqvae"
   version: null
 
 # Export Model

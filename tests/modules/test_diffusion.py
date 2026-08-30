@@ -3,7 +3,7 @@ import torch
 from lightning.pytorch import Trainer
 from torch.utils.data import DataLoader, TensorDataset
 
-from wiskers.modules.gen.diffuser_module import DiffuserModule
+from wiskers.modules.gen.diffuser import Diffuser
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def config_module():
 
 
 def test_training_diffuser_module(config_module):
-    diffuser = DiffuserModule(**config_module)
+    diffuser = Diffuser(**config_module)
 
     in_channels = config_module["in_channels"]
     image_size = config_module["image_size"]
@@ -44,7 +44,7 @@ def test_training_diffuser_module(config_module):
 
 
 def test_sample_generation(config_module):
-    diffuser = DiffuserModule(**config_module)
+    diffuser = Diffuser(**config_module)
     num_samples = 2
     num_inference_steps = 10
     in_channels = config_module["in_channels"]
