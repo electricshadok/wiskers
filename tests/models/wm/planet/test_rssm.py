@@ -7,7 +7,7 @@ No trainer, no Lightning — pure nn.Module tests.
 import pytest
 import torch
 
-from wiskers.models.wm.planet2019.rssm import RSSM, RSSMState
+from wiskers.models.wm.planet.rssm import RSSM, RSSMState
 
 
 # ── Shared config (small, fast on CPU) ────────────────────────────────────────
