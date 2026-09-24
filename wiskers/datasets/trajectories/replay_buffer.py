@@ -8,7 +8,7 @@ contiguous chunks for sequence model training (RSSM, Dreamer, DIAMOND, ...).
 import random
 from collections import deque
 
-from wiskers.common.trajectories.episode import Episode
+from wiskers.datasets.trajectories.episode import Episode
 
 
 class ReplayBuffer:

@@ -21,8 +21,8 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
-from wiskers.common.trajectories.episode import Episode
-from wiskers.common.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.episode import Episode
+from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 def _episode_to_tensors(episode: Episode) -> dict[str, torch.Tensor]:

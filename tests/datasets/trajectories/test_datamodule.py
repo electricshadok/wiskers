@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 
-from wiskers.common.trajectories.datamodule import TrajectoryDataModule
-from wiskers.common.trajectories.episode import Episode
-from wiskers.common.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
+from wiskers.datasets.trajectories.episode import Episode
+from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:

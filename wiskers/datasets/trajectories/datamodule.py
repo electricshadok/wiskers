@@ -23,8 +23,8 @@ from typing import Optional
 import lightning as L
 from torch.utils.data import DataLoader
 
-from wiskers.common.trajectories.dataset import TrajectoryDataset
-from wiskers.common.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.dataset import TrajectoryDataset
+from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 class TrajectoryDataModule(L.LightningDataModule):
