@@ -6,129 +6,79 @@ import torch
 from webui.dataset.adapters import get_adapter
 
 
-def _unbatch(sample: Any) -> Any:
-    if isinstance(sample, (tuple, list)) and len(sample) >= 1:
-        return sample[0]
-    return sample
-
-
-def _is_video(x: torch.Tensor) -> bool:
-    return isinstance(x, torch.Tensor) and x.ndim == 4  # (T,C,H,W)
-
-
-def _is_image(x: torch.Tensor) -> bool:
-    return isinstance(x, torch.Tensor) and x.ndim == 3  # (C,H,W)
-
-
-def prep_image(x: torch.Tensor) -> torch.Tensor:
-    """
-    Normalize and ensure image tensor is in (C, H, W) format with float values in [0, 1].
-
-    Args:
-        x (torch.Tensor): Input image tensor. Accepts:
-            - (C, H, W) color image with dtype uint8 or float.
-            - Values can be in [0, 255] (uint8), already normalized [0, 1] (float),
-            or in the range [-1, 1] (float).
-
-    Returns:
-        torch.Tensor: Image tensor in (C, H, W) format, dtype float32, values scaled to [0, 1].
-    """
-    if x.ndim != 3:
-        raise ValueError(f"Expected (C,H,W), got {tuple(x.shape)}")
-
-    x = x.detach().cpu()
-
-    if x.dtype.is_floating_point:
-        if x.min() < 0:  # looks like [-1,1]
-            x = (x + 1.0) * 0.5
-        x = x.clamp(0, 1)
-    else:
-        x = x.to(torch.float32) / 255.0
-
-    return x
-
-
 def dataset_ui(data_module: Any):
-    import os
+    """
+    Render the interactive Rollout Explorer for trajectory-based DataModules
+    (e.g., BreakoutDataModule, CarRacingDataModule).
+    """
+    buffer = getattr(data_module, "buffer", None)
+    if buffer is None:
+        st.error(f"Expected DataModule with a ReplayBuffer, got {type(data_module).__name__}")
+        return
+
+    if buffer.is_empty:
+        data_module.setup("fit")
+
+    episodes = list(buffer._episodes)
+    if not episodes:
+        st.warning("No episodes found in replay buffer.")
+        return
 
     st.markdown("#### 📂 Rollout Explorer")
 
-    col_split, col_rollout = st.columns(2)
+    # Buffer Overview Metrics
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Episodes", f"{len(episodes)} / {buffer.capacity}")
+    m2.metric("Total Steps", f"{buffer.num_steps:,}")
+    m3.metric("Chunk Length", f"{buffer.chunk_len}")
+    avg_len = sum(len(e) for e in episodes) / len(episodes)
+    m4.metric("Avg Episode Length", f"{avg_len:.1f}")
 
-    with col_split:
-        split = st.selectbox("Split", ["Train", "Validation", "Test"])
+    st.markdown("---")
+    col_ep, col_step = st.columns([1, 2])
 
-    if split == "Train":
-        data_module.setup("fit")
-        dataset = data_module.train_dataloader().dataset
-    elif split == "Validation":
-        data_module.setup("fit")
-        dataset = data_module.val_dataloader().dataset
-    else:  # Test
-        data_module.setup("test")
-        dataset = data_module.test_dataloader().dataset
-
-    first = _unbatch(dataset[0])
-
-    if not isinstance(first, dict):
-        raise ValueError(f"Expected a dictionary sample, got {type(first)}")
-
-    required_keys = {"media", "media_next", "action", "done", "reward"}
-    missing_keys = required_keys - set(first.keys())
-    if missing_keys:
-        raise KeyError(f"Sample is missing required keys: {missing_keys}")
-
-    # Group transitions by rollout file for sequential viewing
-    rollouts = {}
-    if hasattr(dataset, "transitions"):
-        for idx, (fpath, step_idx) in enumerate(dataset.transitions):
-            fname = os.path.basename(fpath)
-            rollouts.setdefault(fname, []).append((idx, step_idx))
-
-    with col_rollout:
-        if rollouts:
-            selected_rollout = st.selectbox("Select Rollout File", list(rollouts.keys()))
-            rollout_steps = rollouts[selected_rollout]
-
-            # Sort steps by step_idx
-            rollout_steps = sorted(rollout_steps, key=lambda x: x[1])
-        else:
-            selected_rollout = None
-
-    if selected_rollout and rollouts:
-        step_selection = st.slider(
-            "Step Index",
-            min_value=0,
-            max_value=len(rollout_steps) - 1,
-            value=0,
-            format="Step %d"
+    with col_ep:
+        ep_idx = st.selectbox(
+            "Select Rollout Episode",
+            range(len(episodes)),
+            format_func=lambda i: (
+                f"Episode {i + 1}  •  {len(episodes[i])} steps  •  "
+                f"R={episodes[i].rewards.sum():.1f}"
+            ),
         )
 
-        global_idx, step_idx = rollout_steps[step_selection]
-        sample = dataset[global_idx]
-    else:
-        st.markdown("#### 🔍 Sample Viewer")
-        idx = st.slider("Select Sample Index", 0, len(dataset) - 1, 0)
-        sample = dataset[idx]
+    episode = episodes[ep_idx]
+    T = len(episode)
 
-    # Display frames and action side-by-side
+    with col_step:
+        step_idx = st.slider(
+            "Step Index",
+            min_value=0,
+            max_value=T - 1,
+            value=0,
+            format="Step %d",
+        )
+
+    # Observations: current and next
     col1, col2 = st.columns(2)
 
+    obs_curr = episode.obs[step_idx]
+    obs_next = episode.obs[step_idx + 1] if step_idx + 1 < T else episode.obs[step_idx]
+
     with col1:
-        st.markdown("**Current Observation (`media`)**")
-        img = prep_image(sample["media"]).permute(1, 2, 0).numpy()
-        st.image(img, width="stretch")
+        st.markdown(f"**Current Observation (`obs[{step_idx}]`)**")
+        st.image(obs_curr, use_container_width=True)
 
     with col2:
-        st.markdown("**Next Observation (`media_next`)**")
-        img_next = prep_image(sample["media_next"]).permute(1, 2, 0).numpy()
-        st.image(img_next, width="stretch")
+        next_label = f"obs[{step_idx + 1}]" if step_idx + 1 < T else f"obs[{step_idx}] (terminal)"
+        st.markdown(f"**Next Observation (`{next_label}`)**")
+        st.image(obs_next, use_container_width=True)
 
-    # ── Action & Status ──────────────────────────────────────────────────────
+    # ── Action & Status ──────────────────────────────────────────────────
     st.markdown("#### 🕹️ Control Action & Status")
-    action = sample["action"].cpu()
-    reward_val = float(sample["reward"].item())
-    done_val = bool(sample["done"].item())
+    action = torch.from_numpy(episode.actions[step_idx])
+    reward_val = float(episode.rewards[step_idx])
+    done_val = bool(episode.dones[step_idx])
 
     adapter = get_adapter(data_module)
     step_info = adapter.describe_step(action, reward_val, done_val)
@@ -146,5 +96,12 @@ def dataset_ui(data_module: Any):
             elif note:
                 st.caption(note)
 
-
-
+    # ── Return trajectory curve ──────────────────────────────────────────
+    st.markdown("#### 📈 Episode Return Curve")
+    cum_rewards = episode.rewards.cumsum()
+    st.line_chart(cum_rewards, height=180)
+    st.caption(
+        f"Step {step_idx}: reward = **{reward_val:+.3f}**  |  "
+        f"cumulative return = **{cum_rewards[step_idx]:.2f}**  |  "
+        f"episode total return = **{cum_rewards[-1]:.2f}**"
+    )
