@@ -18,10 +18,32 @@ Typical usage (seed episodes before training starts):
 """
 
 import numpy as np
+from gymnasium.envs.box2d.car_racing import CarRacing
 
-from wiskers.datasets.gym.car_racing import NoZoomCarRacing
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
+
+
+class NoZoomCarRacing(CarRacing):
+    """
+    Subclass of CarRacing that locks the camera zoom immediately to gameplay scale (t=1.0),
+    bypassing the initial zooming-in animation on reset.
+    """
+
+    def reset(self, **kwargs):
+        obs_info = super().reset(**kwargs)
+        if isinstance(obs_info, tuple) and len(obs_info) == 2:
+            obs, info = obs_info
+        else:
+            obs, info = obs_info, {}
+
+        # Lock camera zoom immediately to standard gameplay scale (bypass zoom-in animation)
+        self.t = 1.0
+        obs = self._render("state_pixels")
+
+        if isinstance(obs_info, tuple) and len(obs_info) == 2:
+            return obs, info
+        return obs
 
 
 def _collect_one_episode(env: NoZoomCarRacing, max_steps: int, seed: int) -> Episode:
