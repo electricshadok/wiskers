@@ -17,6 +17,8 @@ Typical usage (seed episodes before training starts):
     dm = TrajectoryDataModule(buffer, batch_size=16, steps_per_epoch=200)
 """
 
+from typing import Callable, Union
+
 import numpy as np
 from gymnasium.envs.box2d.car_racing import CarRacing
 
@@ -46,14 +48,20 @@ class NoZoomCarRacing(CarRacing):
         return obs
 
 
-def _collect_one_episode(env: NoZoomCarRacing, max_steps: int, seed: int) -> Episode:
+def _collect_one_episode(
+    env: NoZoomCarRacing,
+    max_steps: int,
+    seed: int,
+    policy: Union[str, Callable[[np.ndarray, NoZoomCarRacing, int], np.ndarray]] = "heuristic",
+) -> Episode:
     """
-    Run a single CarRacing episode with the Ornstein-Uhlenbeck heuristic policy.
+    Run a single CarRacing episode with the specified policy.
 
     Args:
         env      : An already-constructed NoZoomCarRacing instance.
         max_steps: Maximum number of environment steps per episode.
         seed     : Seed passed to env.reset() for reproducibility.
+        policy   : 'heuristic' (OU noise), 'random', or a callable(obs, env, step) -> action.
 
     Returns:
         Episode with arrays of shape (T, H, W, C), (T, 3), (T,), (T,).
@@ -69,15 +77,23 @@ def _collect_one_episode(env: NoZoomCarRacing, max_steps: int, seed: int) -> Epi
 
     steering = 0.0
     done = False
-    for _ in range(max_steps):
+    for step in range(max_steps):
         if done:
             break
-        # OU-style mean-reverting random steering keeps the car on track
-        steering = steering * 0.8 + np.random.uniform(-0.2, 0.2)
-        steering = float(np.clip(steering, -1.0, 1.0))
-        gas = float(np.random.uniform(0.4, 0.8))
-        brake = float(np.random.uniform(0.0, 0.05))
-        action = np.array([steering, gas, brake], dtype=np.float32)
+
+        if callable(policy):
+            action = np.asarray(policy(obs, env, step), dtype=np.float32)
+        elif policy == "heuristic":
+            # OU-style mean-reverting random steering keeps the car on track
+            steering = steering * 0.8 + np.random.uniform(-0.2, 0.2)
+            steering = float(np.clip(steering, -1.0, 1.0))
+            gas = float(np.random.uniform(0.4, 0.8))
+            brake = float(np.random.uniform(0.0, 0.05))
+            action = np.array([steering, gas, brake], dtype=np.float32)
+        elif policy == "random":
+            action = np.asarray(env.action_space.sample(), dtype=np.float32)
+        else:
+            raise ValueError(f"Unknown policy '{policy}'. Expected 'heuristic', 'random', or a Callable.")
 
         step_res = env.step(action)
         if len(step_res) == 5:
@@ -87,6 +103,7 @@ def _collect_one_episode(env: NoZoomCarRacing, max_steps: int, seed: int) -> Epi
             next_obs, reward, done, _ = step_res
 
         assert isinstance(next_obs, np.ndarray), f"Expected np.ndarray observation from step, got {type(next_obs)}"
+        obs = next_obs
         observations.append(next_obs)
         actions.append(action)
         rewards.append(float(reward))
@@ -107,6 +124,7 @@ def collect_car_racing_episodes(
     n_episodes: int = 10,
     max_steps: int = 500,
     seed: int = 0,
+    policy: Union[str, Callable[[np.ndarray, NoZoomCarRacing, int], np.ndarray]] = "heuristic",
     verbose: bool = True,
 ) -> None:
     """
@@ -120,12 +138,18 @@ def collect_car_racing_episodes(
         n_episodes : Number of episodes to collect.
         max_steps  : Maximum steps per episode.
         seed       : Base RNG seed; each episode gets seed + episode_index.
+        policy     : 'heuristic', 'random', or custom callable policy.
         verbose    : Print progress to stdout.
     """
     env = NoZoomCarRacing(render_mode="rgb_array")
     try:
         for i in range(n_episodes):
-            episode = _collect_one_episode(env, max_steps=max_steps, seed=seed + i)
+            episode = _collect_one_episode(
+                env=env,
+                max_steps=max_steps,
+                seed=seed + i,
+                policy=policy,
+            )
             buffer.add(episode)
             if verbose:
                 print(

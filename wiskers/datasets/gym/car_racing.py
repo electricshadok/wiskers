@@ -2,7 +2,7 @@
 CarRacing-v3 live trajectory DataModule.
 """
 
-from typing import Optional
+from typing import Callable, Optional, Union
 
 from wiskers.datasets.gym.car_racing_collector import (
     NoZoomCarRacing,
@@ -29,6 +29,7 @@ class CarRacingDataModule(TrajectoryDataModule):
         # Environment rollout configuration
         seed_episodes: int = 20,
         max_steps_per_episode: int = 500,
+        policy: Union[str, Callable] = "heuristic",
         # DataLoader / Training schedule
         batch_size: int = 32,
         steps_per_epoch: int = 500,
@@ -45,6 +46,7 @@ class CarRacingDataModule(TrajectoryDataModule):
         )
         self.seed_episodes = seed_episodes
         self.max_steps_per_episode = max_steps_per_episode
+        self.policy = policy
         self.seed = seed
         self.verbose = verbose
 
@@ -55,6 +57,7 @@ class CarRacingDataModule(TrajectoryDataModule):
                 n_episodes=self.seed_episodes,
                 max_steps=self.max_steps_per_episode,
                 seed=self.seed,
+                policy=self.policy,
                 verbose=self.verbose,
             )
         super().setup(stage)

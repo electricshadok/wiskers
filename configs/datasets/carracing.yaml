@@ -8,6 +8,7 @@ data_module:
   # Environment rollout configuration
   seed_episodes: 20
   max_steps_per_episode: 500
+  policy: heuristic
   # DataLoader / Training schedule
   batch_size: 16
   steps_per_epoch: 500

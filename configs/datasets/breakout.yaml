@@ -2,16 +2,18 @@ seed: 0
 
 data_module:
   _target_: wiskers.datasets.gym.breakout.BreakoutDataModule
-  data_dir: "./datasets"
+  # Replay buffer configuration
+  capacity: 1000
+  chunk_len: 50
+  # Environment rollout configuration
+  seed_episodes: 20
+  max_steps_per_episode: 500
+  image_size: [64, 64]
+  policy: heuristic
+  epsilon: 0.1
+  # DataLoader / Training schedule
   batch_size: 16
-  num_workers: 2
-  preprocessing:
-    _target_: wiskers.datasets.gym.breakout.PreprocessingConfig
-    num_train_rollouts: 20
-    num_val_rollouts: 4
-    num_test_rollouts: 4
-    max_steps_per_rollout: 500
-  transform:
-    _target_: wiskers.datasets.gym.breakout.TransformConfig
-    image_size: [84, 84]
-    grayscale: false
+  steps_per_epoch: 500
+  # General settings
+  seed: ${seed}
+  verbose: true
