@@ -113,7 +113,7 @@ def _collect_one_episode(
 
         # Select action
         if callable(policy):
-            action_idx = int(policy(obs, env, step))
+            action_idx = policy(obs, env, step)
         elif policy == "heuristic":
             action_idx = _get_heuristic_action(env, step, epsilon=epsilon)
         elif policy == "random":

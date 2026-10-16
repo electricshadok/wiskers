@@ -61,6 +61,3 @@ class CarRacingDataModule(TrajectoryDataModule):
                 verbose=self.verbose,
             )
         super().setup(stage)
-
-
-__all__ = ["CarRacingDataModule", "NoZoomCarRacing"]

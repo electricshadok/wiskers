@@ -42,3 +42,17 @@ def test_breakout_datamodule_setup_and_dataloader():
     assert batch["obs"].dtype == torch.float32
     assert batch["obs"].min() >= 0.0
     assert batch["obs"].max() <= 1.0
+
+
+def test_breakout_datamodule_callable_policy():
+    dm = BreakoutDataModule(
+        capacity=10,
+        chunk_len=5,
+        seed_episodes=1,
+        max_steps_per_episode=6,
+        policy=lambda obs, env, step: 1,
+        verbose=False,
+    )
+    dm.setup()
+    assert dm.buffer.num_episodes == 1
+

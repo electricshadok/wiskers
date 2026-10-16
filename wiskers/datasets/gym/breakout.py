@@ -67,6 +67,3 @@ class BreakoutDataModule(TrajectoryDataModule):
                 verbose=self.verbose,
             )
         super().setup(stage)
-
-
-__all__ = ["BreakoutDataModule"]
