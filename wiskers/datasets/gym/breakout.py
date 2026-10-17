@@ -2,12 +2,10 @@
 ALE/Breakout-v5 live trajectory DataModule.
 """
 
-from typing import Callable, Optional, Union
-
-import gymnasium as gym
-import numpy as np
+from typing import Optional
 
 from wiskers.datasets.gym.breakout_collector import collect_breakout_episodes
+from wiskers.datasets.gym.breakout_policies import BreakoutPolicy
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
@@ -23,6 +21,7 @@ class BreakoutDataModule(TrajectoryDataModule):
 
     def __init__(
         self,
+        policy: BreakoutPolicy,
         # Replay buffer configuration
         capacity: int = 1000,
         chunk_len: int = 50,
@@ -30,8 +29,6 @@ class BreakoutDataModule(TrajectoryDataModule):
         seed_episodes: int = 20,
         max_steps_per_episode: int = 500,
         image_size: Optional[tuple[int, int]] = (64, 64),
-        policy: Union[str, Callable[[np.ndarray, gym.Env, int], int]] = "heuristic",
-        epsilon: float = 0.1,
         # DataLoader / Training schedule
         batch_size: int = 32,
         steps_per_epoch: int = 500,
@@ -46,11 +43,10 @@ class BreakoutDataModule(TrajectoryDataModule):
             steps_per_epoch=steps_per_epoch,
             num_workers=0,
         )
+        self.policy = policy
         self.seed_episodes = seed_episodes
         self.max_steps_per_episode = max_steps_per_episode
         self.image_size = tuple(image_size) if image_size is not None else None
-        self.policy = policy
-        self.epsilon = epsilon
         self.seed = seed
         self.verbose = verbose
 
@@ -58,12 +54,11 @@ class BreakoutDataModule(TrajectoryDataModule):
         if self.buffer.is_empty:
             collect_breakout_episodes(
                 buffer=self.buffer,
+                policy=self.policy,
                 n_episodes=self.seed_episodes,
                 max_steps=self.max_steps_per_episode,
                 seed=self.seed,
                 image_size=self.image_size,
-                policy=self.policy,
-                epsilon=self.epsilon,
                 verbose=self.verbose,
             )
         super().setup(stage)

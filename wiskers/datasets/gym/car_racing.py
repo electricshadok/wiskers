@@ -2,11 +2,13 @@
 CarRacing-v3 live trajectory DataModule.
 """
 
-from typing import Callable, Optional, Union
+from typing import Optional
 
 from wiskers.datasets.gym.car_racing_collector import (
-    NoZoomCarRacing,
     collect_car_racing_episodes,
+)
+from wiskers.datasets.gym.car_racing_policies import (
+    CarRacingPolicy,
 )
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
@@ -23,13 +25,13 @@ class CarRacingDataModule(TrajectoryDataModule):
 
     def __init__(
         self,
+        policy: CarRacingPolicy,
         # Replay buffer configuration
         capacity: int = 1000,
         chunk_len: int = 50,
         # Environment rollout configuration
         seed_episodes: int = 20,
         max_steps_per_episode: int = 500,
-        policy: Union[str, Callable] = "heuristic",
         # DataLoader / Training schedule
         batch_size: int = 32,
         steps_per_epoch: int = 500,
@@ -44,9 +46,9 @@ class CarRacingDataModule(TrajectoryDataModule):
             steps_per_epoch=steps_per_epoch,
             num_workers=0,
         )
+        self.policy = policy
         self.seed_episodes = seed_episodes
         self.max_steps_per_episode = max_steps_per_episode
-        self.policy = policy
         self.seed = seed
         self.verbose = verbose
 
@@ -54,10 +56,10 @@ class CarRacingDataModule(TrajectoryDataModule):
         if self.buffer.is_empty:
             collect_car_racing_episodes(
                 buffer=self.buffer,
+                policy=self.policy,
                 n_episodes=self.seed_episodes,
                 max_steps=self.max_steps_per_episode,
                 seed=self.seed,
-                policy=self.policy,
                 verbose=self.verbose,
             )
         super().setup(stage)

@@ -1,27 +1,14 @@
 """
 CarRacing → ReplayBuffer collector.
 
-Provides a single helper function that rolls out one episode of CarRacing-v3
-with the heuristic steering policy and pushes the resulting Episode into a
-ReplayBuffer.
-
-Typical usage (seed episodes before training starts):
-
-    from wiskers.datasets.gym.car_racing_collector import collect_car_racing_episodes
-    from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
-
-    buffer = ReplayBuffer(capacity=200, chunk_len=50)
-    collect_car_racing_episodes(buffer, n_episodes=10, max_steps=500, seed=0)
-
-    # Then hand the buffer to TrajectoryDataModule
-    dm = TrajectoryDataModule(buffer, batch_size=16, steps_per_epoch=200)
+Provides helper functions to roll out episodes of CarRacing-v3 with
+a given CarRacingPolicy, pushing resulting Episodes into a ReplayBuffer.
 """
-
-from typing import Callable, Union
 
 import numpy as np
 from gymnasium.envs.box2d.car_racing import CarRacing
 
+from wiskers.datasets.gym.car_racing_policies import CarRacingPolicy
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
@@ -52,7 +39,7 @@ def _collect_one_episode(
     env: NoZoomCarRacing,
     max_steps: int,
     seed: int,
-    policy: Union[str, Callable[[np.ndarray, NoZoomCarRacing, int], np.ndarray]] = "heuristic",
+    policy: CarRacingPolicy,
 ) -> Episode:
     """
     Run a single CarRacing episode with the specified policy.
@@ -61,7 +48,7 @@ def _collect_one_episode(
         env      : An already-constructed NoZoomCarRacing instance.
         max_steps: Maximum number of environment steps per episode.
         seed     : Seed passed to env.reset() for reproducibility.
-        policy   : 'heuristic' (OU noise), 'random', or a callable(obs, env, step) -> action.
+        policy   : Policy used to select actions.
 
     Returns:
         Episode with arrays of shape (T, H, W, C), (T, 3), (T,), (T,).
@@ -75,25 +62,13 @@ def _collect_one_episode(
     rewards: list[float] = []
     dones: list[bool] = []
 
-    steering = 0.0
+    policy.reset()
     done = False
     for step in range(max_steps):
         if done:
             break
 
-        if callable(policy):
-            action = np.asarray(policy(obs, env, step), dtype=np.float32)
-        elif policy == "heuristic":
-            # OU-style mean-reverting random steering keeps the car on track
-            steering = steering * 0.8 + np.random.uniform(-0.2, 0.2)
-            steering = float(np.clip(steering, -1.0, 1.0))
-            gas = float(np.random.uniform(0.4, 0.8))
-            brake = float(np.random.uniform(0.0, 0.05))
-            action = np.array([steering, gas, brake], dtype=np.float32)
-        elif policy == "random":
-            action = np.asarray(env.action_space.sample(), dtype=np.float32)
-        else:
-            raise ValueError(f"Unknown policy '{policy}'. Expected 'heuristic', 'random', or a Callable.")
+        action = policy(obs, env, step)
 
         step_res = env.step(action)
         if len(step_res) == 5:
@@ -121,10 +96,10 @@ def _collect_one_episode(
 
 def collect_car_racing_episodes(
     buffer: ReplayBuffer,
+    policy: CarRacingPolicy,
     n_episodes: int = 10,
     max_steps: int = 500,
     seed: int = 0,
-    policy: Union[str, Callable[[np.ndarray, NoZoomCarRacing, int], np.ndarray]] = "heuristic",
     verbose: bool = True,
 ) -> None:
     """
@@ -135,10 +110,10 @@ def collect_car_racing_episodes(
 
     Args:
         buffer     : Target ReplayBuffer to populate.
+        policy     : Policy instance to collect rollouts with.
         n_episodes : Number of episodes to collect.
         max_steps  : Maximum steps per episode.
         seed       : Base RNG seed; each episode gets seed + episode_index.
-        policy     : 'heuristic', 'random', or custom callable policy.
         verbose    : Print progress to stdout.
     """
     env = NoZoomCarRacing(render_mode="rgb_array")

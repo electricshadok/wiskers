@@ -1,10 +1,17 @@
 import torch
 
 from wiskers.datasets.gym.breakout import BreakoutDataModule
+from wiskers.datasets.gym.breakout_policies import (
+    BreakoutHeuristicPolicy,
+    BreakoutPolicy,
+    BreakoutRandomPolicy,
+)
 
 
 def test_breakout_datamodule_init():
+    policy = BreakoutHeuristicPolicy()
     dm = BreakoutDataModule(
+        policy=policy,
         capacity=100,
         chunk_len=20,
         seed_episodes=0,
@@ -14,10 +21,12 @@ def test_breakout_datamodule_init():
     assert dm.buffer.capacity == 100
     assert dm.buffer.chunk_len == 20
     assert dm.buffer.is_empty
+    assert dm.policy is policy
 
 
 def test_breakout_datamodule_setup_and_dataloader():
     dm = BreakoutDataModule(
+        policy=BreakoutHeuristicPolicy(epsilon=0.0),
         capacity=10,
         chunk_len=5,
         seed_episodes=1,
@@ -44,15 +53,26 @@ def test_breakout_datamodule_setup_and_dataloader():
     assert batch["obs"].max() <= 1.0
 
 
-def test_breakout_datamodule_callable_policy():
+def test_breakout_datamodule_custom_policy():
+    class ConstantFirePolicy(BreakoutPolicy):
+        def forward(self, obs, env=None, step=0):
+            return 1
+
     dm = BreakoutDataModule(
+        policy=ConstantFirePolicy(),
         capacity=10,
         chunk_len=5,
         seed_episodes=1,
         max_steps_per_episode=6,
-        policy=lambda obs, env, step: 1,
         verbose=False,
     )
     dm.setup()
     assert dm.buffer.num_episodes == 1
 
+
+def test_breakout_random_policy():
+    policy = BreakoutRandomPolicy(fire_frequency=5)
+    assert policy.action_dim == 1
+    assert policy.action_type == "discrete"
+    assert policy(None, None, step=0) == 1
+    assert policy(None, None, step=1) in {0, 1, 2, 3}

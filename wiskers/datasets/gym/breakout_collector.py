@@ -2,17 +2,16 @@
 ALE/Breakout → ReplayBuffer collector.
 
 Provides helper functions to roll out episodes of ALE/Breakout-v5 with
-a heuristic ball-tracking policy or random exploration, pushing resulting
-Episodes into a ReplayBuffer.
+a given BreakoutPolicy, pushing resulting Episodes into a ReplayBuffer.
 """
 
-import random
-from typing import Callable, Optional, Union
+from typing import Optional
 
 import ale_py
 import gymnasium as gym
 import numpy as np
 
+from wiskers.datasets.gym.breakout_policies import BreakoutPolicy
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
@@ -38,61 +37,20 @@ def make_breakout_env(image_size: Optional[tuple[int, int]] = (64, 64)) -> gym.E
     return env
 
 
-def _get_heuristic_action(env: gym.Env, step: int, epsilon: float = 0.1) -> int:
-    """
-    Heuristic policy using Atari RAM state to track the ball with the paddle.
-
-    Atari Breakout RAM addresses:
-      - RAM[72]:  paddle x-position
-      - RAM[99]:  ball x-position
-      - RAM[101]: ball y-position (0 when ball is waiting to be served)
-    """
-    if random.random() < epsilon:
-        # Periodic FIRE during random exploration to avoid stuck ball
-        if step % 30 == 0:
-            return 1  # FIRE
-        return int(env.action_space.sample())
-
-    try:
-        ale = getattr(env.unwrapped, "ale", None)
-        if ale is None:
-            return int(env.action_space.sample())
-        ram = ale.getRAM()
-        paddle_x = int(ram[72])
-        ball_x = int(ram[99])
-        ball_y = int(ram[101])
-
-        # If ball is waiting to be served or just reset, press FIRE
-        if ball_y == 0 or step == 0:
-            return 1  # FIRE
-
-        # Track the ball with the paddle
-        if paddle_x < ball_x - 2:
-            return 2  # RIGHT
-        elif paddle_x > ball_x + 2:
-            return 3  # LEFT
-        else:
-            return random.choice([0, 2, 3])  # small jitter / NOOP near center
-    except Exception:
-        return int(env.action_space.sample())
-
-
 def _collect_one_episode(
     env: gym.Env,
     max_steps: int,
     seed: int,
-    policy: Union[str, Callable[[np.ndarray, gym.Env, int], int]] = "heuristic",
-    epsilon: float = 0.1,
+    policy: BreakoutPolicy,
 ) -> Episode:
     """
-    Run a single Breakout episode.
+    Run a single Breakout episode using the provided policy.
 
     Args:
         env      : An already-constructed Breakout environment instance.
         max_steps: Maximum number of environment steps per episode.
         seed     : Seed passed to env.reset() for reproducibility.
-        policy   : Policy type: 'heuristic', 'random', or a callable(obs, env, step) -> action.
-        epsilon  : Random exploration probability when using 'heuristic'.
+        policy   : Policy used to select actions.
 
     Returns:
         Episode with arrays of shape (T, H, W, C), (T, 1), (T,), (T,).
@@ -106,21 +64,13 @@ def _collect_one_episode(
     rewards: list[float] = []
     dones: list[bool] = []
 
+    policy.reset()
     done = False
     for step in range(max_steps):
         if done:
             break
 
-        # Select action
-        if callable(policy):
-            action_idx = policy(obs, env, step)
-        elif policy == "heuristic":
-            action_idx = _get_heuristic_action(env, step, epsilon=epsilon)
-        elif policy == "random":
-            action_idx = 1 if step % 30 == 0 else int(env.action_space.sample())
-        else:
-            raise ValueError(f"Unknown policy '{policy}'. Expected 'heuristic', 'random', or a Callable.")
-
+        action_idx = policy(obs, env, step)
         action = np.array([float(action_idx)], dtype=np.float32)
 
         step_res = env.step(action_idx)
@@ -147,12 +97,11 @@ def _collect_one_episode(
 
 def collect_breakout_episodes(
     buffer: ReplayBuffer,
+    policy: BreakoutPolicy,
     n_episodes: int = 10,
     max_steps: int = 500,
     seed: int = 0,
     image_size: Optional[tuple[int, int]] = (64, 64),
-    policy: Union[str, Callable[[np.ndarray, gym.Env, int], int]] = "heuristic",
-    epsilon: float = 0.1,
     verbose: bool = True,
 ) -> None:
     """
@@ -163,12 +112,11 @@ def collect_breakout_episodes(
 
     Args:
         buffer     : Target ReplayBuffer to populate.
+        policy     : Policy instance to collect rollouts with.
         n_episodes : Number of episodes to collect.
         max_steps  : Maximum steps per episode.
         seed       : Base RNG seed; each episode gets seed + episode_index.
         image_size : Target image resolution (H, W). Default (64, 64).
-        policy     : 'heuristic', 'random', or custom callable policy.
-        epsilon    : Exploration rate for heuristic policy.
         verbose    : Print progress to stdout.
     """
     env = make_breakout_env(image_size=image_size)
@@ -179,7 +127,6 @@ def collect_breakout_episodes(
                 max_steps=max_steps,
                 seed=seed + i,
                 policy=policy,
-                epsilon=epsilon,
             )
             buffer.add(episode)
             if verbose:
