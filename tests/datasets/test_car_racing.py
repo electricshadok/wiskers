@@ -12,24 +12,24 @@ from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 def test_car_racing_datamodule_init():
     policy = CarRacingHeuristicPolicy()
-    buffer = ReplayBuffer(capacity=100, chunk_len=20)
+    replay_buffer = ReplayBuffer(capacity=100, chunk_len=20)
     dm = CarRacingDataModule(
-        buffer=buffer,
+        replay_buffer=replay_buffer,
         policy=policy,
         seed_episodes=0,
         batch_size=4,
         steps_per_epoch=4,
     )
-    assert dm.buffer.capacity == 100
-    assert dm.buffer.chunk_len == 20
-    assert dm.buffer.is_empty
+    assert dm.replay_buffer.capacity == 100
+    assert dm.replay_buffer.chunk_len == 20
+    assert dm.replay_buffer.is_empty
     assert dm.policy is policy
 
 
 def test_car_racing_datamodule_setup_and_dataloader():
-    buffer = ReplayBuffer(capacity=10, chunk_len=5)
+    replay_buffer = ReplayBuffer(capacity=10, chunk_len=5)
     dm = CarRacingDataModule(
-        buffer=buffer,
+        replay_buffer=replay_buffer,
         policy=CarRacingHeuristicPolicy(),
         seed_episodes=1,
         max_steps_per_episode=8,
@@ -38,8 +38,8 @@ def test_car_racing_datamodule_setup_and_dataloader():
         verbose=False,
     )
     dm.setup()
-    assert not dm.buffer.is_empty
-    assert dm.buffer.num_episodes == 1
+    assert not dm.replay_buffer.is_empty
+    assert dm.replay_buffer.num_episodes == 1
 
     loader = dm.train_dataloader()
     batch = next(iter(loader))
@@ -59,16 +59,16 @@ def test_car_racing_datamodule_custom_policy():
         def forward(self, obs, env=None, step=0):
             return np.array([0.0, 0.5, 0.0], dtype=np.float32)
 
-    buffer = ReplayBuffer(capacity=10, chunk_len=5)
+    replay_buffer = ReplayBuffer(capacity=10, chunk_len=5)
     dm = CarRacingDataModule(
-        buffer=buffer,
+        replay_buffer=replay_buffer,
         policy=StraightLinePolicy(),
         seed_episodes=1,
         max_steps_per_episode=6,
         verbose=False,
     )
     dm.setup()
-    assert dm.buffer.num_episodes == 1
+    assert dm.replay_buffer.num_episodes == 1
 
 
 def test_car_racing_heuristic_policy():

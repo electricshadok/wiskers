@@ -95,7 +95,7 @@ def _collect_one_episode(
 
 
 def collect_car_racing_episodes(
-    buffer: ReplayBuffer,
+    replay_buffer: ReplayBuffer,
     policy: CarRacingPolicy,
     n_episodes: int = 10,
     max_steps: int = 500,
@@ -103,18 +103,18 @@ def collect_car_racing_episodes(
     verbose: bool = True,
 ) -> None:
     """
-    Collect ``n_episodes`` CarRacing rollouts and push them into ``buffer``.
+    Collect ``n_episodes`` CarRacing rollouts and push them into ``replay_buffer``.
 
-    Episodes shorter than ``buffer.chunk_len`` are silently skipped by the
+    Episodes shorter than ``replay_buffer.chunk_len`` are silently skipped by the
     buffer itself.
 
     Args:
-        buffer     : Target ReplayBuffer to populate.
-        policy     : Policy instance to collect rollouts with.
-        n_episodes : Number of episodes to collect.
-        max_steps  : Maximum steps per episode.
-        seed       : Base RNG seed; each episode gets seed + episode_index.
-        verbose    : Print progress to stdout.
+        replay_buffer : Target ReplayBuffer to populate.
+        policy        : Policy instance to collect rollouts with.
+        n_episodes    : Number of episodes to collect.
+        max_steps     : Maximum steps per episode.
+        seed          : Base RNG seed; each episode gets seed + episode_index.
+        verbose       : Print progress to stdout.
     """
     env = NoZoomCarRacing(render_mode="rgb_array")
     try:
@@ -125,13 +125,13 @@ def collect_car_racing_episodes(
                 seed=seed + i,
                 policy=policy,
             )
-            buffer.add(episode)
+            replay_buffer.add(episode)
             if verbose:
                 print(
                     f"[CarRacing] episode {i + 1}/{n_episodes} | "
                     f"T={len(episode)} steps | "
                     f"total_reward={episode.rewards.sum():.1f} | "
-                    f"buffer={buffer}"
+                    f"buffer={replay_buffer}"
                 )
     finally:
         env.close()

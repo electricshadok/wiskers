@@ -8,9 +8,9 @@ The dataset has no fixed epoch size — it streams samples indefinitely.
 Use the DataLoader's `batch_size` to control how many chunks form a batch,
 and stop iteration externally (e.g. via trainer max_steps or a step limit).
 
-    buffer  = ReplayBuffer(capacity=1000, chunk_len=50)
-    dataset = TrajectoryDataset(buffer)
-    loader  = DataLoader(dataset, batch_size=32, num_workers=0)
+    replay_buffer = ReplayBuffer(capacity=1000, chunk_len=50)
+    dataset       = TrajectoryDataset(replay_buffer)
+    loader        = DataLoader(dataset, batch_size=32, num_workers=0)
 
 Note: num_workers must be 0 (or handled carefully) because the buffer
 lives in the main process. Worker forks receive a snapshot of the buffer
@@ -43,23 +43,23 @@ class TrajectoryDataset(IterableDataset):
     The DataLoader collates these into batches of shape (B, T, ...).
 
     Args:
-        buffer      (ReplayBuffer): The buffer to sample from.
+        replay_buffer   (ReplayBuffer): The replay buffer to sample from.
         steps_per_epoch (int): Number of chunks to yield per epoch (i.e. per
                                DataLoader pass). Controls how often Lightning
                                runs validation and logs metrics.
     """
 
-    def __init__(self, buffer: ReplayBuffer, steps_per_epoch: int = 1000) -> None:
+    def __init__(self, replay_buffer: ReplayBuffer, steps_per_epoch: int = 1000) -> None:
         super().__init__()
-        self.buffer = buffer
+        self.replay_buffer = replay_buffer
         self.steps_per_epoch = steps_per_epoch
 
     def __iter__(self):
         for _ in range(self.steps_per_epoch):
-            if self.buffer.is_empty:
+            if self.replay_buffer.is_empty:
                 raise RuntimeError(
-                    "TrajectoryDataset: buffer is empty. "
+                    "TrajectoryDataset: replay_buffer is empty. "
                     "Add episodes before starting training."
                 )
-            chunk = self.buffer.sample(batch_size=1)[0]
+            chunk = self.replay_buffer.sample(batch_size=1)[0]
             yield _episode_to_tensors(chunk)

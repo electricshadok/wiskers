@@ -21,7 +21,7 @@ class BreakoutDataModule(TrajectoryDataModule):
 
     def __init__(
         self,
-        buffer: ReplayBuffer,
+        replay_buffer: ReplayBuffer,
         policy: BreakoutPolicy,
         # Environment rollout configuration
         seed_episodes: int = 20,
@@ -35,7 +35,7 @@ class BreakoutDataModule(TrajectoryDataModule):
         verbose: bool = True,
     ) -> None:
         super().__init__(
-            buffer=buffer,
+            replay_buffer=replay_buffer,
             batch_size=batch_size,
             steps_per_epoch=steps_per_epoch,
             num_workers=0,
@@ -48,9 +48,9 @@ class BreakoutDataModule(TrajectoryDataModule):
         self.verbose = verbose
 
     def setup(self, stage: Optional[str] = None) -> None:
-        if self.buffer.is_empty:
+        if self.replay_buffer.is_empty:
             collect_breakout_episodes(
-                buffer=self.buffer,
+                replay_buffer=self.replay_buffer,
                 policy=self.policy,
                 n_episodes=self.seed_episodes,
                 max_steps=self.max_steps_per_episode,

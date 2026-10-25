@@ -7,15 +7,15 @@ done via a Lightning Callback after each epoch).
 
 Usage:
 
-    buffer = ReplayBuffer(capacity=1000, chunk_len=50)
-    # ... populate buffer with seed episodes ...
+    replay_buffer = ReplayBuffer(capacity=1000, chunk_len=50)
+    # ... populate replay_buffer with seed episodes ...
 
-    dm = TrajectoryDataModule(buffer, batch_size=32, steps_per_epoch=500)
+    dm = TrajectoryDataModule(replay_buffer=replay_buffer, batch_size=32, steps_per_epoch=500)
     trainer = Trainer(...)
     trainer.fit(model, datamodule=dm)
 
     # After each epoch, add new episodes via a Callback:
-    #   dm.buffer.add(new_episode)
+    #   dm.replay_buffer.add(new_episode)
 """
 
 from typing import Optional
@@ -32,11 +32,11 @@ class TrajectoryDataModule(L.LightningDataModule):
     LightningDataModule that serves trajectory chunks from a ReplayBuffer.
 
     The DataModule holds a reference to the buffer so that a Lightning Callback
-    can call dm.buffer.add(episode) after each epoch to grow the dataset
+    can call dm.replay_buffer.add(episode) after each epoch to grow the dataset
     iteratively — without restarting the DataModule or the Trainer.
 
     Args:
-        buffer          (ReplayBuffer): Shared buffer populated externally.
+        replay_buffer   (ReplayBuffer): Shared buffer populated externally.
         batch_size      (int): Number of chunks per training batch.
         steps_per_epoch (int): How many batches to yield per epoch.
                                Controls validation frequency and logging cadence.
@@ -55,13 +55,13 @@ class TrajectoryDataModule(L.LightningDataModule):
 
     def __init__(
         self,
-        buffer: ReplayBuffer,
+        replay_buffer: ReplayBuffer,
         batch_size: int = 32,
         steps_per_epoch: int = 1000,
         num_workers: int = 0,
     ) -> None:
         super().__init__()
-        self.buffer = buffer
+        self.replay_buffer = replay_buffer
         self.batch_size = batch_size
         self.steps_per_epoch = steps_per_epoch
         self.num_workers = num_workers
@@ -70,7 +70,7 @@ class TrajectoryDataModule(L.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
         self._dataset = TrajectoryDataset(
-            buffer=self.buffer,
+            replay_buffer=self.replay_buffer,
             steps_per_epoch=self.steps_per_epoch,
         )
 

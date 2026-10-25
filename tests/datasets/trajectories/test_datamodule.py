@@ -28,10 +28,10 @@ def test_datamodule_train_dataloader():
     BATCH_SIZE = 4
     STEPS_PER_EPOCH = BATCH_SIZE  # one batch worth of steps
 
-    buffer = ReplayBuffer(capacity=10, chunk_len=CHUNK_LEN)
-    buffer.add(_make_episode(T=30))
+    replay_buffer = ReplayBuffer(capacity=10, chunk_len=CHUNK_LEN)
+    replay_buffer.add(_make_episode(T=30))
 
-    dm = TrajectoryDataModule(buffer, batch_size=BATCH_SIZE, steps_per_epoch=STEPS_PER_EPOCH)
+    dm = TrajectoryDataModule(replay_buffer=replay_buffer, batch_size=BATCH_SIZE, steps_per_epoch=STEPS_PER_EPOCH)
     dm.setup()
 
     loader = dm.train_dataloader()

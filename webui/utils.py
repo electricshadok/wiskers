@@ -11,15 +11,15 @@ def dataset_ui(data_module: Any):
     Render the interactive Rollout Explorer for trajectory-based DataModules
     (e.g., BreakoutDataModule, CarRacingDataModule).
     """
-    buffer = getattr(data_module, "buffer", None)
-    if buffer is None:
+    replay_buffer = getattr(data_module, "replay_buffer", None)
+    if replay_buffer is None:
         st.error(f"Expected DataModule with a ReplayBuffer, got {type(data_module).__name__}")
         return
 
-    if buffer.is_empty:
+    if replay_buffer.is_empty:
         data_module.setup("fit")
 
-    episodes = list(buffer._episodes)
+    episodes = list(replay_buffer._episodes)
     if not episodes:
         st.warning("No episodes found in replay buffer.")
         return
@@ -28,9 +28,9 @@ def dataset_ui(data_module: Any):
 
     # Buffer Overview Metrics
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Episodes", f"{len(episodes)} / {buffer.capacity}")
-    m2.metric("Total Steps", f"{buffer.num_steps:,}")
-    m3.metric("Chunk Length", f"{buffer.chunk_len}")
+    m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity}")
+    m2.metric("Total Steps", f"{replay_buffer.num_steps:,}")
+    m3.metric("Chunk Length", f"{replay_buffer.chunk_len}")
     avg_len = sum(len(e) for e in episodes) / len(episodes)
     m4.metric("Avg Episode Length", f"{avg_len:.1f}")
 

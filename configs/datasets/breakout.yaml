@@ -3,7 +3,7 @@ seed: 0
 data_module:
   _target_: wiskers.datasets.gym.breakout.BreakoutDataModule
   # Replay buffer configuration
-  buffer:
+  replay_buffer:
     _target_: wiskers.datasets.trajectories.replay_buffer.ReplayBuffer
     capacity: 1000
     chunk_len: 50
