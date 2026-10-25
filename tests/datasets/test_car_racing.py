@@ -7,14 +7,15 @@ from wiskers.datasets.gym.car_racing_policies import (
     CarRacingPolicy,
     CarRacingRandomPolicy,
 )
+from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 def test_car_racing_datamodule_init():
     policy = CarRacingHeuristicPolicy()
+    buffer = ReplayBuffer(capacity=100, chunk_len=20)
     dm = CarRacingDataModule(
+        buffer=buffer,
         policy=policy,
-        capacity=100,
-        chunk_len=20,
         seed_episodes=0,
         batch_size=4,
         steps_per_epoch=4,
@@ -26,10 +27,10 @@ def test_car_racing_datamodule_init():
 
 
 def test_car_racing_datamodule_setup_and_dataloader():
+    buffer = ReplayBuffer(capacity=10, chunk_len=5)
     dm = CarRacingDataModule(
+        buffer=buffer,
         policy=CarRacingHeuristicPolicy(),
-        capacity=10,
-        chunk_len=5,
         seed_episodes=1,
         max_steps_per_episode=8,
         batch_size=2,
@@ -58,10 +59,10 @@ def test_car_racing_datamodule_custom_policy():
         def forward(self, obs, env=None, step=0):
             return np.array([0.0, 0.5, 0.0], dtype=np.float32)
 
+    buffer = ReplayBuffer(capacity=10, chunk_len=5)
     dm = CarRacingDataModule(
+        buffer=buffer,
         policy=StraightLinePolicy(),
-        capacity=10,
-        chunk_len=5,
         seed_episodes=1,
         max_steps_per_episode=6,
         verbose=False,

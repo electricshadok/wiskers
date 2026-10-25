@@ -25,10 +25,8 @@ class CarRacingDataModule(TrajectoryDataModule):
 
     def __init__(
         self,
+        buffer: ReplayBuffer,
         policy: CarRacingPolicy,
-        # Replay buffer configuration
-        capacity: int = 1000,
-        chunk_len: int = 50,
         # Environment rollout configuration
         seed_episodes: int = 20,
         max_steps_per_episode: int = 500,
@@ -39,7 +37,6 @@ class CarRacingDataModule(TrajectoryDataModule):
         seed: int = 0,
         verbose: bool = True,
     ) -> None:
-        buffer = ReplayBuffer(capacity=capacity, chunk_len=chunk_len)
         super().__init__(
             buffer=buffer,
             batch_size=batch_size,

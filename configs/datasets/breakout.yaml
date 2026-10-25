@@ -3,8 +3,10 @@ seed: 0
 data_module:
   _target_: wiskers.datasets.gym.breakout.BreakoutDataModule
   # Replay buffer configuration
-  capacity: 1000
-  chunk_len: 50
+  buffer:
+    _target_: wiskers.datasets.trajectories.replay_buffer.ReplayBuffer
+    capacity: 1000
+    chunk_len: 50
   # Environment rollout configuration
   seed_episodes: 20
   max_steps_per_episode: 500

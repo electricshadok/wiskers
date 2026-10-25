@@ -6,14 +6,15 @@ from wiskers.datasets.gym.breakout_policies import (
     BreakoutPolicy,
     BreakoutRandomPolicy,
 )
+from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 def test_breakout_datamodule_init():
     policy = BreakoutHeuristicPolicy()
+    buffer = ReplayBuffer(capacity=100, chunk_len=20)
     dm = BreakoutDataModule(
+        buffer=buffer,
         policy=policy,
-        capacity=100,
-        chunk_len=20,
         seed_episodes=0,
         batch_size=4,
         steps_per_epoch=4,
@@ -25,10 +26,10 @@ def test_breakout_datamodule_init():
 
 
 def test_breakout_datamodule_setup_and_dataloader():
+    buffer = ReplayBuffer(capacity=10, chunk_len=5)
     dm = BreakoutDataModule(
+        buffer=buffer,
         policy=BreakoutHeuristicPolicy(epsilon=0.0),
-        capacity=10,
-        chunk_len=5,
         seed_episodes=1,
         max_steps_per_episode=10,
         image_size=(64, 64),
@@ -58,10 +59,10 @@ def test_breakout_datamodule_custom_policy():
         def forward(self, obs, env=None, step=0):
             return 1
 
+    buffer = ReplayBuffer(capacity=10, chunk_len=5)
     dm = BreakoutDataModule(
+        buffer=buffer,
         policy=ConstantFirePolicy(),
-        capacity=10,
-        chunk_len=5,
         seed_episodes=1,
         max_steps_per_episode=6,
         verbose=False,
