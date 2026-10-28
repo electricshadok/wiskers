@@ -4,6 +4,7 @@ import torch
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
@@ -28,10 +29,16 @@ def test_datamodule_train_dataloader():
     BATCH_SIZE = 4
     STEPS_PER_EPOCH = BATCH_SIZE  # one batch worth of steps
 
-    replay_buffer = ReplayBuffer(capacity=10, chunk_len=CHUNK_LEN)
+    replay_buffer = ReplayBuffer(capacity=10)
     replay_buffer.add(_make_episode(T=30))
 
-    dm = TrajectoryDataModule(replay_buffer=replay_buffer, batch_size=BATCH_SIZE, steps_per_epoch=STEPS_PER_EPOCH)
+    sampler = UniformChunkSampler(chunk_len=CHUNK_LEN)
+    dm = TrajectoryDataModule(
+        replay_buffer=replay_buffer,
+        sampler=sampler,
+        batch_size=BATCH_SIZE,
+        steps_per_epoch=STEPS_PER_EPOCH,
+    )
     dm.setup()
 
     loader = dm.train_dataloader()

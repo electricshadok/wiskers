@@ -12,6 +12,7 @@ from wiskers.datasets.gym.car_racing_policies import (
 )
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 
 class CarRacingDataModule(TrajectoryDataModule):
@@ -27,6 +28,7 @@ class CarRacingDataModule(TrajectoryDataModule):
         self,
         replay_buffer: ReplayBuffer,
         policy: CarRacingPolicy,
+        sampler: TrajectorySampler,
         # Environment rollout configuration
         seed_episodes: int = 20,
         max_steps_per_episode: int = 500,
@@ -39,6 +41,7 @@ class CarRacingDataModule(TrajectoryDataModule):
     ) -> None:
         super().__init__(
             replay_buffer=replay_buffer,
+            sampler=sampler,
             batch_size=batch_size,
             steps_per_epoch=steps_per_epoch,
             num_workers=0,

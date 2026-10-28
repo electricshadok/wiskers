@@ -6,6 +6,9 @@ data_module:
   replay_buffer:
     _target_: wiskers.datasets.trajectories.replay_buffer.ReplayBuffer
     capacity: 1000
+  # Pluggable sampler configuration
+  sampler:
+    _target_: wiskers.datasets.trajectories.sampler.UniformChunkSampler
     chunk_len: 50
   # Environment rollout configuration
   seed_episodes: 20

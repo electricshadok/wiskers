@@ -30,7 +30,7 @@ def dataset_ui(data_module: Any):
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity}")
     m2.metric("Total Steps", f"{replay_buffer.num_steps:,}")
-    m3.metric("Chunk Length", f"{replay_buffer.chunk_len}")
+    m3.metric("Chunk Length", f"{data_module.chunk_len}")
     avg_len = sum(len(e) for e in episodes) / len(episodes)
     m4.metric("Avg Episode Length", f"{avg_len:.1f}")
 

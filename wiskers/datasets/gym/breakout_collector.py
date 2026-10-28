@@ -107,9 +107,6 @@ def collect_breakout_episodes(
     """
     Collect ``n_episodes`` Breakout rollouts and push them into ``replay_buffer``.
 
-    Episodes shorter than ``replay_buffer.chunk_len`` are silently skipped by the
-    buffer itself.
-
     Args:
         replay_buffer : Target ReplayBuffer to populate.
         policy        : Policy instance to collect rollouts with.

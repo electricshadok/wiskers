@@ -8,8 +8,9 @@ The dataset has no fixed epoch size — it streams samples indefinitely.
 Use the DataLoader's `batch_size` to control how many chunks form a batch,
 and stop iteration externally (e.g. via trainer max_steps or a step limit).
 
-    replay_buffer = ReplayBuffer(capacity=1000, chunk_len=50)
-    dataset       = TrajectoryDataset(replay_buffer)
+    replay_buffer = ReplayBuffer(capacity=1000)
+    sampler       = UniformChunkSampler(chunk_len=50)
+    dataset       = TrajectoryDataset(replay_buffer=replay_buffer, sampler=sampler)
     loader        = DataLoader(dataset, batch_size=32, num_workers=0)
 
 Note: num_workers must be 0 (or handled carefully) because the buffer
@@ -23,6 +24,7 @@ from torch.utils.data import IterableDataset
 
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 
 def _episode_to_tensors(episode: Episode) -> dict[str, torch.Tensor]:
@@ -44,14 +46,21 @@ class TrajectoryDataset(IterableDataset):
 
     Args:
         replay_buffer   (ReplayBuffer): The replay buffer to sample from.
+        sampler         (TrajectorySampler): Sampling strategy to draw chunks.
         steps_per_epoch (int): Number of chunks to yield per epoch (i.e. per
                                DataLoader pass). Controls how often Lightning
                                runs validation and logs metrics.
     """
 
-    def __init__(self, replay_buffer: ReplayBuffer, steps_per_epoch: int = 1000) -> None:
+    def __init__(
+        self,
+        replay_buffer: ReplayBuffer,
+        sampler: TrajectorySampler,
+        steps_per_epoch: int = 1000,
+    ) -> None:
         super().__init__()
         self.replay_buffer = replay_buffer
+        self.sampler = sampler
         self.steps_per_epoch = steps_per_epoch
 
     def __iter__(self):
@@ -61,5 +70,5 @@ class TrajectoryDataset(IterableDataset):
                     "TrajectoryDataset: replay_buffer is empty. "
                     "Add episodes before starting training."
                 )
-            chunk = self.replay_buffer.sample(batch_size=1)[0]
+            chunk = self.sampler.sample(self.replay_buffer, batch_size=1)[0]
             yield _episode_to_tensors(chunk)

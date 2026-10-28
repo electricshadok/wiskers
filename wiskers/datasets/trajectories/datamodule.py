@@ -7,10 +7,11 @@ done via a Lightning Callback after each epoch).
 
 Usage:
 
-    replay_buffer = ReplayBuffer(capacity=1000, chunk_len=50)
+    replay_buffer = ReplayBuffer(capacity=1000)
+    sampler = UniformChunkSampler(chunk_len=50)
     # ... populate replay_buffer with seed episodes ...
 
-    dm = TrajectoryDataModule(replay_buffer=replay_buffer, batch_size=32, steps_per_epoch=500)
+    dm = TrajectoryDataModule(replay_buffer=replay_buffer, sampler=sampler, batch_size=32, steps_per_epoch=500)
     trainer = Trainer(...)
     trainer.fit(model, datamodule=dm)
 
@@ -25,6 +26,7 @@ from torch.utils.data import DataLoader
 
 from wiskers.datasets.trajectories.dataset import TrajectoryDataset
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 
 class TrajectoryDataModule(L.LightningDataModule):
@@ -37,6 +39,8 @@ class TrajectoryDataModule(L.LightningDataModule):
 
     Args:
         replay_buffer   (ReplayBuffer): Shared buffer populated externally.
+        sampler         (TrajectorySampler): Sampling strategy to draw chunks.
+                                             Configured in Hydra via `_target_`.
         batch_size      (int): Number of chunks per training batch.
         steps_per_epoch (int): How many batches to yield per epoch.
                                Controls validation frequency and logging cadence.
@@ -56,21 +60,29 @@ class TrajectoryDataModule(L.LightningDataModule):
     def __init__(
         self,
         replay_buffer: ReplayBuffer,
+        sampler: TrajectorySampler,
         batch_size: int = 32,
         steps_per_epoch: int = 1000,
         num_workers: int = 0,
     ) -> None:
         super().__init__()
         self.replay_buffer = replay_buffer
+        self.sampler = sampler
         self.batch_size = batch_size
         self.steps_per_epoch = steps_per_epoch
         self.num_workers = num_workers
 
         self._dataset: Optional[TrajectoryDataset] = None
 
+    @property
+    def chunk_len(self) -> int:
+        """Return the chunk length configured on the sampler."""
+        return self.sampler.chunk_len
+
     def setup(self, stage: Optional[str] = None) -> None:
         self._dataset = TrajectoryDataset(
             replay_buffer=self.replay_buffer,
+            sampler=self.sampler,
             steps_per_epoch=self.steps_per_epoch,
         )
 

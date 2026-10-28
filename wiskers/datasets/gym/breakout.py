@@ -8,6 +8,7 @@ from wiskers.datasets.gym.breakout_collector import collect_breakout_episodes
 from wiskers.datasets.gym.breakout_policies import BreakoutPolicy
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
+from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 
 class BreakoutDataModule(TrajectoryDataModule):
@@ -23,6 +24,7 @@ class BreakoutDataModule(TrajectoryDataModule):
         self,
         replay_buffer: ReplayBuffer,
         policy: BreakoutPolicy,
+        sampler: TrajectorySampler,
         # Environment rollout configuration
         seed_episodes: int = 20,
         max_steps_per_episode: int = 500,
@@ -36,6 +38,7 @@ class BreakoutDataModule(TrajectoryDataModule):
     ) -> None:
         super().__init__(
             replay_buffer=replay_buffer,
+            sampler=sampler,
             batch_size=batch_size,
             steps_per_epoch=steps_per_epoch,
             num_workers=0,
