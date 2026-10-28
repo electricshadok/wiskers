@@ -8,7 +8,7 @@ The dataset has no fixed epoch size — it streams samples indefinitely.
 Use the DataLoader's `batch_size` to control how many chunks form a batch,
 and stop iteration externally (e.g. via trainer max_steps or a step limit).
 
-    replay_buffer = ReplayBuffer(capacity=1000)
+    replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler       = UniformChunkSampler(chunk_len=50)
     dataset       = TrajectoryDataset(replay_buffer=replay_buffer, sampler=sampler)
     loader        = DataLoader(dataset, batch_size=32, num_workers=0)

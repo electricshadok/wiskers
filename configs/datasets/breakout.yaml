@@ -2,10 +2,10 @@ seed: 0
 
 data_module:
   _target_: wiskers.datasets.gym.breakout.BreakoutDataModule
-  # Replay buffer configuration
+  # Replay buffer configuration (stores complete rollout episodes)
   replay_buffer:
     _target_: wiskers.datasets.trajectories.replay_buffer.ReplayBuffer
-    capacity: 1000
+    capacity_episodes: 1000  # Number of complete episodes to store
   # Pluggable sampler configuration
   sampler:
     _target_: wiskers.datasets.trajectories.sampler.UniformChunkSampler

@@ -7,7 +7,7 @@ done via a Lightning Callback after each epoch).
 
 Usage:
 
-    replay_buffer = ReplayBuffer(capacity=1000)
+    replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler = UniformChunkSampler(chunk_len=50)
     # ... populate replay_buffer with seed episodes ...
 

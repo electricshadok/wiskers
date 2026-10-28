@@ -12,7 +12,7 @@ from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 
 def test_breakout_datamodule_init():
     policy = BreakoutHeuristicPolicy()
-    replay_buffer = ReplayBuffer(capacity=100)
+    replay_buffer = ReplayBuffer(capacity_episodes=100)
     sampler = UniformChunkSampler(chunk_len=20)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
@@ -22,14 +22,14 @@ def test_breakout_datamodule_init():
         batch_size=4,
         steps_per_epoch=4,
     )
-    assert dm.replay_buffer.capacity == 100
+    assert dm.replay_buffer.capacity_episodes == 100
     assert dm.chunk_len == 20
     assert dm.replay_buffer.is_empty
     assert dm.policy is policy
 
 
 def test_breakout_datamodule_setup_and_dataloader():
-    replay_buffer = ReplayBuffer(capacity=10)
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(chunk_len=5)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
@@ -64,7 +64,7 @@ def test_breakout_datamodule_custom_policy():
         def forward(self, obs, env=None, step=0):
             return 1
 
-    replay_buffer = ReplayBuffer(capacity=10)
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(chunk_len=5)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
@@ -88,7 +88,7 @@ def test_breakout_random_policy():
 
 def test_breakout_datamodule_with_sampler():
     sampler = UniformChunkSampler(chunk_len=5)
-    replay_buffer = ReplayBuffer(capacity=10)
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
         policy=BreakoutHeuristicPolicy(epsilon=0.0),

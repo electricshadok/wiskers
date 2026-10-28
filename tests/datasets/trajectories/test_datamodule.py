@@ -29,7 +29,7 @@ def test_datamodule_train_dataloader():
     BATCH_SIZE = 4
     STEPS_PER_EPOCH = BATCH_SIZE  # one batch worth of steps
 
-    replay_buffer = ReplayBuffer(capacity=10)
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
     replay_buffer.add(_make_episode(T=30))
 
     sampler = UniformChunkSampler(chunk_len=CHUNK_LEN)

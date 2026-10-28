@@ -14,28 +14,31 @@ class ReplayBuffer:
     """
     Fixed-capacity circular buffer of Episodes.
 
-    Internally backed by a collections.deque(maxlen=capacity). Adding a new
+    Internally backed by a collections.deque(maxlen=capacity_episodes). Adding a new
     episode to a full buffer automatically evicts the oldest one (FIFO, O(1)).
+
+    Capacity is explicitly measured in **episodes** (complete rollout trajectories).
 
     The buffer solely stores episodes. Sampling is handled by pluggable
     `TrajectorySampler` implementations configured in Hydra via `_target_`.
 
     Args:
-        capacity (int): Max number of episodes to store before evicting oldest.
+        capacity_episodes (int): Max number of complete episodes (rollouts) to
+                                 store before evicting the oldest (FIFO).
     """
 
-    def __init__(self, capacity: int) -> None:
-        if capacity < 1:
-            raise ValueError(f"capacity must be >= 1, got {capacity}")
+    def __init__(self, capacity_episodes: int) -> None:
+        if capacity_episodes < 1:
+            raise ValueError(f"capacity_episodes must be >= 1, got {capacity_episodes}")
 
-        self.capacity = capacity
-        self._episodes: deque[Episode] = deque(maxlen=capacity)
+        self.capacity_episodes = capacity_episodes
+        self._episodes: deque[Episode] = deque(maxlen=capacity_episodes)
 
     def add(self, episode: Episode) -> None:
         """
         Store a finished episode in the buffer.
 
-        If the buffer already holds `capacity` episodes, the oldest one is
+        If the buffer already holds `capacity_episodes` episodes, the oldest one is
         evicted automatically before the new one is inserted. Empty episodes
         are ignored.
         """
@@ -75,4 +78,4 @@ class ReplayBuffer:
         return len(self._episodes)
 
     def __repr__(self) -> str:
-        return f"ReplayBuffer(episodes={self.num_episodes}/{self.capacity}, steps={self.num_steps})"
+        return f"ReplayBuffer(episodes={self.num_episodes}/{self.capacity_episodes}, total_steps={self.num_steps})"

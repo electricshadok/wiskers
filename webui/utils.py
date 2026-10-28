@@ -28,7 +28,7 @@ def dataset_ui(data_module: Any):
 
     # Buffer Overview Metrics
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity}")
+    m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity_episodes}")
     m2.metric("Total Steps", f"{replay_buffer.num_steps:,}")
     m3.metric("Chunk Length", f"{data_module.chunk_len}")
     avg_len = sum(len(e) for e in episodes) / len(episodes)

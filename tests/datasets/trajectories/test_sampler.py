@@ -26,7 +26,7 @@ def test_uniform_chunk_sampler():
     sampler = UniformChunkSampler(chunk_len=10)
     assert sampler.chunk_len == 10
 
-    buffer = ReplayBuffer(capacity=10)
+    buffer = ReplayBuffer(capacity_episodes=10)
     buffer.add(_make_episode(T=25))
     buffer.add(_make_episode(T=30))
 
@@ -40,14 +40,14 @@ def test_uniform_chunk_sampler():
 
 def test_sampler_empty_buffer_raises():
     sampler = UniformChunkSampler(chunk_len=10)
-    buffer = ReplayBuffer(capacity=10)
+    buffer = ReplayBuffer(capacity_episodes=10)
     with pytest.raises(RuntimeError, match="empty ReplayBuffer"):
         sampler.sample(buffer, batch_size=1)
 
 
 def test_sampler_no_valid_episodes_raises():
     sampler = UniformChunkSampler(chunk_len=50)
-    buffer = ReplayBuffer(capacity=10)
+    buffer = ReplayBuffer(capacity_episodes=10)
     buffer.add(_make_episode(T=20))
     with pytest.raises(RuntimeError, match="no episodes in buffer have length >= 50"):
         sampler.sample(buffer, batch_size=1)
@@ -58,7 +58,7 @@ def test_recency_weighted_sampler():
     assert sampler.chunk_len == 5
     assert sampler.recency_factor == 2.0
 
-    buffer = ReplayBuffer(capacity=10)
+    buffer = ReplayBuffer(capacity_episodes=10)
     for _ in range(5):
         buffer.add(_make_episode(T=15))
 
@@ -80,7 +80,7 @@ def test_hydra_sampler_instantiation():
 
 def test_datamodule_with_explicit_sampler():
     sampler = UniformChunkSampler(chunk_len=8)
-    buffer = ReplayBuffer(capacity=5)
+    buffer = ReplayBuffer(capacity_episodes=5)
     buffer.add(_make_episode(T=20))
 
     dm = TrajectoryDataModule(
@@ -96,3 +96,9 @@ def test_datamodule_with_explicit_sampler():
 
     assert batch["obs"].shape == (2, 8, 8, 8, 3)
     assert batch["actions"].shape == (2, 8, 4)
+
+
+def test_replay_buffer_capacity_episodes():
+    buf = ReplayBuffer(capacity_episodes=50)
+    assert buf.capacity_episodes == 50
+
