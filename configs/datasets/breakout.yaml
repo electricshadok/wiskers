@@ -2,24 +2,36 @@ seed: 0
 
 data_module:
   _target_: wiskers.datasets.gym.breakout.BreakoutDataModule
-  # Replay buffer configuration (stores complete rollout episodes)
+
+  # Replay buffer that stores complete episode trajectories in memory
   replay_buffer:
     _target_: wiskers.datasets.trajectories.replay_buffer.ReplayBuffer
-    capacity_episodes: 1000  # Number of complete episodes to store
-  # Pluggable sampler configuration
+    capacity_episodes: 1000  # Maximum number of complete episodes to keep in memory
+
+  # Sampler that extracts sequence chunks from episodes for training batches
   sampler:
     _target_: wiskers.datasets.trajectories.sampler.UniformChunkSampler
-    chunk_len: 50
-  # Environment rollout configuration
-  seed_episodes: 20
-  max_steps_per_episode: 500
+    chunk_len: 50  # Number of consecutive steps per sampled chunk
+
+  # Rollout data collection settings
+  collection:
+    seed_episodes: 20          # Initial episodes collected before training starts
+    max_steps_per_episode: 500 # Maximum step limit per episode
+    steps_per_iteration: 2000  # Environment steps collected per training iteration
+
+  # Observation frame resolution (height, width)
   image_size: [64, 64]
+
+  # Policy used to generate actions during rollout collection
   policy:
     _target_: wiskers.datasets.gym.breakout_policies.BreakoutHeuristicPolicy
     epsilon: 0.1
-  # DataLoader / Training schedule
-  batch_size: 16
-  steps_per_epoch: 500
+
+  # Batch size and steps per training epoch
+  training:
+    batch_size: 16       # Number of trajectory chunks per training batch
+    steps_per_epoch: 500 # Number of training batches per epoch
+
   # General settings
   seed: ${seed}
   verbose: true

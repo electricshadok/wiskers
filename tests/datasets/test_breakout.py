@@ -6,6 +6,7 @@ from wiskers.datasets.gym.breakout_policies import (
     BreakoutPolicy,
     BreakoutRandomPolicy,
 )
+from wiskers.datasets.trajectories.config import CollectionConfig, TrainingConfig
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 
@@ -16,11 +17,10 @@ def test_breakout_datamodule_init():
     sampler = UniformChunkSampler(chunk_len=20)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
-        policy=policy,
         sampler=sampler,
-        seed_episodes=0,
-        batch_size=4,
-        steps_per_epoch=4,
+        policy=policy,
+        collection=CollectionConfig(seed_episodes=0),
+        training=TrainingConfig(batch_size=4, steps_per_epoch=4),
     )
     assert dm.replay_buffer.capacity_episodes == 100
     assert dm.chunk_len == 20
@@ -33,13 +33,11 @@ def test_breakout_datamodule_setup_and_dataloader():
     sampler = UniformChunkSampler(chunk_len=5)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
-        policy=BreakoutHeuristicPolicy(epsilon=0.0),
         sampler=sampler,
-        seed_episodes=1,
-        max_steps_per_episode=10,
+        policy=BreakoutHeuristicPolicy(epsilon=0.0),
+        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=10),
+        training=TrainingConfig(batch_size=2, steps_per_epoch=2),
         image_size=(64, 64),
-        batch_size=2,
-        steps_per_epoch=2,
         verbose=False,
     )
     dm.setup()
@@ -68,10 +66,10 @@ def test_breakout_datamodule_custom_policy():
     sampler = UniformChunkSampler(chunk_len=5)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
-        policy=ConstantFirePolicy(),
         sampler=sampler,
-        seed_episodes=1,
-        max_steps_per_episode=6,
+        policy=ConstantFirePolicy(),
+        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=6),
+        training=TrainingConfig(batch_size=2, steps_per_epoch=2),
         verbose=False,
     )
     dm.setup()
@@ -91,13 +89,11 @@ def test_breakout_datamodule_with_sampler():
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     dm = BreakoutDataModule(
         replay_buffer=replay_buffer,
-        policy=BreakoutHeuristicPolicy(epsilon=0.0),
         sampler=sampler,
-        seed_episodes=1,
-        max_steps_per_episode=10,
+        policy=BreakoutHeuristicPolicy(epsilon=0.0),
+        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=10),
+        training=TrainingConfig(batch_size=2, steps_per_epoch=2),
         image_size=(64, 64),
-        batch_size=2,
-        steps_per_epoch=2,
         verbose=False,
     )
     assert dm.chunk_len == 5

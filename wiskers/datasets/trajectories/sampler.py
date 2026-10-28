@@ -1,5 +1,5 @@
 """
-Pluggable samplers for drawing trajectory chunks from a ReplayBuffer.
+Samplers for drawing trajectory chunks from a ReplayBuffer.
 
 Designed to be instantiated directly in Hydra configs via `_target_`:
 

@@ -9,9 +9,10 @@ Usage:
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler = UniformChunkSampler(chunk_len=50)
+    training = TrainingConfig(batch_size=32, steps_per_epoch=500)
     # ... populate replay_buffer with seed episodes ...
 
-    dm = TrajectoryDataModule(replay_buffer=replay_buffer, sampler=sampler, batch_size=32, steps_per_epoch=500)
+    dm = TrajectoryDataModule(replay_buffer=replay_buffer, sampler=sampler, training=training)
     trainer = Trainer(...)
     trainer.fit(model, datamodule=dm)
 
@@ -19,11 +20,12 @@ Usage:
     #   dm.replay_buffer.add(new_episode)
 """
 
-from typing import Optional
+from typing import Mapping, Optional, Union
 
 import lightning as L
 from torch.utils.data import DataLoader
 
+from wiskers.datasets.trajectories.config import TrainingConfig
 from wiskers.datasets.trajectories.dataset import TrajectoryDataset
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
@@ -38,14 +40,10 @@ class TrajectoryDataModule(L.LightningDataModule):
     iteratively — without restarting the DataModule or the Trainer.
 
     Args:
-        replay_buffer   (ReplayBuffer): Shared buffer populated externally.
-        sampler         (TrajectorySampler): Sampling strategy to draw chunks.
-                                             Configured in Hydra via `_target_`.
-        batch_size      (int): Number of chunks per training batch.
-        steps_per_epoch (int): How many batches to yield per epoch.
-                               Controls validation frequency and logging cadence.
-        num_workers     (int): DataLoader workers. Must be 0 unless the buffer
-                               is moved to shared memory (default: 0).
+        replay_buffer (ReplayBuffer): Shared buffer populated externally.
+        sampler (TrajectorySampler): Sampling strategy to draw chunks.
+                                     Configured in Hydra via `_target_`.
+        training (TrainingConfig | dict): Batch size, steps_per_epoch, and workers.
 
     Note — val / test dataloaders:
         This DataModule intentionally omits val_dataloader() and test_dataloader().
@@ -61,18 +59,24 @@ class TrajectoryDataModule(L.LightningDataModule):
         self,
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
-        batch_size: int = 32,
-        steps_per_epoch: int = 1000,
-        num_workers: int = 0,
+        training: Union[TrainingConfig, Mapping],
     ) -> None:
         super().__init__()
         self.replay_buffer = replay_buffer
         self.sampler = sampler
-        self.batch_size = batch_size
-        self.steps_per_epoch = steps_per_epoch
-        self.num_workers = num_workers
+        self.training = TrainingConfig(**training) if isinstance(training, Mapping) else training
 
         self._dataset: Optional[TrajectoryDataset] = None
+
+    @property
+    def batch_size(self) -> int:
+        """Batch size for DataLoader."""
+        return self.training.batch_size
+
+    @property
+    def steps_per_epoch(self) -> int:
+        """Number of batches to yield per epoch."""
+        return self.training.steps_per_epoch
 
     @property
     def chunk_len(self) -> int:
@@ -83,13 +87,13 @@ class TrajectoryDataModule(L.LightningDataModule):
         self._dataset = TrajectoryDataset(
             replay_buffer=self.replay_buffer,
             sampler=self.sampler,
-            steps_per_epoch=self.steps_per_epoch,
+            steps_per_epoch=self.training.steps_per_epoch,
         )
 
     def train_dataloader(self) -> DataLoader:
         assert self._dataset is not None, "Call setup() before train_dataloader()"
         return DataLoader(
             self._dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
+            batch_size=self.training.batch_size,
+            num_workers=self.training.num_workers,
         )

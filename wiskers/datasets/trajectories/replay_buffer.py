@@ -1,7 +1,7 @@
 """
 Fixed-capacity circular buffer of Episodes.
 
-Stores complete rollouts. Sampling is delegated to pluggable TrajectorySamplers.
+Stores complete rollouts. Sampling is delegated to TrajectorySampler implementations.
 """
 
 from collections import deque
@@ -19,7 +19,7 @@ class ReplayBuffer:
 
     Capacity is explicitly measured in **episodes** (complete rollout trajectories).
 
-    The buffer solely stores episodes. Sampling is handled by pluggable
+    The buffer solely stores episodes. Sampling is handled by
     `TrajectorySampler` implementations configured in Hydra via `_target_`.
 
     Args:

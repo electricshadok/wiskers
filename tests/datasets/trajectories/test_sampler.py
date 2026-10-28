@@ -3,6 +3,7 @@ import pytest
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
+from wiskers.datasets.trajectories.config import TrainingConfig
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
@@ -86,8 +87,7 @@ def test_datamodule_with_explicit_sampler():
     dm = TrajectoryDataModule(
         replay_buffer=buffer,
         sampler=sampler,
-        batch_size=2,
-        steps_per_epoch=2,
+        training=TrainingConfig(batch_size=2, steps_per_epoch=2),
     )
     assert dm.chunk_len == 8
     dm.setup()

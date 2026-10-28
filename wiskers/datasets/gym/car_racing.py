@@ -2,14 +2,11 @@
 CarRacing-v3 live trajectory DataModule.
 """
 
-from typing import Optional
+from typing import Mapping, Optional, Union
 
-from wiskers.datasets.gym.car_racing_collector import (
-    collect_car_racing_episodes,
-)
-from wiskers.datasets.gym.car_racing_policies import (
-    CarRacingPolicy,
-)
+from wiskers.datasets.gym.car_racing_collector import collect_car_racing_episodes
+from wiskers.datasets.gym.car_racing_policies import CarRacingPolicy
+from wiskers.datasets.trajectories.config import CollectionConfig, TrainingConfig
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
@@ -27,28 +24,20 @@ class CarRacingDataModule(TrajectoryDataModule):
     def __init__(
         self,
         replay_buffer: ReplayBuffer,
-        policy: CarRacingPolicy,
         sampler: TrajectorySampler,
-        # Environment rollout configuration
-        seed_episodes: int = 20,
-        max_steps_per_episode: int = 500,
-        # DataLoader / Training schedule
-        batch_size: int = 32,
-        steps_per_epoch: int = 500,
-        # General settings
+        policy: CarRacingPolicy,
+        collection: Union[CollectionConfig, Mapping],
+        training: Union[TrainingConfig, Mapping],
         seed: int = 0,
         verbose: bool = True,
     ) -> None:
         super().__init__(
             replay_buffer=replay_buffer,
             sampler=sampler,
-            batch_size=batch_size,
-            steps_per_epoch=steps_per_epoch,
-            num_workers=0,
+            training=training,
         )
         self.policy = policy
-        self.seed_episodes = seed_episodes
-        self.max_steps_per_episode = max_steps_per_episode
+        self.collection = CollectionConfig(**collection) if isinstance(collection, Mapping) else collection
         self.seed = seed
         self.verbose = verbose
 
@@ -57,8 +46,8 @@ class CarRacingDataModule(TrajectoryDataModule):
             collect_car_racing_episodes(
                 replay_buffer=self.replay_buffer,
                 policy=self.policy,
-                n_episodes=self.seed_episodes,
-                max_steps=self.max_steps_per_episode,
+                n_episodes=self.collection.seed_episodes,
+                max_steps=self.collection.max_steps_per_episode,
                 seed=self.seed,
                 verbose=self.verbose,
             )

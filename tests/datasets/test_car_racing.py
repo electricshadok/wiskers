@@ -7,6 +7,7 @@ from wiskers.datasets.gym.car_racing_policies import (
     CarRacingPolicy,
     CarRacingRandomPolicy,
 )
+from wiskers.datasets.trajectories.config import CollectionConfig, TrainingConfig
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 
@@ -17,11 +18,10 @@ def test_car_racing_datamodule_init():
     sampler = UniformChunkSampler(chunk_len=20)
     dm = CarRacingDataModule(
         replay_buffer=replay_buffer,
-        policy=policy,
         sampler=sampler,
-        seed_episodes=0,
-        batch_size=4,
-        steps_per_epoch=4,
+        policy=policy,
+        collection=CollectionConfig(seed_episodes=0),
+        training=TrainingConfig(batch_size=4, steps_per_epoch=4),
     )
     assert dm.replay_buffer.capacity_episodes == 100
     assert dm.chunk_len == 20
@@ -34,12 +34,10 @@ def test_car_racing_datamodule_setup_and_dataloader():
     sampler = UniformChunkSampler(chunk_len=5)
     dm = CarRacingDataModule(
         replay_buffer=replay_buffer,
-        policy=CarRacingHeuristicPolicy(),
         sampler=sampler,
-        seed_episodes=1,
-        max_steps_per_episode=8,
-        batch_size=2,
-        steps_per_epoch=2,
+        policy=CarRacingHeuristicPolicy(),
+        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=8),
+        training=TrainingConfig(batch_size=2, steps_per_epoch=2),
         verbose=False,
     )
     dm.setup()
@@ -68,10 +66,10 @@ def test_car_racing_datamodule_custom_policy():
     sampler = UniformChunkSampler(chunk_len=5)
     dm = CarRacingDataModule(
         replay_buffer=replay_buffer,
-        policy=StraightLinePolicy(),
         sampler=sampler,
-        seed_episodes=1,
-        max_steps_per_episode=6,
+        policy=StraightLinePolicy(),
+        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=6),
+        training=TrainingConfig(batch_size=2, steps_per_epoch=2),
         verbose=False,
     )
     dm.setup()

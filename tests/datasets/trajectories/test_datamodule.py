@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+from wiskers.datasets.trajectories.config import TrainingConfig
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
@@ -36,8 +37,7 @@ def test_datamodule_train_dataloader():
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
-        batch_size=BATCH_SIZE,
-        steps_per_epoch=STEPS_PER_EPOCH,
+        training=TrainingConfig(batch_size=BATCH_SIZE, steps_per_epoch=STEPS_PER_EPOCH),
     )
     dm.setup()
 
