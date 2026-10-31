@@ -27,10 +27,8 @@ data_module:
     _target_: wiskers.datasets.gym.breakout_policies.BreakoutHeuristicPolicy
     epsilon: 0.1
 
-  # Batch size and steps per training epoch
-  training:
-    batch_size: 16       # Number of trajectory chunks per training batch
-    steps_per_epoch: 500 # Number of training batches per epoch
+  # DataLoader batch size
+  batch_size: 16
 
   # General settings
   seed: ${seed}

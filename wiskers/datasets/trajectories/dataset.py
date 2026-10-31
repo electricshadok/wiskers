@@ -4,9 +4,9 @@ PyTorch IterableDataset backed by a ReplayBuffer.
 Wraps the buffer in a thin Dataset so it can be used with a standard
 DataLoader. Each iteration yields one Episode chunk of length chunk_len.
 
-The dataset has no fixed epoch size — it streams samples indefinitely.
+The dataset streams samples indefinitely as an infinite generator.
 Use the DataLoader's `batch_size` to control how many chunks form a batch,
-and stop iteration externally (e.g. via trainer max_steps or a step limit).
+and control training duration via Trainer `max_steps` or `limit_train_batches`.
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler       = UniformChunkSampler(chunk_len=50)
@@ -41,30 +41,25 @@ class TrajectoryDataset(IterableDataset):
     """
     Infinite-stream IterableDataset that draws random chunks from a ReplayBuffer.
 
-    Each call to __iter__ yields individual Episode chunks as tensor dicts.
+    Each call to __iter__ yields individual Episode chunks as tensor dicts indefinitely.
     The DataLoader collates these into batches of shape (B, T, ...).
 
     Args:
-        replay_buffer   (ReplayBuffer): The replay buffer to sample from.
-        sampler         (TrajectorySampler): Sampling strategy to draw chunks.
-        steps_per_epoch (int): Number of chunks to yield per epoch (i.e. per
-                               DataLoader pass). Controls how often Lightning
-                               runs validation and logs metrics.
+        replay_buffer (ReplayBuffer): The replay buffer to sample from.
+        sampler (TrajectorySampler): Sampling strategy to draw chunks.
     """
 
     def __init__(
         self,
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
-        steps_per_epoch: int = 1000,
     ) -> None:
         super().__init__()
         self.replay_buffer = replay_buffer
         self.sampler = sampler
-        self.steps_per_epoch = steps_per_epoch
 
     def __iter__(self):
-        for _ in range(self.steps_per_epoch):
+        while True:
             if self.replay_buffer.is_empty:
                 raise RuntimeError(
                     "TrajectoryDataset: replay_buffer is empty. "

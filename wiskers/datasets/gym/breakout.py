@@ -6,7 +6,7 @@ from typing import Mapping, Optional, Union
 
 from wiskers.datasets.gym.breakout_collector import collect_breakout_episodes
 from wiskers.datasets.gym.breakout_policies import BreakoutPolicy
-from wiskers.datasets.trajectories.config import CollectionConfig, TrainingConfig
+from wiskers.datasets.trajectories.config import CollectionConfig
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
@@ -27,7 +27,8 @@ class BreakoutDataModule(TrajectoryDataModule):
         sampler: TrajectorySampler,
         policy: BreakoutPolicy,
         collection: Union[CollectionConfig, Mapping],
-        training: Union[TrainingConfig, Mapping],
+        batch_size: int = 32,
+        num_workers: int = 0,
         image_size: Optional[tuple[int, int]] = (64, 64),
         seed: int = 0,
         verbose: bool = True,
@@ -35,7 +36,8 @@ class BreakoutDataModule(TrajectoryDataModule):
         super().__init__(
             replay_buffer=replay_buffer,
             sampler=sampler,
-            training=training,
+            batch_size=batch_size,
+            num_workers=num_workers,
         )
         self.policy = policy
         self.collection = CollectionConfig(**collection) if isinstance(collection, Mapping) else collection

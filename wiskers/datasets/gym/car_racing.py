@@ -6,7 +6,7 @@ from typing import Mapping, Optional, Union
 
 from wiskers.datasets.gym.car_racing_collector import collect_car_racing_episodes
 from wiskers.datasets.gym.car_racing_policies import CarRacingPolicy
-from wiskers.datasets.trajectories.config import CollectionConfig, TrainingConfig
+from wiskers.datasets.trajectories.config import CollectionConfig
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
@@ -27,14 +27,16 @@ class CarRacingDataModule(TrajectoryDataModule):
         sampler: TrajectorySampler,
         policy: CarRacingPolicy,
         collection: Union[CollectionConfig, Mapping],
-        training: Union[TrainingConfig, Mapping],
+        batch_size: int = 32,
+        num_workers: int = 0,
         seed: int = 0,
         verbose: bool = True,
     ) -> None:
         super().__init__(
             replay_buffer=replay_buffer,
             sampler=sampler,
-            training=training,
+            batch_size=batch_size,
+            num_workers=num_workers,
         )
         self.policy = policy
         self.collection = CollectionConfig(**collection) if isinstance(collection, Mapping) else collection
