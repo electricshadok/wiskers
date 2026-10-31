@@ -7,7 +7,7 @@ No trainer, no Lightning — pure nn.Module tests.
 import pytest
 import torch
 
-from wiskers.models.wm.dreamer.heads import Actor, Critic, Reward
+from wiskers.models.dreamer.heads import Actor, Critic, Reward
 
 
 # ── Shared config (small, fast on CPU) ────────────────────────────────────────

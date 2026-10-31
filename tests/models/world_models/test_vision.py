@@ -4,7 +4,7 @@ Tests for Vision model (V) — World Models 2018 (Ha & Schmidhuber).
 import pytest
 import torch
 
-from wiskers.models.wm.world_models.vision import Vision
+from wiskers.models.world_models.vision import Vision
 
 
 # Smaller config for fast CPU tests

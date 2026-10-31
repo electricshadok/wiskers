@@ -3,7 +3,7 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 
-from wiskers.models.gen.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
+from wiskers.models.world_models.encoder_decoder import CNNDecoder, CNNEncoder
 
 
 class Vision(nn.Module):

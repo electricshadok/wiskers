@@ -9,7 +9,7 @@ models saved as:
 
 from typing import Type
 
-from wiskers.modules.gen.base_module import BaseLightningModule
+import lightning as L
 
 
 class ONNXInference:
@@ -37,7 +37,7 @@ class SafeTensorInference:
 class CheckpointInference:
     ext = "ckpt"
 
-    def __init__(self, model_class: Type[BaseLightningModule]):
+    def __init__(self, model_class: Type[L.LightningModule]):
         self.model_class = model_class
 
     def __call__(self, filepath: str, num_samples: int):

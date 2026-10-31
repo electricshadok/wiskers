@@ -1,8 +1,8 @@
 import lightning as L
 import torch.nn as nn
 
-from wiskers.models.wm.world_models.controller import Controller
-from wiskers.models.wm.world_models.mdn_rnn import MDNRNN
+from wiskers.models.world_models.controller import Controller
+from wiskers.models.world_models.mdn_rnn import MDNRNN
 
 
 class WorldModels(L.LightningModule):
