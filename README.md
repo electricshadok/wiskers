@@ -1,81 +1,79 @@
-# Wiskers: World Models Playground 
+# Wiskers: World Models & Policy Learning Playground
 
 ![Wiskers Logo](https://raw.githubusercontent.com/electricshadok/wiskers/refs/heads/main/docs/wiskers_logo.png)
 
-Wiskers is an experimental sandbox for building and testing diverse world models that learn to predict and reason about dynamic environments. It serves as a modular playground to explore latent dynamics, acting as the predictive engine for physical AI and reinforcement learning agents.
+Wiskers is a modular framework to build, train, and evaluate world models and policies in simulation. Starting with core world model and policy training, Wiskers is designed to progressively support diverse architectures for reinforcement learning and generative dynamics—including latent world models, diffusion policies, Vision-Language-Action models (VLAs), behavior cloning, and actor-critic RL—providing an experimental playground to train policies and benchmark agent intelligence from imagination to simulated execution.
 
-
-> 📘 For the full philosophy and system blueprint, see [PROJECT.md](https://github.com/vincentbonnetai/wiskers/blob/main/PROJECT.md)
+> 📘 For the full philosophy and system blueprint, see [PROJECT.md](https://github.com/electricshadok/wiskers/blob/main/PROJECT.md)
 
 ## Installation
 
-Create and activate your environment.
-```
-mamba env create -f environment.yml
-```
+Create and activate your environment:
 
-```
+```bash
+mamba env create -f environment.yml
 mamba activate wiskers
 ```
 
 ## Tests
 
-Run unit tests
+Run unit tests:
 
-```
+```bash
 pytest tests
 ```
 
-```--fast_dev_run```
+### Development Runs
 
-Use this when you want the fastest check that everything compiles and runs. Doesn't test the full training pipeline.
+`--fast_dev_run`
 
+Use this for the fastest sanity check that everything compiles and runs without executing the full training pipeline:
+
+```bash
+python wiskers/cli/train.py --config <config_yaml> --fast_dev_run
 ```
-python wiskers/cli/train.py --config configs/training/clevrer_vqvae.yaml --fast_dev_run
-```
 
-```--quick_run```
+`--quick_run`
 
-Use this when you want to simulate a real training run and catch bugs across the full training pipeline (checkpointing, LR scheduler, etc.).
+Use this to simulate a short training run and catch bugs across the full pipeline (checkpointing, logging, etc.):
 
-```
-python wiskers/cli/train.py --config configs/training/clevrer_vqvae.yaml --quick_run
+```bash
+python wiskers/cli/train.py --config <config_yaml> --quick_run
 ```
 
 ## Training
 
-Use the following command to begin the training process. The configuration is defined in *train.yaml*, which can be tailored to suit your specific training needs.
+Launch training with a chosen experiment configuration file (`<config_yaml>`):
 
+```bash
+python wiskers/cli/train.py --config <config_yaml>
 ```
-python wiskers/cli/train.py --config configs/training/clevrer_vqvae.yaml
-```
 
-## Prediction
+## Prediction & Evaluation
 
-Use the following command to run the prediction process with a configuration.
+Run evaluation or inference with a configuration:
 
-```
-python wiskers/cli/predict.py --config configs/inference/clevrer_vqvae.yaml
+```bash
+python wiskers/cli/predict.py --config <config_yaml>
 ```
 
 ## Inspect Datasets
 
-Inspect and test the dataloaders.
+Inspect and verify trajectory dataloaders and rollout replay buffers:
 
-```
-python wiskers/cli/inspect_dataset.py --config configs/training/clevrer_vqvae.yaml
-python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_image.yaml
-python wiskers/cli/inspect_dataset.py --config configs/datasets/clevrer_video.yaml
-python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
+```bash
+# Atari Breakout trajectory dataloader
 python wiskers/cli/inspect_dataset.py --config configs/datasets/breakout.yaml
-python wiskers/cli/inspect_dataset.py --config configs/datasets/cifar10.yaml
+
+# CarRacing-v3 trajectory dataloader
+python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
 ```
 
-## Streamlit
+## Streamlit WebUI
 
-Streamlit is used to debug and run diffusion code, facilitating a smoother development and testing process.
+Streamlit provides an interactive WebUI to explore rollout trajectories, transitions, and models:
 
-```
+```bash
 streamlit run webui/main.py
 ```
 
@@ -84,40 +82,36 @@ streamlit run webui/main.py
 <p align="center"><img src="docs/app.png?raw=true"></p>
 </details>
 
-
 ## Tensorboard
 
-Track ML experiments
+Track ML experiments and training metrics:
 
-```
+```bash
 tensorboard --logdir=experiments/ --port=6006
 ```
 
 ## Docker
 
-### build docker container
+### Build Docker container
 
-Docker ensures a consistent environment Docker. Simply run the command to build the Docker container:
-
-```
+```bash
 ./build_docker.sh
 ```
 
-### start docker container
-Once the build is complete, you can start the Docker container with all necessary dependencies installed:
+### Start Docker container
 
-```
+```bash
 docker run --rm -it wiskers:1.0
 ```
 
 ## Code Formatter
-Use code formatter with ruff (see pyproject.toml)
 
-```
+Check and format code with ruff (configured in `pyproject.toml`):
+
+```bash
 ruff check --fix
 ```
 
-
 ## License
 
-Wiskers has a MIT license, as found in the [LICENSE](https://github.com/vincentbonnetai/wiskers/blob/main/LICENSE) file.
+Wiskers is licensed under the MIT License — see the [LICENSE](https://github.com/electricshadok/wiskers/blob/main/LICENSE) file for details.
