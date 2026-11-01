@@ -45,8 +45,8 @@ def test_datamodule_train_dataloader():
     # Keys
     assert set(batch.keys()) == {"obs", "actions", "rewards", "dones"}
 
-    # Shapes: (B, T, ...)
-    assert batch["obs"].shape == (BATCH_SIZE, CHUNK_LEN, 8, 8, 3)
+    # Shapes: (B, T, C, H, W)
+    assert batch["obs"].shape == (BATCH_SIZE, CHUNK_LEN, 3, 8, 8)
     assert batch["actions"].shape == (BATCH_SIZE, CHUNK_LEN, 4)
     assert batch["rewards"].shape == (BATCH_SIZE, CHUNK_LEN)
     assert batch["dones"].shape == (BATCH_SIZE, CHUNK_LEN)

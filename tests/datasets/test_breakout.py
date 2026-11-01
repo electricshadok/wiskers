@@ -48,7 +48,7 @@ def test_breakout_datamodule_setup_and_dataloader():
     batch = next(iter(loader))
 
     assert set(batch.keys()) == {"obs", "actions", "rewards", "dones"}
-    assert batch["obs"].shape == (2, 5, 64, 64, 3)
+    assert batch["obs"].shape == (2, 5, 3, 64, 64)
     assert batch["actions"].shape == (2, 5, 1)
     assert batch["rewards"].shape == (2, 5)
     assert batch["dones"].shape == (2, 5)
@@ -100,4 +100,4 @@ def test_breakout_datamodule_with_sampler():
     dm.setup()
     loader = dm.train_dataloader()
     batch = next(iter(loader))
-    assert batch["obs"].shape == (2, 5, 64, 64, 3)
+    assert batch["obs"].shape == (2, 5, 3, 64, 64)

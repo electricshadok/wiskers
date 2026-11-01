@@ -5,6 +5,9 @@ Provides helper functions to roll out episodes of CarRacing-v3 with
 a given CarRacingPolicy, pushing resulting Episodes into a ReplayBuffer.
 """
 
+from typing import Optional
+
+import gymnasium as gym
 import numpy as np
 from gymnasium.envs.box2d.car_racing import CarRacing
 
@@ -35,8 +38,25 @@ class NoZoomCarRacing(CarRacing):
         return obs
 
 
+def make_car_racing_env(image_size: Optional[tuple[int, int]] = (64, 64)) -> gym.Env:
+    """
+    Construct a NoZoomCarRacing environment with optional observation resizing.
+
+    Args:
+        image_size: Target (height, width) to resize frames to. If None, native
+                    resolution (96, 96) is preserved.
+
+    Returns:
+        Gymnasium environment instance.
+    """
+    env = NoZoomCarRacing(render_mode="rgb_array")
+    if image_size is not None:
+        env = gym.wrappers.ResizeObservation(env, tuple(image_size))
+    return env
+
+
 def _collect_one_episode(
-    env: NoZoomCarRacing,
+    env: gym.Env,
     max_steps: int,
     seed: int,
     policy: CarRacingPolicy,
@@ -100,6 +120,7 @@ def collect_car_racing_episodes(
     n_episodes: int = 10,
     max_steps: int = 500,
     seed: int = 0,
+    image_size: Optional[tuple[int, int]] = (64, 64),
     verbose: bool = True,
 ) -> None:
     """
@@ -111,9 +132,10 @@ def collect_car_racing_episodes(
         n_episodes    : Number of episodes to collect.
         max_steps     : Maximum steps per episode.
         seed          : Base RNG seed; each episode gets seed + episode_index.
+        image_size    : Target image resolution (H, W). Default (64, 64).
         verbose       : Print progress to stdout.
     """
-    env = NoZoomCarRacing(render_mode="rgb_array")
+    env = make_car_racing_env(image_size=image_size)
     try:
         for i in range(n_episodes):
             episode = _collect_one_episode(

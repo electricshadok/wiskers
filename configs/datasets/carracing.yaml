@@ -19,6 +19,9 @@ data_module:
     max_steps_per_episode: 500 # Maximum step limit per episode
     steps_per_iteration: 2000  # Environment steps collected per training iteration
 
+  # Observation frame resolution (height, width)
+  image_size: [64, 64]
+
   # Policy used to generate actions during rollout collection
   policy:
     _target_: wiskers.datasets.gym.car_racing_policies.CarRacingHeuristicPolicy

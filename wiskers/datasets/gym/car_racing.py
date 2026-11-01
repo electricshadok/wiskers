@@ -29,6 +29,7 @@ class CarRacingDataModule(TrajectoryDataModule):
         collection: Union[CollectionConfig, Mapping],
         batch_size: int = 32,
         num_workers: int = 0,
+        image_size: Optional[tuple[int, int]] = (64, 64),
         seed: int = 0,
         verbose: bool = True,
     ) -> None:
@@ -40,6 +41,7 @@ class CarRacingDataModule(TrajectoryDataModule):
         )
         self.policy = policy
         self.collection = CollectionConfig(**collection) if isinstance(collection, Mapping) else collection
+        self.image_size = tuple(image_size) if image_size is not None else None
         self.seed = seed
         self.verbose = verbose
 
@@ -51,6 +53,7 @@ class CarRacingDataModule(TrajectoryDataModule):
                 n_episodes=self.collection.seed_episodes,
                 max_steps=self.collection.max_steps_per_episode,
                 seed=self.seed,
+                image_size=self.image_size,
                 verbose=self.verbose,
             )
         super().setup(stage)

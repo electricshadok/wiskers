@@ -28,12 +28,25 @@ from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 
 def _episode_to_tensors(episode: Episode) -> dict[str, torch.Tensor]:
-    """Convert one Episode chunk (numpy arrays) into a dict of tensors."""
+    """
+    Convert one Episode chunk (numpy arrays) into a dict of tensors on-the-fly.
+
+    Post-processes observations into PyTorch channel-first format (T, C, H, W)
+    and scales uint8 pixel values to float32 in [0.0, 1.0].
+    """
+    obs = torch.from_numpy(episode.obs)
+    if obs.ndim == 4:
+        # (T, H, W, C) -> (T, C, H, W)
+        obs = obs.permute(0, 3, 1, 2)
+    elif obs.ndim == 3:
+        # (T, H, W) -> (T, 1, H, W)
+        obs = obs.unsqueeze(1)
+
     return {
-        "obs":     torch.from_numpy(episode.obs.astype(np.float32) / 255.0),
+        "obs": obs.float() / 255.0,
         "actions": torch.from_numpy(episode.actions),
         "rewards": torch.from_numpy(episode.rewards),
-        "dones":   torch.from_numpy(episode.dones.astype(np.float32)),
+        "dones": torch.from_numpy(episode.dones.astype(np.float32)),
     }
 
 
