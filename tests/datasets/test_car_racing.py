@@ -22,7 +22,6 @@ def test_car_racing_datamodule_init():
         policy=policy,
         collection=CollectionConfig(seed_episodes=0),
         batch_size=4,
-        steps_per_epoch=4,
     )
     assert dm.replay_buffer.capacity_episodes == 100
     assert dm.chunk_len == 20
@@ -39,7 +38,6 @@ def test_car_racing_datamodule_setup_and_dataloader():
         policy=CarRacingHeuristicPolicy(),
         collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=8),
         batch_size=2,
-        steps_per_epoch=2,
         verbose=False,
     )
     dm.setup()
@@ -72,7 +70,6 @@ def test_car_racing_datamodule_custom_policy():
         policy=StraightLinePolicy(),
         collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=6),
         batch_size=2,
-        steps_per_epoch=2,
         verbose=False,
     )
     dm.setup()

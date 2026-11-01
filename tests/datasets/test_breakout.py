@@ -21,7 +21,6 @@ def test_breakout_datamodule_init():
         policy=policy,
         collection=CollectionConfig(seed_episodes=0),
         batch_size=4,
-        steps_per_epoch=4,
     )
     assert dm.replay_buffer.capacity_episodes == 100
     assert dm.chunk_len == 20
@@ -38,7 +37,6 @@ def test_breakout_datamodule_setup_and_dataloader():
         policy=BreakoutHeuristicPolicy(epsilon=0.0),
         collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=10),
         batch_size=2,
-        steps_per_epoch=2,
         image_size=(64, 64),
         verbose=False,
     )
@@ -72,7 +70,6 @@ def test_breakout_datamodule_custom_policy():
         policy=ConstantFirePolicy(),
         collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=6),
         batch_size=2,
-        steps_per_epoch=2,
         verbose=False,
     )
     dm.setup()
@@ -96,7 +93,6 @@ def test_breakout_datamodule_with_sampler():
         policy=BreakoutHeuristicPolicy(epsilon=0.0),
         collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=10),
         batch_size=2,
-        steps_per_epoch=2,
         image_size=(64, 64),
         verbose=False,
     )

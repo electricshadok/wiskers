@@ -1,6 +1,12 @@
 [tool.ruff]
 line-length = 120
 indent-width = 4
+exclude = [
+    "archive",
+    ".git",
+    ".venv",
+    "__pycache__",
+]
 
 [tool.ruff.lint]
 select = [
@@ -36,4 +42,10 @@ skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra -q"
 
