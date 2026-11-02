@@ -12,6 +12,7 @@ import numpy as np
 from gymnasium.envs.box2d.car_racing import CarRacing
 
 from wiskers.datasets.gym.car_racing_policies import CarRacingPolicy
+from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
@@ -118,39 +119,39 @@ def collect_car_racing_episodes(
     replay_buffer: ReplayBuffer,
     policy: CarRacingPolicy,
     n_episodes: int = 10,
+    min_steps: int = 0,
     max_steps: int = 500,
     seed: int = 0,
     image_size: Optional[tuple[int, int]] = (64, 64),
     verbose: bool = True,
-) -> None:
+) -> int:
     """
-    Collect ``n_episodes`` CarRacing rollouts and push them into ``replay_buffer``.
+    Collect CarRacing rollouts and push them into ``replay_buffer`` using Collector.
 
     Args:
         replay_buffer : Target ReplayBuffer to populate.
         policy        : Policy instance to collect rollouts with.
         n_episodes    : Number of episodes to collect.
-        max_steps     : Maximum steps per episode.
+        min_steps     : Minimum steps per episode (shorter episodes are discarded).
+        max_steps     : Maximum steps per episode (clamped).
         seed          : Base RNG seed; each episode gets seed + episode_index.
         image_size    : Target image resolution (H, W). Default (64, 64).
         verbose       : Print progress to stdout.
+
+    Returns:
+        Total steps collected.
     """
     env = make_car_racing_env(image_size=image_size)
     try:
-        for i in range(n_episodes):
-            episode = _collect_one_episode(
-                env=env,
-                max_steps=max_steps,
-                seed=seed + i,
-                policy=policy,
-            )
-            replay_buffer.add(episode)
-            if verbose:
-                print(
-                    f"[CarRacing] episode {i + 1}/{n_episodes} | "
-                    f"T={len(episode)} steps | "
-                    f"total_reward={episode.rewards.sum():.1f} | "
-                    f"buffer={replay_buffer}"
-                )
+        collector = Collector(
+            env=env,
+            policy=policy,
+            num_episodes=n_episodes,
+            min_steps=min_steps,
+            max_steps=max_steps,
+            seed=seed,
+            verbose=verbose,
+        )
+        return collector.collect(replay_buffer)
     finally:
         env.close()

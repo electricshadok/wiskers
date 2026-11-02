@@ -2,14 +2,14 @@
 PyTorch IterableDataset backed by a ReplayBuffer.
 
 Wraps the buffer in a thin Dataset so it can be used with a standard
-DataLoader. Each iteration yields one Episode chunk of length chunk_len.
+DataLoader. Each iteration yields one Episode chunk of length num_steps.
 
 The dataset streams samples indefinitely as an infinite generator.
 Use the DataLoader's `batch_size` to control how many chunks form a batch,
 and control training duration via Trainer `max_steps` or `limit_train_batches`.
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
-    sampler       = UniformChunkSampler(chunk_len=50)
+    sampler       = UniformChunkSampler(num_steps=50)
     dataset       = TrajectoryDataset(replay_buffer=replay_buffer, sampler=sampler)
     loader        = DataLoader(dataset, batch_size=32, num_workers=0)
 

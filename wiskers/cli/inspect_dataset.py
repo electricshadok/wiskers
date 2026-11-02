@@ -54,18 +54,23 @@ class InspectDatasetCLI:
         self.datamodule.setup("test")
         self.datamodule.setup("predict")
 
-        train_loader = self.datamodule.train_dataloader()
-        val_loader = self.datamodule.val_dataloader()
-        test_loader = self.datamodule.test_dataloader()
+        loaders = []
+        for name, method_name in [
+            ("Train", "train_dataloader"),
+            ("Val", "val_dataloader"),
+            ("Test", "test_dataloader"),
+        ]:
+            try:
+                method = getattr(self.datamodule, method_name)
+                loaders.append((name, method()))
+            except Exception:
+                continue
 
         # Print dataset lengths and batch info
-        for name, loader in [
-            ("Train", train_loader),
-            ("Val", val_loader),
-            ("Test", test_loader),
-        ]:
-            ds = loader.dataset
-            print(f"{name} dataset length: {len(ds)}")
+        for name, loader in loaders:
+            ds = getattr(loader, "dataset", None)
+            if ds is not None and hasattr(ds, "__len__"):
+                print(f"{name} dataset length: {len(ds)}")
             batch = next(iter(loader))
             print(f"{name} batch description:")
             describe_element(batch, indent=2)

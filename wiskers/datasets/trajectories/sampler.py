@@ -6,7 +6,7 @@ Designed to be instantiated directly in Hydra configs via `_target_`:
     # in configs/datasets/breakout.yaml
     sampler:
       _target_: wiskers.datasets.trajectories.sampler.UniformChunkSampler
-      chunk_len: 50
+      num_steps: 50
 """
 
 import math
@@ -25,7 +25,7 @@ class TrajectorySampler(ABC):
     Defines the strategy for selecting and slicing episodes from a ReplayBuffer.
     """
 
-    chunk_len: int
+    num_steps: int
 
     @abstractmethod
     def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
@@ -37,7 +37,7 @@ class TrajectorySampler(ABC):
             batch_size: Number of chunks to sample.
 
         Returns:
-            List of Episode chunks of length `chunk_len`.
+            List of Episode chunks of length `num_steps`.
         """
         pass
 
@@ -49,51 +49,51 @@ class UniformChunkSampler(TrajectorySampler):
     """
     Uniform transition-level chunk sampler.
 
-    Samples contiguous chunks of fixed length `chunk_len`. Episodes are chosen
+    Samples contiguous chunks of fixed length `num_steps`. Episodes are chosen
     with probability proportional to their number of valid start positions:
 
-        weight(ep) = len(ep) - chunk_len + 1
+        weight(ep) = len(ep) - num_steps + 1
 
     And the start index within the chosen episode is drawn uniformly at random:
 
-        start ~ Uniform(0, len(ep) - chunk_len)
+        start ~ Uniform(0, len(ep) - num_steps)
 
     This two-level scheme guarantees that every valid (episode, start) pair
     in the buffer has equal probability — no transition is under-sampled
     relative to others regardless of episode length differences.
 
     Args:
-        chunk_len (int): Length of the contiguous sequence chunk to slice.
+        num_steps (int): Number of consecutive steps per sampled sequence.
     """
 
-    def __init__(self, chunk_len: int = 50) -> None:
-        if chunk_len < 1:
-            raise ValueError(f"chunk_len must be >= 1, got {chunk_len}")
-        self.chunk_len = chunk_len
+    def __init__(self, num_steps: int = 50) -> None:
+        if num_steps < 1:
+            raise ValueError(f"num_steps must be >= 1, got {num_steps}")
+        self.num_steps = num_steps
 
     def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
         if buffer.is_empty:
             raise RuntimeError("Cannot sample from an empty ReplayBuffer.")
 
-        episodes = [ep for ep in buffer if len(ep) >= self.chunk_len]
+        episodes = [ep for ep in buffer if len(ep) >= self.num_steps]
         if not episodes:
             raise RuntimeError(
-                f"Cannot sample chunks of length {self.chunk_len}: "
-                f"no episodes in buffer have length >= {self.chunk_len}."
+                f"Cannot sample chunks of length {self.num_steps}: "
+                f"no episodes in buffer have length >= {self.num_steps}."
             )
 
-        weights = [len(ep) - self.chunk_len + 1 for ep in episodes]
+        weights = [len(ep) - self.num_steps + 1 for ep in episodes]
         chunks: List[Episode] = []
         for _ in range(batch_size):
             episode = random.choices(episodes, weights=weights, k=1)[0]
-            max_start = len(episode) - self.chunk_len
+            max_start = len(episode) - self.num_steps
             start = random.randint(0, max_start)
-            chunks.append(episode.slice(start, start + self.chunk_len))
+            chunks.append(episode.slice(start, start + self.num_steps))
 
         return chunks
 
     def __repr__(self) -> str:
-        return f"UniformChunkSampler(chunk_len={self.chunk_len})"
+        return f"UniformChunkSampler(num_steps={self.num_steps})"
 
 
 class RecencyWeightedSampler(TrajectorySampler):
@@ -106,21 +106,21 @@ class RecencyWeightedSampler(TrajectorySampler):
 
     The weight of each episode is:
 
-        weight(ep_i) = (len(ep_i) - chunk_len + 1) * exp(recency_factor * (i / N))
+        weight(ep_i) = (len(ep_i) - num_steps + 1) * exp(recency_factor * (i / N))
 
     where `i` is the index from oldest (0) to newest (N - 1) in the buffer.
 
     Args:
-        chunk_len (int): Length of the sequence chunk to slice.
+        num_steps (int): Number of consecutive steps per sampled sequence.
         recency_factor (float): Strength of the recency bias. 0.0 gives uniform
                                 transition weighting; higher values heavily favor
                                 recent episodes.
     """
 
-    def __init__(self, chunk_len: int = 50, recency_factor: float = 1.0) -> None:
-        if chunk_len < 1:
-            raise ValueError(f"chunk_len must be >= 1, got {chunk_len}")
-        self.chunk_len = chunk_len
+    def __init__(self, num_steps: int = 50, recency_factor: float = 1.0) -> None:
+        if num_steps < 1:
+            raise ValueError(f"num_steps must be >= 1, got {num_steps}")
+        self.num_steps = num_steps
         self.recency_factor = float(recency_factor)
 
     def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
@@ -134,29 +134,29 @@ class RecencyWeightedSampler(TrajectorySampler):
         weights: List[float] = []
 
         for i, ep in enumerate(all_episodes):
-            if len(ep) >= self.chunk_len:
-                valid_starts = len(ep) - self.chunk_len + 1
+            if len(ep) >= self.num_steps:
+                valid_starts = len(ep) - self.num_steps + 1
                 recency_weight = math.exp(self.recency_factor * (i / max(1, n - 1)))
                 valid_episodes.append(ep)
                 weights.append(valid_starts * recency_weight)
 
         if not valid_episodes:
             raise RuntimeError(
-                f"Cannot sample chunks of length {self.chunk_len}: "
-                f"no episodes in buffer have length >= {self.chunk_len}."
+                f"Cannot sample chunks of length {self.num_steps}: "
+                f"no episodes in buffer have length >= {self.num_steps}."
             )
 
         chunks: List[Episode] = []
         for _ in range(batch_size):
             episode = random.choices(valid_episodes, weights=weights, k=1)[0]
-            max_start = len(episode) - self.chunk_len
+            max_start = len(episode) - self.num_steps
             start = random.randint(0, max_start)
-            chunks.append(episode.slice(start, start + self.chunk_len))
+            chunks.append(episode.slice(start, start + self.num_steps))
 
         return chunks
 
     def __repr__(self) -> str:
         return (
             f"RecencyWeightedSampler("
-            f"chunk_len={self.chunk_len}, recency_factor={self.recency_factor})"
+            f"num_steps={self.num_steps}, recency_factor={self.recency_factor})"
         )

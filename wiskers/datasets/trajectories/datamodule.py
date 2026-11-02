@@ -8,7 +8,7 @@ done via a Lightning Callback after each epoch).
 Usage:
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
-    sampler = UniformChunkSampler(chunk_len=50)
+    sampler = UniformChunkSampler(num_steps=50)
     # ... populate replay_buffer with seed episodes ...
 
     dm = TrajectoryDataModule(replay_buffer=replay_buffer, sampler=sampler, batch_size=32)
@@ -19,11 +19,12 @@ Usage:
     #   dm.replay_buffer.add(new_episode)
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 import lightning as L
 from torch.utils.data import DataLoader
 
+from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.dataset import TrajectoryDataset
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
@@ -33,48 +34,61 @@ class TrajectoryDataModule(L.LightningDataModule):
     """
     LightningDataModule that serves trajectory chunks from a ReplayBuffer.
 
-    The DataModule holds a reference to the buffer so that a Lightning Callback
-    can call dm.replay_buffer.add(episode) after each epoch to grow the dataset
-    iteratively — without restarting the DataModule or the Trainer.
+    Optionally accepts a Collector to seed the ReplayBuffer during `setup()`
+    if the buffer is empty, and allows online rollout callbacks to push new
+    episodes dynamically during training.
 
     Args:
-        replay_buffer (ReplayBuffer): Shared buffer populated externally.
+        replay_buffer (ReplayBuffer): Shared buffer populated externally or via collector.
         sampler (TrajectorySampler): Sampling strategy to draw chunks.
-                                     Configured in Hydra via `_target_`.
+        collector (Optional[Collector]): Collector to seed the buffer during setup().
         batch_size (int): Number of chunks per training batch (default: 32).
         num_workers (int): DataLoader workers (default: 0).
-
-    Note — val / test dataloaders:
-        This DataModule intentionally omits val_dataloader() and test_dataloader().
-        For world-model training, validation is measured by running the agent in
-        the environment and recording cumulative reward — not by evaluating on
-        held-out buffer data. Add a separate eval Callback for that.
-        If you want to track world-model loss (reconstruction, KL) on a fixed
-        set of episodes, pass a separate `val_buffer` and create a second
-        TrajectoryDataset from it in val_dataloader().
     """
 
     def __init__(
         self,
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
+        collector: Optional[Collector] = None,
         batch_size: int = 32,
         num_workers: int = 0,
     ) -> None:
         super().__init__()
+        if collector is not None:
+            if sampler.num_steps > collector.max_steps:
+                raise ValueError(
+                    f"sampler.num_steps ({sampler.num_steps}) cannot be greater than "
+                    f"collector.max_steps ({collector.max_steps})."
+                )
+            if collector.min_steps < sampler.num_steps:
+                raise ValueError(
+                    f"collector.min_steps ({collector.min_steps}) cannot be less than "
+                    f"sampler.num_steps ({sampler.num_steps}). Episodes shorter than "
+                    f"sampler.num_steps cannot be sampled."
+                )
+
         self.replay_buffer = replay_buffer
         self.sampler = sampler
+        self.collector = collector
         self.batch_size = batch_size
         self.num_workers = num_workers
 
         self._dataset: Optional[TrajectoryDataset] = None
 
     @property
-    def chunk_len(self) -> int:
-        """Return the chunk length configured on the sampler."""
-        return self.sampler.chunk_len
+    def num_steps(self) -> int:
+        """Return the sequence length configured on the sampler."""
+        return self.sampler.num_steps
+
+    @property
+    def policy(self) -> Any:
+        return self.collector.policy if self.collector is not None else None
 
     def setup(self, stage: Optional[str] = None) -> None:
+        if self.collector is not None and self.replay_buffer.is_empty:
+            self.collector.collect(self.replay_buffer)
+
         self._dataset = TrajectoryDataset(
             replay_buffer=self.replay_buffer,
             sampler=self.sampler,

@@ -23,8 +23,8 @@ def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: i
 
 
 def test_uniform_chunk_sampler():
-    sampler = UniformChunkSampler(chunk_len=10)
-    assert sampler.chunk_len == 10
+    sampler = UniformChunkSampler(num_steps=10)
+    assert sampler.num_steps == 10
 
     buffer = ReplayBuffer(capacity_episodes=10)
     buffer.add(_make_episode(T=25))
@@ -39,14 +39,14 @@ def test_uniform_chunk_sampler():
 
 
 def test_sampler_empty_buffer_raises():
-    sampler = UniformChunkSampler(chunk_len=10)
+    sampler = UniformChunkSampler(num_steps=10)
     buffer = ReplayBuffer(capacity_episodes=10)
     with pytest.raises(RuntimeError, match="empty ReplayBuffer"):
         sampler.sample(buffer, batch_size=1)
 
 
 def test_sampler_no_valid_episodes_raises():
-    sampler = UniformChunkSampler(chunk_len=50)
+    sampler = UniformChunkSampler(num_steps=50)
     buffer = ReplayBuffer(capacity_episodes=10)
     buffer.add(_make_episode(T=20))
     with pytest.raises(RuntimeError, match="no episodes in buffer have length >= 50"):
@@ -54,8 +54,8 @@ def test_sampler_no_valid_episodes_raises():
 
 
 def test_recency_weighted_sampler():
-    sampler = RecencyWeightedSampler(chunk_len=5, recency_factor=2.0)
-    assert sampler.chunk_len == 5
+    sampler = RecencyWeightedSampler(num_steps=5, recency_factor=2.0)
+    assert sampler.num_steps == 5
     assert sampler.recency_factor == 2.0
 
     buffer = ReplayBuffer(capacity_episodes=10)
@@ -71,15 +71,15 @@ def test_recency_weighted_sampler():
 def test_hydra_sampler_instantiation():
     cfg = OmegaConf.create({
         "_target_": "wiskers.datasets.trajectories.sampler.UniformChunkSampler",
-        "chunk_len": 35,
+        "num_steps": 35,
     })
     sampler = instantiate(cfg)
     assert isinstance(sampler, UniformChunkSampler)
-    assert sampler.chunk_len == 35
+    assert sampler.num_steps == 35
 
 
 def test_datamodule_with_explicit_sampler():
-    sampler = UniformChunkSampler(chunk_len=8)
+    sampler = UniformChunkSampler(num_steps=8)
     buffer = ReplayBuffer(capacity_episodes=5)
     buffer.add(_make_episode(T=20))
 
@@ -88,7 +88,7 @@ def test_datamodule_with_explicit_sampler():
         sampler=sampler,
         batch_size=2,
     )
-    assert dm.chunk_len == 8
+    assert dm.num_steps == 8
     dm.setup()
     loader = dm.train_dataloader()
     batch = next(iter(loader))

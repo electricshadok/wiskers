@@ -1,44 +1,79 @@
 import numpy as np
+import pytest
 import torch
 
-from wiskers.datasets.gym.car_racing import CarRacingDataModule
+from wiskers.datasets.gym.car_racing_collector import make_car_racing_env
 from wiskers.datasets.gym.car_racing_policies import (
     CarRacingHeuristicPolicy,
     CarRacingPolicy,
     CarRacingRandomPolicy,
 )
-from wiskers.datasets.trajectories.config import CollectionConfig
+from wiskers.datasets.trajectories.collector import Collector
+from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 
 
 def test_car_racing_datamodule_init():
     policy = CarRacingHeuristicPolicy()
+    env = make_car_racing_env()
     replay_buffer = ReplayBuffer(capacity_episodes=100)
-    sampler = UniformChunkSampler(chunk_len=20)
-    dm = CarRacingDataModule(
+    sampler = UniformChunkSampler(num_steps=20)
+    collector = Collector(env=env, policy=policy, num_episodes=0, min_steps=20)
+    dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
-        policy=policy,
-        collection=CollectionConfig(seed_episodes=0),
+        collector=collector,
         batch_size=4,
     )
     assert dm.replay_buffer.capacity_episodes == 100
-    assert dm.chunk_len == 20
+    assert dm.num_steps == 20
+    assert dm.collector.min_steps == 20
     assert dm.replay_buffer.is_empty
     assert dm.policy is policy
 
 
-def test_car_racing_datamodule_setup_and_dataloader():
+def test_car_racing_datamodule_validation():
+    policy = CarRacingHeuristicPolicy()
+    env = make_car_racing_env()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
-    sampler = UniformChunkSampler(chunk_len=5)
-    dm = CarRacingDataModule(
+
+    # sampler.num_steps > collector.max_steps raises ValueError
+    with pytest.raises(ValueError, match="sampler.num_steps .* cannot be greater than collector.max_steps"):
+        TrajectoryDataModule(
+            replay_buffer=replay_buffer,
+            sampler=UniformChunkSampler(num_steps=50),
+            collector=Collector(env=env, policy=policy, num_episodes=1, min_steps=40, max_steps=40),
+        )
+
+    # collector.min_steps < sampler.num_steps raises ValueError (no silent mutations)
+    with pytest.raises(ValueError, match="collector.min_steps .* cannot be less than sampler.num_steps"):
+        TrajectoryDataModule(
+            replay_buffer=replay_buffer,
+            sampler=UniformChunkSampler(num_steps=50),
+            collector=Collector(env=env, policy=policy, num_episodes=1, min_steps=20, max_steps=100),
+        )
+
+    # default min_steps=0 when sampler.num_steps=50 also raises ValueError
+    with pytest.raises(ValueError, match="collector.min_steps .* cannot be less than sampler.num_steps"):
+        TrajectoryDataModule(
+            replay_buffer=replay_buffer,
+            sampler=UniformChunkSampler(num_steps=50),
+            collector=Collector(env=env, policy=policy, num_episodes=1, max_steps=100),
+        )
+
+
+def test_car_racing_datamodule_setup_and_dataloader():
+    policy = CarRacingHeuristicPolicy()
+    env = make_car_racing_env(image_size=(64, 64))
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
+    sampler = UniformChunkSampler(num_steps=5)
+    collector = Collector(env=env, policy=policy, num_episodes=1, min_steps=5, max_steps=8, verbose=False)
+    dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
-        policy=CarRacingHeuristicPolicy(),
-        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=8),
+        collector=collector,
         batch_size=2,
-        verbose=False,
     )
     dm.setup()
     assert not dm.replay_buffer.is_empty
@@ -62,15 +97,16 @@ def test_car_racing_datamodule_custom_policy():
         def forward(self, obs, env=None, step=0):
             return np.array([0.0, 0.5, 0.0], dtype=np.float32)
 
+    policy = StraightLinePolicy()
+    env = make_car_racing_env(image_size=(64, 64))
     replay_buffer = ReplayBuffer(capacity_episodes=10)
-    sampler = UniformChunkSampler(chunk_len=5)
-    dm = CarRacingDataModule(
+    sampler = UniformChunkSampler(num_steps=5)
+    collector = Collector(env=env, policy=policy, num_episodes=1, min_steps=5, max_steps=6, verbose=False)
+    dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
-        policy=StraightLinePolicy(),
-        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=6),
+        collector=collector,
         batch_size=2,
-        verbose=False,
     )
     dm.setup()
     assert dm.replay_buffer.num_episodes == 1
@@ -96,17 +132,18 @@ def test_car_racing_random_policy():
 
 
 def test_car_racing_datamodule_native_resolution():
+    policy = CarRacingHeuristicPolicy()
+    env = make_car_racing_env(image_size=None)
     replay_buffer = ReplayBuffer(capacity_episodes=10)
-    sampler = UniformChunkSampler(chunk_len=4)
-    dm = CarRacingDataModule(
+    sampler = UniformChunkSampler(num_steps=4)
+    collector = Collector(env=env, policy=policy, num_episodes=1, min_steps=4, max_steps=6, verbose=False)
+    dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
-        policy=CarRacingHeuristicPolicy(),
-        collection=CollectionConfig(seed_episodes=1, max_steps_per_episode=6),
+        collector=collector,
         batch_size=2,
-        image_size=None,
-        verbose=False,
     )
+    assert dm.num_steps == 4
     dm.setup()
     loader = dm.train_dataloader()
     batch = next(iter(loader))

@@ -25,13 +25,13 @@ def test_datamodule_train_dataloader():
     - setup() creates the inner dataset without errors.
     - train_dataloader() yields a single batch with the expected keys and shapes.
     """
-    CHUNK_LEN = 10
+    NUM_STEPS = 10
     BATCH_SIZE = 4
 
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     replay_buffer.add(_make_episode(T=30))
 
-    sampler = UniformChunkSampler(chunk_len=CHUNK_LEN)
+    sampler = UniformChunkSampler(num_steps=NUM_STEPS)
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
@@ -46,10 +46,10 @@ def test_datamodule_train_dataloader():
     assert set(batch.keys()) == {"obs", "actions", "rewards", "dones"}
 
     # Shapes: (B, T, C, H, W)
-    assert batch["obs"].shape == (BATCH_SIZE, CHUNK_LEN, 3, 8, 8)
-    assert batch["actions"].shape == (BATCH_SIZE, CHUNK_LEN, 4)
-    assert batch["rewards"].shape == (BATCH_SIZE, CHUNK_LEN)
-    assert batch["dones"].shape == (BATCH_SIZE, CHUNK_LEN)
+    assert batch["obs"].shape == (BATCH_SIZE, NUM_STEPS, 3, 8, 8)
+    assert batch["actions"].shape == (BATCH_SIZE, NUM_STEPS, 4)
+    assert batch["rewards"].shape == (BATCH_SIZE, NUM_STEPS)
+    assert batch["dones"].shape == (BATCH_SIZE, NUM_STEPS)
 
     # dtypes
     assert batch["obs"].dtype == torch.float32
@@ -60,3 +60,59 @@ def test_datamodule_train_dataloader():
     # Observations were uint8 [0,255] → normalised to [0,1]
     assert batch["obs"].min() >= 0.0
     assert batch["obs"].max() <= 1.0
+
+
+def test_datamodule_with_collector(monkeypatch):
+    class DummyCollector:
+        def __init__(self):
+            self.min_steps = 10
+            self.max_steps = 50
+            self.policy = "dummy_policy"
+            self.collected = False
+
+        def collect(self, buffer):
+            self.collected = True
+            buffer.add(_make_episode(T=20))
+
+    collector = DummyCollector()
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
+    sampler = UniformChunkSampler(num_steps=10)
+    dm = TrajectoryDataModule(
+        replay_buffer=replay_buffer,
+        sampler=sampler,
+        collector=collector,
+        batch_size=2,
+    )
+    assert dm.policy == "dummy_policy"
+    dm.setup()
+    assert collector.collected
+    assert dm.replay_buffer.num_episodes == 1
+
+
+def test_datamodule_collector_validation():
+    import pytest
+
+    class DummyCollector:
+        def __init__(self, min_steps=10, max_steps=50):
+            self.min_steps = min_steps
+            self.max_steps = max_steps
+            self.policy = None
+
+    replay_buffer = ReplayBuffer(capacity_episodes=10)
+    sampler = UniformChunkSampler(num_steps=20)
+
+    # num_steps > max_steps
+    with pytest.raises(ValueError, match="sampler.num_steps .* cannot be greater than collector.max_steps"):
+        TrajectoryDataModule(
+            replay_buffer=replay_buffer,
+            sampler=sampler,
+            collector=DummyCollector(min_steps=5, max_steps=15),
+        )
+
+    # collector.min_steps < sampler.num_steps
+    with pytest.raises(ValueError, match="collector.min_steps .* cannot be less than sampler.num_steps"):
+        TrajectoryDataModule(
+            replay_buffer=replay_buffer,
+            sampler=sampler,
+            collector=DummyCollector(min_steps=10, max_steps=50),
+        )

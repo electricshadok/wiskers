@@ -108,14 +108,21 @@ class DefaultUIAdapter(DataModuleUIAdapter):
 def get_adapter(data_module: Any) -> DataModuleUIAdapter:
     """
     Return the UI adapter for the given DataModule instance.
-
-    Registration is done by class name to avoid circular imports between
-    webui and wiskers training code.
     """
-    _REGISTRY: Dict[str, type] = {
-        "CarRacingDataModule": CarRacingUIAdapter,
-        "BreakoutDataModule":  BreakoutUIAdapter,
-    }
-    cls_name = type(data_module).__name__
-    adapter_cls = _REGISTRY.get(cls_name, DefaultUIAdapter)
-    return adapter_cls()
+    env = getattr(getattr(data_module, "collector", None), "env", None)
+    env_str = ""
+    if env is not None:
+        spec = getattr(env, "spec", None) or getattr(getattr(env, "unwrapped", None), "spec", None)
+        if spec is not None and getattr(spec, "id", None):
+            env_str = str(spec.id).lower()
+        else:
+            env_str = f"{type(env).__name__} {type(getattr(env, 'unwrapped', None)).__name__}".lower()
+
+    cls_name = type(data_module).__name__.lower()
+
+    if "carracing" in env_str or "car_racing" in env_str or "carracing" in cls_name:
+        return CarRacingUIAdapter()
+    if "breakout" in env_str or "breakout" in cls_name:
+        return BreakoutUIAdapter()
+
+    return DefaultUIAdapter()

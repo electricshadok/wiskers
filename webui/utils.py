@@ -9,7 +9,7 @@ from webui.dataset.adapters import get_adapter
 def dataset_ui(data_module: Any):
     """
     Render the interactive Rollout Explorer for trajectory-based DataModules
-    (e.g., BreakoutDataModule, CarRacingDataModule).
+    (e.g., TrajectoryDataModule).
     """
     replay_buffer = getattr(data_module, "replay_buffer", None)
     if replay_buffer is None:
@@ -30,7 +30,7 @@ def dataset_ui(data_module: Any):
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity_episodes}")
     m2.metric("Total Steps", f"{replay_buffer.num_steps:,}")
-    m3.metric("Chunk Length", f"{data_module.chunk_len}")
+    m3.metric("Chunk Length", f"{data_module.num_steps}")
     avg_len = sum(len(e) for e in episodes) / len(episodes)
     m4.metric("Avg Episode Length", f"{avg_len:.1f}")
 
