@@ -1,5 +1,6 @@
 import lightning as L
 import torch.nn as nn
+from torch.optim import Adam
 
 from wiskers.models.world_models.controller import Controller
 from wiskers.models.world_models.mdn_rnn import MDNRNN
@@ -11,7 +12,7 @@ class WorldModels(L.LightningModule):
 
     Architecture:
         V  - Vision model: a VAE that encodes observations into a compact
-             latent vector z_t.  The encoder is frozen during Stage 2;
+             latent vector z_t. The encoder is frozen during Stage 2;
              only the M model is trained here.
         M  - Memory model: an MDN-RNN that learns the transition dynamics
              p(z_{t+1} | z_t, a_t, h_t) in latent space.
@@ -20,15 +21,15 @@ class WorldModels(L.LightningModule):
 
     Training pipeline (3 stages):
         Stage 1 - Train VAE on raw observations (see AEModule / VAEModule).
-        Stage 2 - Freeze VAE encoder; train MDN-RNN on encoded sequences.  <- this module
+        Stage 2 - Freeze VAE encoder; train MDN-RNN on encoded sequences.
         Stage 3 - Freeze V + M; optimise Controller with CMA-ES in-dream.
 
     Args:
         encoder (nn.Module): Frozen VAE encoder  z = encoder(x).
-        decoder (nn.Module): VAE decoder  x^ = decoder(z).  Kept for
+        decoder (nn.Module): VAE decoder  x^ = decoder(z). Kept for
             dream rollouts; not trained here.
         mdn_rnn (MDNRNN): Memory model to train.
-        controller (Controller): Controller (C).  Stored for reference /
+        controller (Controller): Controller (C). Stored for reference /
             dream rollouts; weights are not updated by this module.
         learning_rate (float): Learning rate for the MDN-RNN optimiser.
     """
@@ -62,27 +63,6 @@ class WorldModels(L.LightningModule):
 
         self.learning_rate = learning_rate
 
-    # ------------------------------------------------------------------ #
-    #  TODO: Stage 1 — train VAE separately (AEModule / VAEModule)        #
-    #    Load the trained checkpoint and pass encoder/decoder here.       #
-    # ------------------------------------------------------------------ #
-
-    # ------------------------------------------------------------------ #
-    #  TODO: Stage 2 — training_step / validation_step                    #
-    #    1. Encode a sequence of frames with self.encoder (no grad).      #
-    #    2. Run self.mdn_rnn on (z_t, a_t) pairs.                         #
-    #    3. Compute MDN-NLL loss against z_{t+1} targets.                 #
-    # ------------------------------------------------------------------ #
-
-    # ------------------------------------------------------------------ #
-    #  TODO: Stage 3 — dream rollout (for Controller optimisation)        #
-    #    1. Sample z_0 from the prior.                                    #
-    #    2. Loop: a_t = controller(z_t, h_t)                              #
-    #             z_{t+1} ~ mdn_rnn(z_t, a_t, h_t)                       #
-    #    3. Decode z_t with self.decoder to get dream frames.             #
-    # ------------------------------------------------------------------ #
-
     def configure_optimizers(self):
-        return __import__("torch").optim.Adam(
-            self.mdn_rnn.parameters(), lr=self.learning_rate
-        )
+        return Adam(self.mdn_rnn.parameters(), lr=self.learning_rate)
+
