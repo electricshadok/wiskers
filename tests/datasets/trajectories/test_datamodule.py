@@ -1,9 +1,9 @@
 import numpy as np
 import torch
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 
 

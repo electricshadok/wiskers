@@ -3,9 +3,9 @@ import pytest
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import (
     RecencyWeightedSampler,
     UniformChunkSampler,

@@ -7,8 +7,8 @@ from typing import Any
 import gymnasium as gym
 import numpy as np
 
+from wiskers.datasets.trajectories.buffer import Buffer
 from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 class Collector:
@@ -96,14 +96,14 @@ class Collector:
 
     def collect(
         self,
-        replay_buffer: ReplayBuffer,
+        buffer: Buffer,
     ) -> int:
         """
-        Collect ``self.num_episodes`` valid episodes into ``replay_buffer``.
+        Collect ``self.num_episodes`` valid episodes into ``buffer``.
         Episodes shorter than ``self.min_steps`` are discarded and re-collected.
 
         Args:
-            replay_buffer: Target buffer to store episodes.
+            buffer: Target Buffer (ReplayBuffer, RolloutBuffer) to store episodes.
 
         Returns:
             Total environment steps collected across all accepted episodes.
@@ -116,7 +116,7 @@ class Collector:
             if len(episode) < self.min_steps:
                 continue
 
-            replay_buffer.add(episode)
+            buffer.add(episode)
             collected += 1
             total_steps += len(episode)
 
@@ -125,7 +125,7 @@ class Collector:
                     f"[Collector] episode {collected}/{self.num_episodes} | "
                     f"T={len(episode)} steps | "
                     f"reward={episode.rewards.sum():.1f} | "
-                    f"buffer={replay_buffer}"
+                    f"buffer={buffer}"
                 )
 
         return total_steps

@@ -24,9 +24,9 @@ from typing import Any, Optional
 import lightning as L
 from torch.utils.data import DataLoader
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.dataset import TrajectoryDataset
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 

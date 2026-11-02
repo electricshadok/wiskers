@@ -22,8 +22,8 @@ import numpy as np
 import torch
 from torch.utils.data import IterableDataset
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
 
 

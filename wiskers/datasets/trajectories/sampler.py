@@ -14,8 +14,8 @@ import random
 from abc import ABC, abstractmethod
 from typing import List
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 class TrajectorySampler(ABC):

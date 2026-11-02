@@ -1,9 +1,9 @@
 import pytest
 import torch
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
 from wiskers.envs.breakout import (
     BreakoutHeuristicPolicy,

@@ -3,8 +3,8 @@ import numpy as np
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
+from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
-from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 
 
 class DummyDiscreteEnv(gym.Env):
