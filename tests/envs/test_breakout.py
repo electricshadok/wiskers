@@ -1,16 +1,16 @@
 import pytest
 import torch
 
-from wiskers.datasets.gym.breakout_collector import make_breakout_env
-from wiskers.datasets.gym.breakout_policies import (
-    BreakoutHeuristicPolicy,
-    BreakoutPolicy,
-    BreakoutRandomPolicy,
-)
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
+from wiskers.envs.breakout import (
+    BreakoutHeuristicPolicy,
+    BreakoutPolicy,
+    BreakoutRandomPolicy,
+    make_breakout_env,
+)
 
 
 def test_breakout_datamodule_init():

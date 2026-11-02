@@ -83,9 +83,15 @@ def test_datamodule_with_explicit_sampler():
     buffer = ReplayBuffer(capacity_episodes=5)
     buffer.add(_make_episode(T=20))
 
+    class DummyCollector:
+        min_steps = 8
+        max_steps = 50
+        policy = None
+
     dm = TrajectoryDataModule(
         replay_buffer=buffer,
         sampler=sampler,
+        collector=DummyCollector(),
         batch_size=2,
     )
     assert dm.num_steps == 8

@@ -2,16 +2,16 @@ import numpy as np
 import pytest
 import torch
 
-from wiskers.datasets.gym.car_racing_collector import make_car_racing_env
-from wiskers.datasets.gym.car_racing_policies import (
-    CarRacingHeuristicPolicy,
-    CarRacingPolicy,
-    CarRacingRandomPolicy,
-)
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.replay_buffer import ReplayBuffer
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
+from wiskers.envs.car_racing import (
+    CarRacingHeuristicPolicy,
+    CarRacingPolicy,
+    CarRacingRandomPolicy,
+    make_car_racing_env,
+)
 
 
 def test_car_racing_datamodule_init():

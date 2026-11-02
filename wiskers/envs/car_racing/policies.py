@@ -53,3 +53,4 @@ class CarRacingHeuristicPolicy(CarRacingPolicy):
         gas = float(np.random.uniform(0.4, 0.8))
         brake = float(np.random.uniform(0.0, 0.05))
         return np.array([self.steering, gas, brake], dtype=np.float32)
+

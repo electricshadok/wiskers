@@ -34,14 +34,14 @@ class TrajectoryDataModule(L.LightningDataModule):
     """
     LightningDataModule that serves trajectory chunks from a ReplayBuffer.
 
-    Optionally accepts a Collector to seed the ReplayBuffer during `setup()`
-    if the buffer is empty, and allows online rollout callbacks to push new
-    episodes dynamically during training.
+    Accepts a Collector to seed the ReplayBuffer during `setup()` if the buffer
+    is empty, and allows online rollout callbacks to push new episodes dynamically
+    during training.
 
     Args:
-        replay_buffer (ReplayBuffer): Shared buffer populated externally or via collector.
+        replay_buffer (ReplayBuffer): Buffer to store collected episodes.
         sampler (TrajectorySampler): Sampling strategy to draw chunks.
-        collector (Optional[Collector]): Collector to seed the buffer during setup().
+        collector (Collector): Collector to seed the buffer during setup().
         batch_size (int): Number of chunks per training batch (default: 32).
         num_workers (int): DataLoader workers (default: 0).
     """
@@ -50,23 +50,22 @@ class TrajectoryDataModule(L.LightningDataModule):
         self,
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
-        collector: Optional[Collector] = None,
+        collector: Collector,
         batch_size: int = 32,
         num_workers: int = 0,
     ) -> None:
         super().__init__()
-        if collector is not None:
-            if sampler.num_steps > collector.max_steps:
-                raise ValueError(
-                    f"sampler.num_steps ({sampler.num_steps}) cannot be greater than "
-                    f"collector.max_steps ({collector.max_steps})."
-                )
-            if collector.min_steps < sampler.num_steps:
-                raise ValueError(
-                    f"collector.min_steps ({collector.min_steps}) cannot be less than "
-                    f"sampler.num_steps ({sampler.num_steps}). Episodes shorter than "
-                    f"sampler.num_steps cannot be sampled."
-                )
+        if sampler.num_steps > collector.max_steps:
+            raise ValueError(
+                f"sampler.num_steps ({sampler.num_steps}) cannot be greater than "
+                f"collector.max_steps ({collector.max_steps})."
+            )
+        if collector.min_steps < sampler.num_steps:
+            raise ValueError(
+                f"collector.min_steps ({collector.min_steps}) cannot be less than "
+                f"sampler.num_steps ({sampler.num_steps}). Episodes shorter than "
+                f"sampler.num_steps cannot be sampled."
+            )
 
         self.replay_buffer = replay_buffer
         self.sampler = sampler
@@ -83,10 +82,10 @@ class TrajectoryDataModule(L.LightningDataModule):
 
     @property
     def policy(self) -> Any:
-        return self.collector.policy if self.collector is not None else None
+        return self.collector.policy
 
     def setup(self, stage: Optional[str] = None) -> None:
-        if self.collector is not None and self.replay_buffer.is_empty:
+        if self.replay_buffer.is_empty:
             self.collector.collect(self.replay_buffer)
 
         self._dataset = TrajectoryDataset(

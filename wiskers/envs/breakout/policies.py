@@ -77,3 +77,4 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
                 return random.choice([0, 2, 3])
         except Exception:
             return int(env.action_space.sample()) if env is not None else 0
+

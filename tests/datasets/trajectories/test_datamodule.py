@@ -31,10 +31,16 @@ def test_datamodule_train_dataloader():
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     replay_buffer.add(_make_episode(T=30))
 
+    class DummyCollector:
+        min_steps = 10
+        max_steps = 50
+        policy = None
+
     sampler = UniformChunkSampler(num_steps=NUM_STEPS)
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
+        collector=DummyCollector(),
         batch_size=BATCH_SIZE,
     )
     dm.setup()
