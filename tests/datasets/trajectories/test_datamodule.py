@@ -39,7 +39,7 @@ def test_datamodule_train_dataloader():
         policy = None
 
     sampler = UniformChunkSampler(num_steps=NUM_STEPS)
-    transform = EpisodeToTensor(image_size=(3, 8, 8))
+    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
@@ -75,21 +75,42 @@ def test_datamodule_train_dataloader():
 def test_episode_to_tensor_resize_and_grayscale():
     ep = _make_episode(T=6, H=16, W=16, C=3)
 
-    rgb_transform = EpisodeToTensor(image_size=(3, 32, 32))
+    rgb_transform = EpisodeToTensor(image_size=(3, 32, 32), obs_range=(0.0, 1.0))
     out_rgb = rgb_transform(ep)
     assert out_rgb["obs"].shape == (6, 3, 32, 32)
     assert out_rgb["obs"].dtype == torch.float32
+    assert out_rgb["obs"].min() >= 0.0
+    assert out_rgb["obs"].max() <= 1.0
 
-    gray_transform = EpisodeToTensor(image_size=(1, 12, 12))
+    gray_transform = EpisodeToTensor(image_size=(1, 12, 12), obs_range=(0.0, 1.0))
     out_gray = gray_transform(ep)
     assert out_gray["obs"].shape == (6, 1, 12, 12)
     assert out_gray["obs"].dtype == torch.float32
 
+    # Test obs_range=(-1.0, 1.0)
+    ep_extremes = Episode(
+        obs=np.array([[[[0, 128, 255]]]], dtype=np.uint8),
+        actions=np.zeros((1, 4), dtype=np.float32),
+        rewards=np.zeros((1,), dtype=np.float32),
+        dones=np.zeros((1,), dtype=bool),
+    )
+    sym_transform = EpisodeToTensor(image_size=(3, 1, 1), obs_range=(-1.0, 1.0))
+    out_sym = sym_transform(ep_extremes)
+    assert torch.isclose(out_sym["obs"][0, 0, 0, 0], torch.tensor(-1.0))
+    assert torch.isclose(out_sym["obs"][0, 2, 0, 0], torch.tensor(1.0))
+    assert -1.0 <= out_sym["obs"].min() and out_sym["obs"].max() <= 1.0
+
     with pytest.raises(ValueError, match="3-element sequence"):
-        EpisodeToTensor(image_size=(64, 64))
+        EpisodeToTensor(image_size=(64, 64), obs_range=(0.0, 1.0))
 
     with pytest.raises(ValueError, match="channel count C must be 1 or 3"):
-        EpisodeToTensor(image_size=(2, 64, 64))
+        EpisodeToTensor(image_size=(2, 64, 64), obs_range=(0.0, 1.0))
+
+    with pytest.raises(ValueError, match="2-element sequence"):
+        EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 0.5, 1.0))
+
+    with pytest.raises(ValueError, match="low < high"):
+        EpisodeToTensor(image_size=(3, 64, 64), obs_range=(1.0, -1.0))
 
 
 def test_datamodule_with_collector(monkeypatch):
@@ -107,7 +128,7 @@ def test_datamodule_with_collector(monkeypatch):
     collector = DummyCollector()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=10)
-    transform = EpisodeToTensor(image_size=(3, 8, 8))
+    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
@@ -130,7 +151,7 @@ def test_datamodule_collector_validation():
 
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=20)
-    transform = EpisodeToTensor(image_size=(3, 8, 8))
+    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))
 
     # num_steps > max_steps
     with pytest.raises(ValueError, match="sampler.num_steps .* cannot be greater than collector.max_steps"):

@@ -9,7 +9,7 @@ Usage:
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler = UniformChunkSampler(num_steps=50)
-    transform = EpisodeToTensor(image_size=(3, 64, 64))
+    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     # ... populate replay_buffer with seed episodes ...
 
     dm = TrajectoryDataModule(

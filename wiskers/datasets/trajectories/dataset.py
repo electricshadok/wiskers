@@ -10,7 +10,7 @@ and control training duration via Trainer `max_steps` or `limit_train_batches`.
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler       = UniformChunkSampler(num_steps=50)
-    transform     = EpisodeToTensor(image_size=(3, 64, 64))
+    transform     = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     dataset       = TrajectoryDataset(replay_buffer=replay_buffer, sampler=sampler, transform=transform)
     loader        = DataLoader(dataset, batch_size=32, num_workers=0)
 

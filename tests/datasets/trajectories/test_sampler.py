@@ -93,7 +93,7 @@ def test_datamodule_with_explicit_sampler():
         replay_buffer=buffer,
         sampler=sampler,
         collector=DummyCollector(),
-        transform=EpisodeToTensor(image_size=(3, 8, 8)),
+        transform=EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0)),
         batch_size=2,
     )
     assert dm.num_steps == 8

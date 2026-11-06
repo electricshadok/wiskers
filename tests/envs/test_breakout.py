@@ -24,7 +24,7 @@ def test_breakout_datamodule_init():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
-        transform=EpisodeToTensor(image_size=(3, 64, 64)),
+        transform=EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0)),
         batch_size=4,
     )
     assert dm.replay_buffer.capacity_episodes == 100
@@ -38,7 +38,7 @@ def test_breakout_datamodule_validation():
     policy = BreakoutHeuristicPolicy()
     env = make_breakout_env()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
-    transform = EpisodeToTensor(image_size=(3, 64, 64))
+    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
     # sampler.num_steps > collector.max_steps raises ValueError
     with pytest.raises(ValueError, match="sampler.num_steps .* cannot be greater than collector.max_steps"):
@@ -78,7 +78,7 @@ def test_breakout_datamodule_setup_and_dataloader():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
-        transform=EpisodeToTensor(image_size=(3, 64, 64)),
+        transform=EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0)),
         batch_size=2,
     )
     dm.setup()
@@ -112,7 +112,7 @@ def test_breakout_datamodule_custom_policy():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
-        transform=EpisodeToTensor(image_size=(3, 64, 64)),
+        transform=EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0)),
         batch_size=2,
     )
     dm.setup()
@@ -137,7 +137,7 @@ def test_breakout_datamodule_with_sampler():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
-        transform=EpisodeToTensor(image_size=(3, 64, 64)),
+        transform=EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0)),
         batch_size=2,
     )
     assert dm.num_steps == 5
