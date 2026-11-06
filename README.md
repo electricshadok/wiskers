@@ -69,7 +69,10 @@ python wiskers/cli/inspect_dataset.py --config configs/datasets/breakout.yaml
 python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
 
 # Franka Kitchen robotics manipulator trajectory dataloader
-python wiskers/cli/inspect_dataset.py --config configs/datasets/franka.yaml
+python wiskers/cli/inspect_dataset.py --config configs/datasets/franka_kitchen.yaml
+
+# Adroit Hand dexterous manipulation trajectory dataloader
+python wiskers/cli/inspect_dataset.py --config configs/datasets/adroit_hand.yaml
 ```
 
 ## Streamlit WebUI

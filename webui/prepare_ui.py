@@ -3,7 +3,7 @@ Pre-collect short rollout trajectories on the main thread for the Streamlit WebU
 
 Usage:
     python webui/prepare_ui.py
-    python webui/prepare_ui.py --config configs/datasets/franka.yaml --force
+    python webui/prepare_ui.py --config configs/datasets/franka_kitchen.yaml --force
 """
 
 import argparse

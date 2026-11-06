@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
@@ -9,6 +10,16 @@ from wiskers.envs.franka import (
     FrankaKitchenRandomPolicy,
     make_franka_kitchen_env,
 )
+
+
+@pytest.fixture(autouse=True)
+def mock_mujoco_renderer(monkeypatch):
+    """Bypass OpenGL/GLFW window creation during unit tests while keeping real MuJoCo physics."""
+    monkeypatch.setattr(
+        MujocoRenderer,
+        "render",
+        lambda self, *args, **kwargs: np.zeros((self.height, self.width, 3), dtype=np.uint8),
+    )
 
 
 @pytest.fixture

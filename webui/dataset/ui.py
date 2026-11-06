@@ -20,9 +20,11 @@ def format_config_name(path: str) -> str:
     """Format config file paths into descriptive display labels."""
     stem = Path(path).stem.lower()
     display_names = {
+        "adroit_hand": "Adroit Hand",
         "breakout": "ALE/Breakout-v5",
         "carracing": "CarRacing-v3",
         "franka": "Franka Kitchen",
+        "franka_kitchen": "Franka Kitchen",
     }
     label = display_names.get(stem, stem.replace("_", " ").title())
     return f"{label} ({Path(path).name})"

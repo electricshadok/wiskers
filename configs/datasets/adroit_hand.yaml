@@ -1,0 +1,35 @@
+seed: 0
+
+data_module:
+  _target_: wiskers.datasets.trajectories.datamodule.TrajectoryDataModule
+
+  # Replay buffer that stores complete episode trajectories in memory
+  replay_buffer:
+    _target_: wiskers.datasets.trajectories.buffer.ReplayBuffer
+    capacity_episodes: 500  # Maximum number of complete episodes to keep in memory
+
+  # Sampler that extracts sequence chunks from episodes for training batches
+  sampler:
+    _target_: wiskers.datasets.trajectories.sampler.UniformChunkSampler
+    num_steps: 50  # Number of consecutive steps per sampled chunk
+
+  # Rollout data collection settings
+  collector:
+    _target_: wiskers.datasets.trajectories.collector.Collector
+    env:
+      _target_: wiskers.envs.adroit_hand.make_adroit_hand_env
+      task: door
+      image_size: [64, 64]
+    policy:
+      _target_: wiskers.envs.adroit_hand.AdroitHandHeuristicPolicy
+      momentum: 0.85
+      noise_scale: 0.25
+    num_episodes: 20
+    min_steps: 50
+    max_steps: 250
+    seed: ${seed}
+    verbose: true
+
+  # DataLoader batch size
+  batch_size: 16
+

@@ -129,6 +129,49 @@ class FrankaKitchenUIAdapter(DataModuleUIAdapter):
         }
 
 
+class AdroitHandUIAdapter(DataModuleUIAdapter):
+    """UI adapter for AdroitHand-v1 (continuous 24..30-DoF dexterous hand action space)."""
+
+    def describe_step(self, action: torch.Tensor, reward: float, done: bool) -> Dict[str, StepInfo]:
+        a = action.cpu().numpy().flatten()
+        wrist_norm = float(np.linalg.norm(a[:4])) if len(a) >= 4 else 0.0
+        finger_norm = float(np.linalg.norm(a[4:])) if len(a) > 4 else 0.0
+        grip_mean = float(a[4:].mean()) if len(a) > 4 else (float(a.mean()) if len(a) > 0 else 0.0)
+
+        return {
+            "Wrist / Arm (L2)": StepInfo(
+                value=f"{wrist_norm:.3f}",
+                bar=min(1.0, float(wrist_norm / 2.0)),
+                status=None,
+                note="Base & wrist joints norm",
+            ),
+            "Finger Joints (L2)": StepInfo(
+                value=f"{finger_norm:.3f}",
+                bar=min(1.0, float(finger_norm / 5.0)),
+                status=None,
+                note="Dexterous finger actuation norm",
+            ),
+            "Mean Grip": StepInfo(
+                value=f"{grip_mean:+.3f}",
+                bar=float((grip_mean + 1.0) / 2.0),
+                status=None,
+                note="Extend (-1) / Flex (+1)",
+            ),
+            "Reward": StepInfo(
+                value=f"{reward:.3f}",
+                bar=None,
+                status="success" if reward > 0 else "info",
+                note="✅ Positive task reward" if reward > 0 else " shaping / distance penalty",
+            ),
+            "Done": StepInfo(
+                value=str(done),
+                bar=None,
+                status="error" if done else "success",
+                note="🚨 Episode terminated" if done else "🟢 Episode active",
+            ),
+        }
+
+
 class DefaultUIAdapter(DataModuleUIAdapter):
     """Fallback adapter for DataModules without a registered adapter."""
 
@@ -163,5 +206,7 @@ def get_adapter(data_module: Any) -> DataModuleUIAdapter:
         return BreakoutUIAdapter()
     if "franka" in env_str or "kitchen" in env_str or "franka" in cls_name:
         return FrankaKitchenUIAdapter()
+    if "adroit" in env_str or "hand" in env_str or "adroit" in cls_name:
+        return AdroitHandUIAdapter()
 
     return DefaultUIAdapter()
