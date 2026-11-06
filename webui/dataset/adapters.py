@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+import numpy as np
 import torch
 
 
@@ -92,6 +93,42 @@ class BreakoutUIAdapter(DataModuleUIAdapter):
         }
 
 
+class FrankaKitchenUIAdapter(DataModuleUIAdapter):
+    """UI adapter for FrankaKitchen-v1 (continuous 9-DoF action space)."""
+
+    def describe_step(self, action: torch.Tensor, reward: float, done: bool) -> Dict[str, StepInfo]:
+        a = action.cpu().numpy().flatten()
+        arm_norm = float(np.linalg.norm(a[:7])) if len(a) >= 7 else 0.0
+        gripper_val = float(a[7:].mean()) if len(a) >= 9 else (float(a[-1]) if len(a) > 0 else 0.0)
+
+        return {
+            "Arm Velocity (L2)": StepInfo(
+                value=f"{arm_norm:.3f}",
+                bar=min(1.0, float(arm_norm / 2.65)),
+                status=None,
+                note="Joints 1-7 velocity norm",
+            ),
+            "Gripper Action": StepInfo(
+                value=f"{gripper_val:+.3f}",
+                bar=float((gripper_val + 1.0) / 2.0),
+                status=None,
+                note="Close (-1) / Open (+1)",
+            ),
+            "Reward": StepInfo(
+                value=f"{reward:.3f}",
+                bar=None,
+                status="success" if reward > 0 else "info",
+                note="✅ Subtask completed!" if reward > 0 else "Task in progress",
+            ),
+            "Done": StepInfo(
+                value=str(done),
+                bar=None,
+                status="error" if done else "success",
+                note="🚨 Episode terminated" if done else "🟢 Episode active",
+            ),
+        }
+
+
 class DefaultUIAdapter(DataModuleUIAdapter):
     """Fallback adapter for DataModules without a registered adapter."""
 
@@ -124,5 +161,7 @@ def get_adapter(data_module: Any) -> DataModuleUIAdapter:
         return CarRacingUIAdapter()
     if "breakout" in env_str or "breakout" in cls_name:
         return BreakoutUIAdapter()
+    if "franka" in env_str or "kitchen" in env_str or "franka" in cls_name:
+        return FrankaKitchenUIAdapter()
 
     return DefaultUIAdapter()

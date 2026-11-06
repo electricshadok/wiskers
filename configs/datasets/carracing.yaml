@@ -19,6 +19,7 @@ data_module:
     env:
       _target_: wiskers.envs.car_racing.make_car_racing_env
       image_size: [64, 64]
+      show_indicators: false
     policy:
       _target_: wiskers.envs.car_racing.CarRacingHeuristicPolicy
     num_episodes: 20

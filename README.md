@@ -67,6 +67,9 @@ python wiskers/cli/inspect_dataset.py --config configs/datasets/breakout.yaml
 
 # CarRacing-v3 trajectory dataloader
 python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
+
+# Franka Kitchen robotics manipulator trajectory dataloader
+python wiskers/cli/inspect_dataset.py --config configs/datasets/franka.yaml
 ```
 
 ## Streamlit WebUI
@@ -74,7 +77,7 @@ python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
 Streamlit provides an interactive WebUI to explore rollout trajectories, transitions, and models:
 
 ```bash
-streamlit run webui/main.py
+./streamlit.sh
 ```
 
 <details>

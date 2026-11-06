@@ -29,3 +29,5 @@ dependencies:
       - google-auth-oauthlib
       - gymnasium[box2d]
       - ale-py
+      - gymnasium-robotics>=1.4.2
+      - mujoco>=3.1.0

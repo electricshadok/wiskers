@@ -27,12 +27,14 @@ def dataset_ui(data_module: Any):
     st.markdown("#### 📂 Rollout Explorer")
 
     # Buffer Overview Metrics
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity_episodes}")
     m2.metric("Total Steps", f"{replay_buffer.num_steps:,}")
     m3.metric("Chunk Length", f"{data_module.num_steps}")
     avg_len = sum(len(e) for e in episodes) / len(episodes)
     m4.metric("Avg Episode Length", f"{avg_len:.1f}")
+    obs_shape = tuple(episodes[0].obs.shape[1:])
+    m5.metric("Obs Shape", f"{obs_shape}")
 
     st.markdown("---")
     col_ep, col_step = st.columns([1, 2])
@@ -66,13 +68,13 @@ def dataset_ui(data_module: Any):
     obs_next = episode.obs[step_idx + 1] if step_idx + 1 < T else episode.obs[step_idx]
 
     with col1:
-        st.markdown(f"**Current Observation (`obs[{step_idx}]`)**")
-        st.image(obs_curr, use_container_width=True)
+        st.markdown(f"**Current Observation (`obs[{step_idx}]`, shape `{obs_curr.shape}`)**")
+        st.image(obs_curr, width="stretch")
 
     with col2:
         next_label = f"obs[{step_idx + 1}]" if step_idx + 1 < T else f"obs[{step_idx}] (terminal)"
-        st.markdown(f"**Next Observation (`{next_label}`)**")
-        st.image(obs_next, use_container_width=True)
+        st.markdown(f"**Next Observation (`{next_label}`, shape `{obs_next.shape}`)**")
+        st.image(obs_next, width="stretch")
 
     # ── Action & Status ──────────────────────────────────────────────────
     st.markdown("#### 🕹️ Control Action & Status")
