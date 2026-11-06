@@ -1,4 +1,3 @@
-from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 import numpy as np
 import pytest
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer

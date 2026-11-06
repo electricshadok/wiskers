@@ -5,6 +5,7 @@ from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 from wiskers.datasets.trajectories.sampler import UniformChunkSampler
+from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 from wiskers.envs.breakout import (
     BreakoutHeuristicPolicy,
     BreakoutPolicy,
@@ -23,6 +24,7 @@ def test_breakout_datamodule_init():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
+        transform=EpisodeToTensor(image_size=(3, 64, 64)),
         batch_size=4,
     )
     assert dm.replay_buffer.capacity_episodes == 100
@@ -36,6 +38,7 @@ def test_breakout_datamodule_validation():
     policy = BreakoutHeuristicPolicy()
     env = make_breakout_env()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
+    transform = EpisodeToTensor(image_size=(3, 64, 64))
 
     # sampler.num_steps > collector.max_steps raises ValueError
     with pytest.raises(ValueError, match="sampler.num_steps .* cannot be greater than collector.max_steps"):
@@ -43,6 +46,7 @@ def test_breakout_datamodule_validation():
             replay_buffer=replay_buffer,
             sampler=UniformChunkSampler(num_steps=50),
             collector=Collector(env=env, policy=policy, num_episodes=1, min_steps=40, max_steps=40),
+            transform=transform,
         )
 
     # collector.min_steps < sampler.num_steps raises ValueError (no silent mutations)
@@ -51,6 +55,7 @@ def test_breakout_datamodule_validation():
             replay_buffer=replay_buffer,
             sampler=UniformChunkSampler(num_steps=50),
             collector=Collector(env=env, policy=policy, num_episodes=1, min_steps=20, max_steps=100),
+            transform=transform,
         )
 
     # default min_steps=0 when sampler.num_steps=50 also raises ValueError
@@ -59,6 +64,7 @@ def test_breakout_datamodule_validation():
             replay_buffer=replay_buffer,
             sampler=UniformChunkSampler(num_steps=50),
             collector=Collector(env=env, policy=policy, num_episodes=1, max_steps=100),
+            transform=transform,
         )
 
 
@@ -72,6 +78,7 @@ def test_breakout_datamodule_setup_and_dataloader():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
+        transform=EpisodeToTensor(image_size=(3, 64, 64)),
         batch_size=2,
     )
     dm.setup()
@@ -105,6 +112,7 @@ def test_breakout_datamodule_custom_policy():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
+        transform=EpisodeToTensor(image_size=(3, 64, 64)),
         batch_size=2,
     )
     dm.setup()
@@ -129,6 +137,7 @@ def test_breakout_datamodule_with_sampler():
         replay_buffer=replay_buffer,
         sampler=sampler,
         collector=collector,
+        transform=EpisodeToTensor(image_size=(3, 64, 64)),
         batch_size=2,
     )
     assert dm.num_steps == 5

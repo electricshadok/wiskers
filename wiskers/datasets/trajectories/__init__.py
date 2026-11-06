@@ -8,6 +8,7 @@ from wiskers.datasets.trajectories.sampler import (
     TrajectorySampler,
     UniformChunkSampler,
 )
+from wiskers.datasets.trajectories.transforms import EpisodeToTensor, EpisodeTransform
 
 
 __all__ = [
@@ -18,6 +19,8 @@ __all__ = [
     "TrajectorySampler",
     "UniformChunkSampler",
     "RecencyWeightedSampler",
+    "EpisodeTransform",
+    "EpisodeToTensor",
     "TrajectoryDataset",
     "Collector",
     "TrajectoryDataModule",

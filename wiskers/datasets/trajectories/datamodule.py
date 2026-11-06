@@ -9,9 +9,16 @@ Usage:
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler = UniformChunkSampler(num_steps=50)
+    transform = EpisodeToTensor(image_size=(3, 64, 64))
     # ... populate replay_buffer with seed episodes ...
 
-    dm = TrajectoryDataModule(replay_buffer=replay_buffer, sampler=sampler, batch_size=32)
+    dm = TrajectoryDataModule(
+        replay_buffer=replay_buffer,
+        sampler=sampler,
+        collector=collector,
+        transform=transform,
+        batch_size=32,
+    )
     trainer = Trainer(...)
     trainer.fit(model, datamodule=dm)
 
@@ -28,6 +35,7 @@ from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.dataset import TrajectoryDataset
 from wiskers.datasets.trajectories.sampler import TrajectorySampler
+from wiskers.datasets.trajectories.transforms import EpisodeTransform
 
 
 class TrajectoryDataModule(L.LightningDataModule):
@@ -42,6 +50,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         replay_buffer (ReplayBuffer): Buffer to store collected episodes.
         sampler (TrajectorySampler): Sampling strategy to draw chunks.
         collector (Collector): Collector to seed the buffer during setup().
+        transform (EpisodeTransform): Transform converting sampled Episode chunks into tensors.
         batch_size (int): Number of chunks per training batch (default: 32).
         num_workers (int): DataLoader workers (default: 0).
     """
@@ -51,6 +60,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
         collector: Collector,
+        transform: EpisodeTransform,
         batch_size: int = 32,
         num_workers: int = 0,
     ) -> None:
@@ -70,6 +80,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         self.replay_buffer = replay_buffer
         self.sampler = sampler
         self.collector = collector
+        self.transform = transform
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -91,6 +102,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         self._dataset = TrajectoryDataset(
             replay_buffer=self.replay_buffer,
             sampler=self.sampler,
+            transform=self.transform,
         )
 
     def train_dataloader(self) -> DataLoader:

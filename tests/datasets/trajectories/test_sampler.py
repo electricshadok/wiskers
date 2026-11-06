@@ -10,6 +10,7 @@ from wiskers.datasets.trajectories.sampler import (
     RecencyWeightedSampler,
     UniformChunkSampler,
 )
+from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
@@ -92,6 +93,7 @@ def test_datamodule_with_explicit_sampler():
         replay_buffer=buffer,
         sampler=sampler,
         collector=DummyCollector(),
+        transform=EpisodeToTensor(image_size=(3, 8, 8)),
         batch_size=2,
     )
     assert dm.num_steps == 8
