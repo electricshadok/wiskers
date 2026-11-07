@@ -75,15 +75,15 @@ class EpisodeToTensor(EpisodeTransform):
         Convert one Episode chunk into a dictionary of float32 PyTorch tensors.
 
         Args:
-            episode (Episode): Trajectory chunk of length ``T`` containing:
-                - ``obs``: ``np.ndarray`` of shape ``(T, H_in, W_in, C_in)``, dtype ``uint8``
+            episode (Episode): Trajectory chunk of ``T`` transitions containing:
+                - ``obs``: ``np.ndarray`` of shape ``(T + 1, H_in, W_in, C_in)``, dtype ``uint8``
                 - ``actions``: ``np.ndarray`` of shape ``(T, action_dim)``, dtype ``float32``
                 - ``rewards``: ``np.ndarray`` of shape ``(T,)``, dtype ``float32``
                 - ``dones``: ``np.ndarray`` of shape ``(T,)``, dtype ``bool``
 
         Returns:
-            dict[str, torch.Tensor]: Dictionary of tensors (collated by DataLoader into ``(B, T, ...)``):
-                - ``"obs"``: ``torch.Tensor`` of shape ``(T, C, H, W)``, dtype ``torch.float32`` in ``obs_range``
+            dict[str, torch.Tensor]: Dictionary of tensors (collated by DataLoader into ``(B, ...)``):
+                - ``"obs"``: ``torch.Tensor`` of shape ``(T + 1, C, H, W)``, dtype ``torch.float32`` in ``obs_range``
                 - ``"actions"``: ``torch.Tensor`` of shape ``(T, action_dim)``, dtype ``torch.float32``
                 - ``"rewards"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32``
                 - ``"dones"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)

@@ -12,7 +12,7 @@ from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
     """Build a dummy episode filled with random data."""
     return Episode(
-        obs=np.random.randint(0, 256, (T, H, W, C), dtype=np.uint8),
+        obs=np.random.randint(0, 256, (T + 1, H, W, C), dtype=np.uint8),
         actions=np.random.randn(T, action_dim).astype(np.float32),
         rewards=np.random.randn(T).astype(np.float32),
         dones=np.zeros(T, dtype=bool),
@@ -55,8 +55,8 @@ def test_datamodule_train_dataloader():
     # Keys
     assert set(batch.keys()) == {"obs", "actions", "rewards", "dones"}
 
-    # Shapes: (B, T, C, H, W)
-    assert batch["obs"].shape == (BATCH_SIZE, NUM_STEPS, 3, 8, 8)
+    # Shapes: obs is (B, T + 1, C, H, W), others are (B, T, ...)
+    assert batch["obs"].shape == (BATCH_SIZE, NUM_STEPS + 1, 3, 8, 8)
     assert batch["actions"].shape == (BATCH_SIZE, NUM_STEPS, 4)
     assert batch["rewards"].shape == (BATCH_SIZE, NUM_STEPS)
     assert batch["dones"].shape == (BATCH_SIZE, NUM_STEPS)
@@ -77,19 +77,19 @@ def test_episode_to_tensor_resize_and_grayscale():
 
     rgb_transform = EpisodeToTensor(image_size=(3, 32, 32), obs_range=(0.0, 1.0))
     out_rgb = rgb_transform(ep)
-    assert out_rgb["obs"].shape == (6, 3, 32, 32)
+    assert out_rgb["obs"].shape == (7, 3, 32, 32)
     assert out_rgb["obs"].dtype == torch.float32
     assert out_rgb["obs"].min() >= 0.0
     assert out_rgb["obs"].max() <= 1.0
 
     gray_transform = EpisodeToTensor(image_size=(1, 12, 12), obs_range=(0.0, 1.0))
     out_gray = gray_transform(ep)
-    assert out_gray["obs"].shape == (6, 1, 12, 12)
+    assert out_gray["obs"].shape == (7, 1, 12, 12)
     assert out_gray["obs"].dtype == torch.float32
 
     # Test obs_range=(-1.0, 1.0)
     ep_extremes = Episode(
-        obs=np.array([[[[0, 128, 255]]]], dtype=np.uint8),
+        obs=np.array([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=np.uint8),
         actions=np.zeros((1, 4), dtype=np.float32),
         rewards=np.zeros((1,), dtype=np.float32),
         dones=np.zeros((1,), dtype=bool),

@@ -86,9 +86,8 @@ class Collector:
             rewards.append(float(reward))
             dones.append(done)
 
-        T = len(actions)
         return Episode(
-            obs=np.array(observations[:T], dtype=np.uint8),
+            obs=np.array(observations, dtype=np.uint8),
             actions=np.array(actions, dtype=np.float32),
             rewards=np.array(rewards, dtype=np.float32),
             dones=np.array(dones, dtype=bool),

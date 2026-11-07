@@ -16,7 +16,7 @@ from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
     """Build a dummy episode filled with deterministic or pseudo-random data."""
     return Episode(
-        obs=np.random.randint(0, 256, (T, H, W, C), dtype=np.uint8),
+        obs=np.random.randint(0, 256, (T + 1, H, W, C), dtype=np.uint8),
         actions=np.random.randn(T, action_dim).astype(np.float32),
         rewards=np.random.randn(T).astype(np.float32),
         dones=np.zeros(T, dtype=bool),
@@ -35,7 +35,7 @@ def test_uniform_chunk_sampler():
     assert len(chunks) == 4
     for chunk in chunks:
         assert len(chunk) == 10
-        assert chunk.obs.shape[0] == 10
+        assert chunk.obs.shape[0] == 11
         assert chunk.actions.shape[0] == 10
 
 
@@ -101,7 +101,7 @@ def test_datamodule_with_explicit_sampler():
     loader = dm.train_dataloader()
     batch = next(iter(loader))
 
-    assert batch["obs"].shape == (2, 8, 3, 8, 8)
+    assert batch["obs"].shape == (2, 9, 3, 8, 8)
     assert batch["actions"].shape == (2, 8, 4)
 
 

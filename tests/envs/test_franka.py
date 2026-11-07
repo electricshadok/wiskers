@@ -109,7 +109,7 @@ def test_franka_kitchen_collector_integration(franka_env):
     assert collected_steps == 10
     assert buffer.num_episodes == 1
     assert buffer.num_steps == 10
-    assert buffer[0].obs.shape == (10, 64, 64, 3)
+    assert buffer[0].obs.shape == (11, 64, 64, 3)
     assert buffer[0].obs.dtype == np.uint8
     assert buffer[0].actions.shape == (10, 9)
     assert buffer[0].actions.dtype == np.float32

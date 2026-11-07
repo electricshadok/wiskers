@@ -7,7 +7,7 @@ from wiskers.datasets.trajectories.episode import Episode
 
 def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: int = 2) -> Episode:
     return Episode(
-        obs=np.random.randint(0, 256, (T, H, W, C), dtype=np.uint8),
+        obs=np.random.randint(0, 256, (T + 1, H, W, C), dtype=np.uint8),
         actions=np.random.randn(T, action_dim).astype(np.float32),
         rewards=np.ones(T, dtype=np.float32),
         dones=np.zeros(T, dtype=bool),
@@ -81,6 +81,26 @@ def test_replay_buffer_empty_episode_ignored():
     )
     buf.add(empty_ep)
     assert buf.is_empty
+
+
+def test_episode_validation_and_slice():
+    with pytest.raises(ValueError, match="must have T \\+ 1 = 6 observations"):
+        Episode(
+            obs=np.zeros((5, 4, 4, 3), dtype=np.uint8),
+            actions=np.zeros((5, 2), dtype=np.float32),
+            rewards=np.zeros(5, dtype=np.float32),
+            dones=np.zeros(5, dtype=bool),
+        )
+
+    ep = _make_episode(T=10)
+    chunk = ep.slice(3, 8)
+    assert len(chunk) == 5
+    assert chunk.obs.shape == (6, 4, 4, 3)
+    assert chunk.actions.shape == (5, 2)
+    assert chunk.rewards.shape == (5,)
+    assert chunk.dones.shape == (5,)
+    assert np.array_equal(chunk.obs, ep.obs[3:9])
+    assert np.array_equal(chunk.actions, ep.actions[3:8])
 
 
 def test_replay_buffer_slicing_and_repr():

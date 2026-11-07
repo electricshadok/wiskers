@@ -63,7 +63,10 @@ def test_collector_collect_one_episode_no_args():
 
     assert len(episode) == 8
     assert episode.obs.dtype == np.uint8
-    assert episode.obs.shape == (8, 16, 16, 3)
+    assert episode.obs.shape == (9, 16, 16, 3)
+    # Initial observation o_0 is zeros, terminal observation o_8 is 8s
+    assert np.all(episode.obs[0] == 0)
+    assert np.all(episode.obs[8] == 8)
     assert episode.actions.shape == (8, 1)
     assert episode.actions.dtype == np.float32
 

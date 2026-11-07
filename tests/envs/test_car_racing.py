@@ -90,7 +90,7 @@ def test_car_racing_datamodule_setup_and_dataloader():
     batch = next(iter(loader))
 
     assert set(batch.keys()) == {"obs", "actions", "rewards", "dones"}
-    assert batch["obs"].shape == (2, 5, 3, 64, 64)
+    assert batch["obs"].shape == (2, 6, 3, 64, 64)
     assert batch["actions"].shape == (2, 5, 3)
     assert batch["rewards"].shape == (2, 5)
     assert batch["dones"].shape == (2, 5)
@@ -156,4 +156,4 @@ def test_car_racing_datamodule_native_resolution():
     dm.setup()
     loader = dm.train_dataloader()
     batch = next(iter(loader))
-    assert batch["obs"].shape == (2, 4, 3, 96, 96)
+    assert batch["obs"].shape == (2, 5, 3, 96, 96)

@@ -37,7 +37,7 @@ class TrajectorySampler(ABC):
             batch_size: Number of chunks to sample.
 
         Returns:
-            List of Episode chunks of length `num_steps`.
+            List of Episode chunks of `num_steps` transitions (with `num_steps + 1` observations).
         """
         pass
 
