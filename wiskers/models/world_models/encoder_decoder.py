@@ -137,3 +137,4 @@ class CNNDecoder(nn.Module):
 
     def forward(self, x):
         return self.up_blocks(x)
+
