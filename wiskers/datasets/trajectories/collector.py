@@ -7,6 +7,7 @@ from typing import Any
 import gymnasium as gym
 import numpy as np
 
+from wiskers.common.policy import BasePolicy
 from wiskers.datasets.trajectories.buffer import Buffer
 from wiskers.datasets.trajectories.episode import Episode
 
@@ -24,7 +25,7 @@ class Collector:
 
     Args:
         env (gym.Env): The Gymnasium environment instance.
-        policy (Any): Policy implementing ``__call__(obs, env, step)`` or ``__call__(obs)``.
+        policy (BasePolicy): Policy instance implementing ``BasePolicy``.
         num_episodes (int): Target number of valid episodes to collect.
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
         max_steps (int): Maximum step cutoff per episode (clamped).
@@ -35,7 +36,7 @@ class Collector:
     def __init__(
         self,
         env: gym.Env,
-        policy: Any,
+        policy: BasePolicy,
         num_episodes: int = 10,
         min_steps: int = 0,
         max_steps: int = 500,
@@ -58,8 +59,7 @@ class Collector:
         Returns:
             Episode containing collected transitions.
         """
-        if hasattr(self.policy, "reset") and callable(self.policy.reset):
-            self.policy.reset()
+        self.policy.reset()
 
         obs, _ = self.env.reset(seed=self.seed + self._episode_idx)
         self._episode_idx += 1
@@ -74,7 +74,7 @@ class Collector:
             if done:
                 break
 
-            action = self._call_policy(obs, step)
+            action = self.policy(obs, self.env, step)
             env_action, stored_action = self._format_action(action)
 
             next_obs, reward, terminated, truncated, _ = self.env.step(env_action)
@@ -131,12 +131,6 @@ class Collector:
 
     def close(self) -> None:
         self.env.close()
-
-    def _call_policy(self, obs: np.ndarray, step: int) -> Any:
-        try:
-            return self.policy(obs, self.env, step)
-        except TypeError:
-            return self.policy(obs)
 
     @staticmethod
     def _format_action(action: Any) -> tuple[Any, np.ndarray]:

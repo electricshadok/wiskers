@@ -3,8 +3,25 @@ import numpy as np
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
+from wiskers.common.policy import BasePolicy
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
+
+
+class DummyPolicy(BasePolicy):
+    action_dim = 1
+    action_type = "discrete"
+
+    def forward(self, obs, env=None, step=0):
+        return 0
+
+
+class DummyContinuousPolicy(BasePolicy):
+    action_dim = 2
+    action_type = "continuous"
+
+    def forward(self, obs, env=None, step=0):
+        return np.array([0.25, -0.75], dtype=np.float32)
 
 
 class DummyDiscreteEnv(gym.Env):
@@ -54,11 +71,7 @@ class DummyContinuousEnv(gym.Env):
 def test_collector_collect_one_episode_no_args():
     """collect_one_episode takes no parameters and uses self.env, self.policy, self.max_steps."""
     env = DummyDiscreteEnv(step_limit=8)
-
-    def policy(obs, env, step):
-        return 0
-
-    collector = Collector(env=env, policy=policy, max_steps=20, verbose=False)
+    collector = Collector(env=env, policy=DummyPolicy(), max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 8
@@ -74,11 +87,7 @@ def test_collector_collect_one_episode_no_args():
 def test_collector_max_steps_clamping():
     """Collector clamps rollouts at max_steps if environment does not terminate earlier."""
     env = DummyDiscreteEnv(step_limit=50)
-
-    def policy(obs, env, step):
-        return 1
-
-    collector = Collector(env=env, policy=policy, max_steps=12, verbose=False)
+    collector = Collector(env=env, policy=DummyPolicy(), max_steps=12, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 12
@@ -98,14 +107,10 @@ def test_collector_min_steps_filtering():
             return super().reset(seed=seed)
 
     env = FlakyEnv()
-
-    def policy(obs, env, step):
-        return 0
-
     buffer = ReplayBuffer(capacity_episodes=10)
     collector = Collector(
         env=env,
-        policy=policy,
+        policy=DummyPolicy(),
         num_episodes=3,
         min_steps=10,  # Must reject 3-step episodes
         max_steps=50,
@@ -122,23 +127,14 @@ def test_collector_min_steps_filtering():
 def test_collector_continuous_actions():
     """Collector properly formats continuous array actions."""
     env = DummyContinuousEnv(step_limit=6)
-
-    def policy(obs, env, step):
-        return np.array([0.25, -0.75], dtype=np.float32)
-
     buffer = ReplayBuffer(capacity_episodes=5)
-    collector = Collector(env=env, policy=policy, num_episodes=2, verbose=False)
+    collector = Collector(env=env, policy=DummyContinuousPolicy(), num_episodes=2, verbose=False)
     total_steps = collector.collect(buffer)
 
     assert total_steps == 12
     assert buffer.num_episodes == 2
     assert buffer[0].actions.shape == (6, 2)
     assert buffer[0].actions.dtype == np.float32
-
-
-class DummyPolicy:
-    def __call__(self, obs, env=None, step=0):
-        return 0
 
 
 def test_collector_hydra_instantiation():

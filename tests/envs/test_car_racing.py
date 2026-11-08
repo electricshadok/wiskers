@@ -121,22 +121,26 @@ def test_car_racing_datamodule_custom_policy():
 
 
 def test_car_racing_heuristic_policy():
+    env = make_car_racing_env(image_size=(64, 64))
     policy = CarRacingHeuristicPolicy()
     assert policy.action_dim == 3
     assert policy.action_type == "continuous"
     policy.steering = 0.5
     policy.reset()
     assert policy.steering == 0.0
-    action = policy(None, None, step=0)
+    action = policy(None, env, step=0)
     assert isinstance(action, np.ndarray)
     assert action.shape == (3,)
+    env.close()
 
 
 def test_car_racing_random_policy():
+    env = make_car_racing_env(image_size=(64, 64))
     policy = CarRacingRandomPolicy()
-    action = policy(None, None, step=0)
+    action = policy(None, env, step=0)
     assert isinstance(action, np.ndarray)
     assert action.shape == (3,)
+    env.close()
 
 
 def test_car_racing_datamodule_native_resolution():

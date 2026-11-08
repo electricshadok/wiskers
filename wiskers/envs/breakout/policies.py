@@ -1,24 +1,16 @@
 import random
-from typing import Optional
 
 import gymnasium as gym
 import numpy as np
-import torch.nn as nn
+
+from wiskers.common.policy import BasePolicy
 
 
-class BreakoutPolicy(nn.Module):
+class BreakoutPolicy(BasePolicy):
     """Base policy for ALE/Breakout. Discrete action space (0..3)."""
 
     action_dim: int = 1
     action_type: str = "discrete"
-
-    def reset(self) -> None:
-        """Reset internal state at episode start."""
-        pass
-
-    def forward(self, obs: np.ndarray, env: Optional[gym.Env] = None, step: int = 0) -> int:
-        """Return a discrete action index (0..3)."""
-        raise NotImplementedError
 
 
 class BreakoutRandomPolicy(BreakoutPolicy):
@@ -28,12 +20,10 @@ class BreakoutRandomPolicy(BreakoutPolicy):
         super().__init__()
         self.fire_frequency = fire_frequency
 
-    def forward(self, obs: np.ndarray, env: Optional[gym.Env] = None, step: int = 0) -> int:
+    def forward(self, obs: np.ndarray, env: gym.Env, step: int = 0) -> int:
         if step % self.fire_frequency == 0:
             return 1  # FIRE
-        if env is not None:
-            return int(env.action_space.sample())
-        return random.randint(0, 3)
+        return int(env.action_space.sample())
 
 
 class BreakoutHeuristicPolicy(BreakoutPolicy):
@@ -50,9 +40,9 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         super().__init__()
         self.epsilon = epsilon
 
-    def forward(self, obs: np.ndarray, env: Optional[gym.Env] = None, step: int = 0) -> int:
-        if random.random() < self.epsilon or env is None:
-            return 1 if step == 0 else (int(env.action_space.sample()) if env is not None else 0)
+    def forward(self, obs: np.ndarray, env: gym.Env, step: int = 0) -> int:
+        if random.random() < self.epsilon:
+            return 1 if step == 0 else int(env.action_space.sample())
 
         try:
             ale = getattr(env.unwrapped, "ale", None)
@@ -76,5 +66,5 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
             else:
                 return random.choice([0, 2, 3])
         except Exception:
-            return int(env.action_space.sample()) if env is not None else 0
+            return int(env.action_space.sample())
 

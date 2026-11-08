@@ -120,11 +120,13 @@ def test_breakout_datamodule_custom_policy():
 
 
 def test_breakout_random_policy():
+    env = make_breakout_env(image_size=(64, 64))
     policy = BreakoutRandomPolicy(fire_frequency=5)
     assert policy.action_dim == 1
     assert policy.action_type == "discrete"
-    assert policy(None, None, step=0) == 1
-    assert policy(None, None, step=1) in {0, 1, 2, 3}
+    assert policy(None, env, step=0) == 1
+    assert policy(None, env, step=1) in {0, 1, 2, 3}
+    env.close()
 
 
 def test_breakout_datamodule_with_sampler():
