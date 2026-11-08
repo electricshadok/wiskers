@@ -1,6 +1,6 @@
 import gymnasium as gym
-import numpy as np
 import pytest
+import torch
 
 from wiskers.common.policy import BasePolicy
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
@@ -35,8 +35,10 @@ def test_env_policies_inherit_from_base_policy():
         assert isinstance(pol, BasePolicy)
         pol.reset()
 
-    dummy_obs = np.zeros((64, 64, 3), dtype=np.uint8)
-    assert isinstance(breakout_pol(dummy_obs, step=0), int)
+    dummy_obs = torch.zeros((3, 64, 64), dtype=torch.float32)
+    b_act = breakout_pol(dummy_obs, step=0)
+    assert isinstance(b_act, torch.Tensor)
+    assert b_act.ndim == 0 and b_act.dtype == torch.long
     assert car_pol(dummy_obs, step=0).shape == (3,)
     assert adroit_pol(dummy_obs, step=0).shape == (28,)
     assert franka_pol(dummy_obs, step=0).shape == (9,)
@@ -57,7 +59,7 @@ def test_policy_env_validation():
 
     # Calling sample_random without setting env raises RuntimeError
     pol = CarRacingRandomPolicy()
-    dummy_obs = np.zeros((64, 64, 3), dtype=np.uint8)
+    dummy_obs = torch.zeros((3, 64, 64), dtype=torch.float32)
     with pytest.raises(RuntimeError, match="env is not set"):
         pol(dummy_obs, step=0)
 

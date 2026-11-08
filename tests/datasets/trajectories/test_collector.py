@@ -1,23 +1,27 @@
 import gymnasium as gym
 import numpy as np
+import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from wiskers.common.policy import ContinuousPolicy, DiscretePolicy
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
+from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 
 
 class DummyPolicy(DiscretePolicy):
-    def forward(self, obs: np.ndarray, step: int = 0) -> int:
-        return 0
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        assert isinstance(obs, torch.Tensor)
+        return torch.tensor(0, dtype=torch.long)
 
 
 class DummyContinuousPolicy(ContinuousPolicy):
     action_dim = 2
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
-        return np.array([0.25, -0.75], dtype=np.float32)
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        assert isinstance(obs, torch.Tensor)
+        return torch.tensor([0.25, -0.75], dtype=torch.float32)
 
 
 class DummyDiscreteEnv(gym.Env):
@@ -67,7 +71,8 @@ class DummyContinuousEnv(gym.Env):
 def test_collector_collect_one_episode_no_args():
     """collect_one_episode takes no parameters and uses self.env, self.policy, self.max_steps."""
     env = DummyDiscreteEnv(step_limit=8)
-    collector = Collector(env=env, policy=DummyPolicy(), max_steps=20, verbose=False)
+    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 8
@@ -83,7 +88,8 @@ def test_collector_collect_one_episode_no_args():
 def test_collector_max_steps_clamping():
     """Collector clamps rollouts at max_steps if environment does not terminate earlier."""
     env = DummyDiscreteEnv(step_limit=50)
-    collector = Collector(env=env, policy=DummyPolicy(), max_steps=12, verbose=False)
+    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, max_steps=12, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 12
@@ -104,9 +110,11 @@ def test_collector_min_steps_filtering():
 
     env = FlakyEnv()
     buffer = ReplayBuffer(capacity_episodes=10)
+    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(
         env=env,
         policy=DummyPolicy(),
+        transform=transform,
         num_episodes=3,
         min_steps=10,  # Must reject 3-step episodes
         max_steps=50,
@@ -124,7 +132,8 @@ def test_collector_continuous_actions():
     """Collector properly formats continuous array actions."""
     env = DummyContinuousEnv(step_limit=6)
     buffer = ReplayBuffer(capacity_episodes=5)
-    collector = Collector(env=env, policy=DummyContinuousPolicy(), num_episodes=2, verbose=False)
+    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    collector = Collector(env=env, policy=DummyContinuousPolicy(), transform=transform, num_episodes=2, verbose=False)
     total_steps = collector.collect(buffer)
 
     assert total_steps == 12
@@ -144,6 +153,11 @@ def test_collector_hydra_instantiation():
         "policy": {
             "_target_": "tests.datasets.trajectories.test_collector.DummyPolicy",
         },
+        "transform": {
+            "_target_": "wiskers.datasets.trajectories.transforms.EpisodeToTensor",
+            "image_size": [3, 16, 16],
+            "obs_range": [0.0, 1.0],
+        },
         "num_episodes": 25,
         "min_steps": 50,
         "max_steps": 500,
@@ -153,3 +167,26 @@ def test_collector_hydra_instantiation():
     assert collector.num_episodes == 25
     assert collector.min_steps == 50
     assert collector.max_steps == 500
+
+
+def test_collector_with_transform():
+    """Collector passes transformed torch.Tensor obs to policy while storing uint8 np.ndarray in Episode."""
+    seen_obs: list[torch.Tensor] = []
+
+    class InspectingPolicy(DiscretePolicy):
+        def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+            seen_obs.append(obs)
+            return torch.tensor(0, dtype=torch.long)
+
+    env = DummyDiscreteEnv(step_limit=4)
+    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
+    collector = Collector(env=env, policy=InspectingPolicy(), transform=transform, max_steps=10, verbose=False)
+    ep = collector.collect_one_episode()
+
+    assert len(seen_obs) == 4
+    assert seen_obs[0].shape == (3, 8, 8)
+    assert seen_obs[0].dtype == torch.float32
+    assert torch.allclose(seen_obs[0], torch.full((3, 8, 8), -1.0))
+    # Episode still stores raw uint8 (T+1, H, W, C)
+    assert ep.obs.dtype == np.uint8
+    assert ep.obs.shape == (5, 16, 16, 3)

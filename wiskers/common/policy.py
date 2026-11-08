@@ -3,10 +3,10 @@ Common base policy interfaces for discrete and continuous environment rollouts.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional
 
 import gymnasium as gym
-import numpy as np
+import torch
 import torch.nn as nn
 
 
@@ -43,24 +43,25 @@ class BasePolicy(nn.Module, ABC):
     @abstractmethod
     def forward(
         self,
-        obs: np.ndarray,
+        obs: torch.Tensor,
         step: int = 0,
-    ) -> Union[int, np.ndarray]:
+    ) -> torch.Tensor:
         """
-        Compute the environment action for the current step.
+        Compute the environment action tensor for the current step.
 
         Args:
-            obs (np.ndarray): Current raw observation from the environment.
+            obs (torch.Tensor): Transformed observation tensor for the current step.
             step (int): Current step index within the episode.
 
         Returns:
-            Union[int, np.ndarray]: Discrete action index (``int``) or continuous action array (``np.ndarray``).
+            torch.Tensor: Action tensor (scalar ``int64`` tensor for discrete actions,
+            or ``float32`` tensor of shape ``(action_dim,)`` for continuous actions).
         """
         raise NotImplementedError
 
 
 class DiscretePolicy(BasePolicy):
-    """Base policy for discrete action spaces returning an ``int`` action index."""
+    """Base policy for discrete action spaces returning a scalar ``int64`` ``torch.Tensor``."""
 
     action_dim: int = 1
 
@@ -71,25 +72,17 @@ class DiscretePolicy(BasePolicy):
                 f"got {env.action_space}."
             )
 
-    def sample_random(self) -> int:
-        """Sample a uniform random discrete action index from ``self.env.action_space``."""
+    def sample_random(self) -> torch.Tensor:
+        """Sample a uniform random discrete action tensor from ``self.env.action_space``."""
         if self.env is None:
             raise RuntimeError(
                 f"{self.__class__.__name__}.env is not set. Pass env to __init__ or call set_env(env)."
             )
-        return int(self.env.action_space.sample())
-
-    @abstractmethod
-    def forward(
-        self,
-        obs: np.ndarray,
-        step: int = 0,
-    ) -> int:
-        raise NotImplementedError
+        return torch.tensor(int(self.env.action_space.sample()), dtype=torch.long)
 
 
 class ContinuousPolicy(BasePolicy):
-    """Base policy for continuous action spaces returning a ``float32`` ``np.ndarray``."""
+    """Base policy for continuous action spaces returning a ``float32`` ``torch.Tensor``."""
 
     def _validate_env(self, env: gym.Env) -> None:
         if not isinstance(env.action_space, gym.spaces.Box):
@@ -103,18 +96,10 @@ class ContinuousPolicy(BasePolicy):
                 f"got action_space shape {env.action_space.shape}."
             )
 
-    def sample_random(self) -> np.ndarray:
-        """Sample a uniform random continuous action vector from ``self.env.action_space``."""
+    def sample_random(self) -> torch.Tensor:
+        """Sample a uniform random continuous action tensor from ``self.env.action_space``."""
         if self.env is None:
             raise RuntimeError(
                 f"{self.__class__.__name__}.env is not set. Pass env to __init__ or call set_env(env)."
             )
-        return np.asarray(self.env.action_space.sample(), dtype=np.float32)
-
-    @abstractmethod
-    def forward(
-        self,
-        obs: np.ndarray,
-        step: int = 0,
-    ) -> np.ndarray:
-        raise NotImplementedError
+        return torch.as_tensor(self.env.action_space.sample(), dtype=torch.float32)

@@ -5,7 +5,7 @@ Policies for FrankaKitchen environment.
 from typing import Optional
 
 import gymnasium as gym
-import numpy as np
+import torch
 
 from wiskers.common.policy import ContinuousPolicy
 
@@ -19,7 +19,7 @@ class FrankaKitchenPolicy(ContinuousPolicy):
 class FrankaKitchenRandomPolicy(FrankaKitchenPolicy):
     """Uniform random exploration for FrankaKitchen."""
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         return self.sample_random()
 
 
@@ -44,13 +44,13 @@ class FrankaKitchenHeuristicPolicy(FrankaKitchenPolicy):
         super().__init__(env=env)
         self.momentum = momentum
         self.noise_scale = noise_scale
-        self.current_action: np.ndarray = np.zeros(self.action_dim, dtype=np.float32)
+        self.current_action: torch.Tensor = torch.zeros(self.action_dim, dtype=torch.float32)
 
     def reset(self) -> None:
-        self.current_action = np.zeros(self.action_dim, dtype=np.float32)
+        self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
-        noise = np.random.randn(self.action_dim) * self.noise_scale
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        noise = torch.randn(self.action_dim, dtype=torch.float32) * self.noise_scale
         action = self.momentum * self.current_action + (1.0 - self.momentum) * noise
-        self.current_action = np.clip(action, -1.0, 1.0).astype(np.float32)
-        return self.current_action.copy()
+        self.current_action = torch.clamp(action, -1.0, 1.0)
+        return self.current_action.clone()

@@ -1,5 +1,11 @@
 seed: 0
 
+# Shared transform for both Collector (policy input) and TrajectoryDataModule (training batches)
+transform:
+  _target_: wiskers.datasets.trajectories.transforms.EpisodeToTensor
+  image_size: [3, 64, 64]  # [C, H, W] (C = 1 for grayscale or 3 for RGB)
+  obs_range: [0.0, 1.0]    # [low, high] normalization range for observations
+
 data_module:
   _target_: wiskers.datasets.trajectories.datamodule.TrajectoryDataModule
 
@@ -14,10 +20,7 @@ data_module:
     num_steps: 50  # Number of consecutive steps per sampled chunk
 
   # Transform that converts a sampled Episode chunk into PyTorch tensors
-  transform:
-    _target_: wiskers.datasets.trajectories.transforms.EpisodeToTensor
-    image_size: [3, 64, 64]  # [C, H, W] (C = 1 for grayscale or 3 for RGB)
-    obs_range: [0.0, 1.0]    # [low, high] normalization range for observations
+  transform: ${transform}
 
   # Rollout data collection settings
   collector:
@@ -31,6 +34,7 @@ data_module:
       _target_: wiskers.envs.franka.FrankaKitchenHeuristicPolicy
       momentum: 0.85
       noise_scale: 0.25
+    transform: ${transform}
     num_episodes: 20
     min_steps: 50
     max_steps: 250

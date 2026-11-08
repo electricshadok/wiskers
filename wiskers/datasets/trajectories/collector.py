@@ -2,14 +2,14 @@
 Modular rollout collector for trajectory-based RL and world models.
 """
 
-from typing import Any
-
 import gymnasium as gym
 import numpy as np
+import torch
 
 from wiskers.common.policy import BasePolicy
 from wiskers.datasets.trajectories.buffer import Buffer
 from wiskers.datasets.trajectories.episode import Episode
+from wiskers.datasets.trajectories.transforms import EpisodeTransform
 
 
 class Collector:
@@ -21,11 +21,14 @@ class Collector:
         - Collects ``num_episodes`` valid episodes.
         - Enforces ``min_steps``: any episode ending earlier than ``min_steps`` is discarded.
         - Enforces ``max_steps``: clamps episodes from exceeding ``max_steps``.
-        - Stores observations as compact ``uint8`` numpy arrays.
+        - Stores observations as compact ``uint8`` numpy arrays while passing transformed
+          PyTorch tensors to the policy.
 
     Args:
         env (gym.Env): The Gymnasium environment instance.
         policy (BasePolicy): Policy instance implementing ``BasePolicy``.
+        transform (EpisodeTransform): Transform used to convert raw ``uint8``
+            observations into ``torch.Tensor`` before passing them to ``policy``.
         num_episodes (int): Target number of valid episodes to collect.
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
         max_steps (int): Maximum step cutoff per episode (clamped).
@@ -37,6 +40,7 @@ class Collector:
         self,
         env: gym.Env,
         policy: BasePolicy,
+        transform: EpisodeTransform,
         num_episodes: int = 10,
         min_steps: int = 0,
         max_steps: int = 500,
@@ -46,6 +50,7 @@ class Collector:
         self.env = env
         self.policy = policy
         self.policy.set_env(env)
+        self.transform = transform
         self.num_episodes = num_episodes
         self.min_steps = min_steps
         self.max_steps = max_steps
@@ -75,11 +80,12 @@ class Collector:
             if done:
                 break
 
-            action = self.policy(obs, step)
+            obs_tensor = self.transform.transform_obs(obs)
+            action = self.policy(obs_tensor, step)
             env_action, stored_action = self._format_action(action)
 
             next_obs, reward, terminated, truncated, _ = self.env.step(env_action)
-            done = bool(terminated or truncated)
+            done = terminated or truncated
 
             obs = next_obs
             observations.append(next_obs)
@@ -134,12 +140,15 @@ class Collector:
         self.env.close()
 
     @staticmethod
-    def _format_action(action: Any) -> tuple[Any, np.ndarray]:
+    def _format_action(action: torch.Tensor) -> tuple[int | np.ndarray, np.ndarray]:
         """
-        Gymnasium env.step() needs primitive types for Discrete spaces (e.g. int),
-        while Episode.actions must be a float32 array of shape (action_dim,).
+        Convert a policy action ``torch.Tensor`` into:
+        - ``env_action``: primitive ``int`` for discrete actions or ``float32`` ``np.ndarray`` for continuous.
+        - ``stored_action``: ``float32`` ``np.ndarray`` of shape ``(action_dim,)`` for ``Episode.actions``.
         """
-        if isinstance(action, (int, np.integer)):
-            return int(action), np.array([float(action)], dtype=np.float32)
-        act_arr = np.asarray(action, dtype=np.float32)
+        action_cpu = action.detach().cpu()
+        if not action_cpu.is_floating_point():
+            act_int = int(action_cpu.item())
+            return act_int, np.array([act_int], dtype=np.float32)
+        act_arr = action_cpu.numpy().astype(np.float32)
         return act_arr, act_arr

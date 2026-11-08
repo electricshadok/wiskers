@@ -2,7 +2,7 @@ import random
 from typing import Optional
 
 import gymnasium as gym
-import numpy as np
+import torch
 
 from wiskers.common.policy import DiscretePolicy
 
@@ -19,9 +19,9 @@ class BreakoutRandomPolicy(BreakoutPolicy):
         super().__init__(env=env)
         self.fire_frequency = fire_frequency
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> int:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         if step % self.fire_frequency == 0:
-            return 1  # FIRE
+            return torch.tensor(1, dtype=torch.long)  # FIRE
         return self.sample_random()
 
 
@@ -39,9 +39,9 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         super().__init__(env=env)
         self.epsilon = epsilon
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> int:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         if random.random() < self.epsilon or self.env is None:
-            return 1 if step == 0 else self.sample_random()
+            return torch.tensor(1, dtype=torch.long) if step == 0 else self.sample_random()
 
         try:
             ale = getattr(self.env.unwrapped, "ale", None)
@@ -55,14 +55,14 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
 
             # If ball is waiting to be served or just reset, press FIRE
             if ball_y == 0 or step == 0:
-                return 1  # FIRE
+                return torch.tensor(1, dtype=torch.long)  # FIRE
 
             # Track the ball with the paddle
             if paddle_x < ball_x - 2:
-                return 2  # RIGHT
+                return torch.tensor(2, dtype=torch.long)  # RIGHT
             elif paddle_x > ball_x + 2:
-                return 3  # LEFT
+                return torch.tensor(3, dtype=torch.long)  # LEFT
             else:
-                return random.choice([0, 2, 3])
+                return torch.tensor(random.choice([0, 2, 3]), dtype=torch.long)
         except Exception:
             return self.sample_random()

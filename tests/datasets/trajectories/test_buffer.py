@@ -149,13 +149,15 @@ def test_rollout_buffer_reset():
 
 def test_collector_with_rollout_buffer():
     import gymnasium as gym
+    import torch
 
     from wiskers.common.policy import DiscretePolicy
     from wiskers.datasets.trajectories.collector import Collector
+    from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 
     class DummyPolicy(DiscretePolicy):
-        def forward(self, obs: np.ndarray, step: int = 0) -> int:
-            return 0
+        def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+            return torch.tensor(0, dtype=torch.long)
 
     class DummyEnv(gym.Env):
         def __init__(self):
@@ -175,6 +177,7 @@ def test_collector_with_rollout_buffer():
     collector = Collector(
         env=DummyEnv(),
         policy=DummyPolicy(),
+        transform=EpisodeToTensor(image_size=(3, 4, 4), obs_range=(0.0, 1.0)),
         num_episodes=2,
         min_steps=5,
         max_steps=10,

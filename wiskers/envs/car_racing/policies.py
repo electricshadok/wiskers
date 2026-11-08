@@ -2,6 +2,7 @@ from typing import Optional
 
 import gymnasium as gym
 import numpy as np
+import torch
 
 from wiskers.common.policy import ContinuousPolicy
 
@@ -15,7 +16,7 @@ class CarRacingPolicy(ContinuousPolicy):
 class CarRacingRandomPolicy(CarRacingPolicy):
     """Uniform random exploration for CarRacing."""
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         return self.sample_random()
 
 
@@ -34,9 +35,9 @@ class CarRacingHeuristicPolicy(CarRacingPolicy):
     def reset(self) -> None:
         self.steering = 0.0
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         self.steering = self.steering * 0.8 + np.random.uniform(-0.2, 0.2)
         self.steering = float(np.clip(self.steering, -1.0, 1.0))
         gas = float(np.random.uniform(0.4, 0.8))
         brake = float(np.random.uniform(0.0, 0.05))
-        return np.array([self.steering, gas, brake], dtype=np.float32)
+        return torch.tensor([self.steering, gas, brake], dtype=torch.float32)

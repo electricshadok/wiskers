@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
+import torch
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
+from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 from wiskers.envs.franka import (
     AVAILABLE_TASKS,
     FrankaKitchenHeuristicPolicy,
@@ -68,11 +70,12 @@ def test_franka_random_policy(franka_env):
     assert policy.action_dim == 9
 
     obs, _ = franka_env.reset()
-    action = policy(obs, step=0)
-    assert isinstance(action, np.ndarray)
+    obs_t = torch.from_numpy(obs)
+    action = policy(obs_t, step=0)
+    assert isinstance(action, torch.Tensor)
     assert action.shape == (9,)
-    assert action.dtype == np.float32
-    assert np.all(action >= -1.0) and np.all(action <= 1.0)
+    assert action.dtype == torch.float32
+    assert torch.all(action >= -1.0) and torch.all(action <= 1.0)
 
 
 def test_franka_heuristic_policy(franka_env):
@@ -80,22 +83,25 @@ def test_franka_heuristic_policy(franka_env):
     assert policy.action_dim == 9
 
     obs, _ = franka_env.reset()
-    act1 = policy(obs, step=0)
-    act2 = policy(obs, step=1)
+    obs_t = torch.from_numpy(obs)
+    act1 = policy(obs_t, step=0)
+    act2 = policy(obs_t, step=1)
     assert act1.shape == (9,)
     assert act2.shape == (9,)
-    assert np.all(act1 >= -1.0) and np.all(act1 <= 1.0)
-    assert np.all(act2 >= -1.0) and np.all(act2 <= 1.0)
+    assert torch.all(act1 >= -1.0) and torch.all(act1 <= 1.0)
+    assert torch.all(act2 >= -1.0) and torch.all(act2 <= 1.0)
 
     policy.reset()
-    assert np.all(policy.current_action == 0.0)
+    assert torch.all(policy.current_action == 0.0)
 
 
 def test_franka_kitchen_collector_integration(franka_env):
     policy = FrankaKitchenHeuristicPolicy()
+    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
         env=franka_env,
         policy=policy,
+        transform=transform,
         num_episodes=1,
         min_steps=5,
         max_steps=10,

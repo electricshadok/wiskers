@@ -5,7 +5,7 @@ Policies for AdroitHand dexterous manipulation environments.
 from typing import Optional
 
 import gymnasium as gym
-import numpy as np
+import torch
 
 from wiskers.common.policy import ContinuousPolicy
 
@@ -15,7 +15,7 @@ class AdroitHandPolicy(ContinuousPolicy):
 
     action_dim: int = 28
 
-    def validate_env(self, env: gym.Env) -> None:
+    def _validate_env(self, env: gym.Env) -> None:
         if not isinstance(env.action_space, gym.spaces.Box) or not env.action_space.shape:
             raise ValueError(
                 f"{self.__class__.__name__} requires a continuous Box action_space, "
@@ -27,7 +27,7 @@ class AdroitHandPolicy(ContinuousPolicy):
 class AdroitHandRandomPolicy(AdroitHandPolicy):
     """Uniform random exploration for AdroitHand."""
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         return self.sample_random()
 
 
@@ -49,19 +49,19 @@ class AdroitHandHeuristicPolicy(AdroitHandPolicy):
         noise_scale: float = 0.25,
         env: Optional[gym.Env] = None,
     ):
-        self.current_action: np.ndarray = np.zeros(self.action_dim, dtype=np.float32)
+        self.current_action: torch.Tensor = torch.zeros(self.action_dim, dtype=torch.float32)
         super().__init__(env=env)
         self.momentum = momentum
         self.noise_scale = noise_scale
-        self.current_action = np.zeros(self.action_dim, dtype=np.float32)
+        self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
 
     def reset(self) -> None:
-        self.current_action = np.zeros(self.action_dim, dtype=np.float32)
+        self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
 
-    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         if self.current_action.shape[0] != self.action_dim:
-            self.current_action = np.zeros(self.action_dim, dtype=np.float32)
-        noise = np.random.randn(self.action_dim) * self.noise_scale
+            self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
+        noise = torch.randn(self.action_dim, dtype=torch.float32) * self.noise_scale
         action = self.momentum * self.current_action + (1.0 - self.momentum) * noise
-        self.current_action = np.clip(action, -1.0, 1.0).astype(np.float32)
-        return self.current_action.copy()
+        self.current_action = torch.clamp(action, -1.0, 1.0)
+        return self.current_action.clone()

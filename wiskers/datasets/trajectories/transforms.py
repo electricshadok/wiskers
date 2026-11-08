@@ -19,6 +19,14 @@ class EpisodeTransform(ABC):
     """
 
     @abstractmethod
+    def transform_obs(self, obs: np.ndarray) -> torch.Tensor:
+        """
+        Convert a raw observation array (single frame ``(H, W, C)`` or sequence ``(T, H, W, C)``)
+        into a normalized PyTorch tensor (``(C, H, W)`` or ``(T, C, H, W)``).
+        """
+        ...
+
+    @abstractmethod
     def __call__(self, episode: Episode) -> dict[str, torch.Tensor]:
         """
         Convert one Episode chunk into a dictionary of PyTorch tensors.
@@ -70,6 +78,45 @@ class EpisodeToTensor(EpisodeTransform):
         self.image_size: tuple[int, int, int] = (c, h, w)
         self.obs_range: tuple[float, float] = (low, high)
 
+    def transform_obs(self, obs: np.ndarray) -> torch.Tensor:
+        """
+        Convert a raw observation array into a normalized ``float32`` tensor in ``obs_range``.
+
+        Supports both a single frame ``(H, W, C)`` -> ``(C, H, W)`` and a
+        sequence of frames ``(T, H, W, C)`` -> ``(T, C, H, W)``.
+        """
+        single_frame = obs.ndim == 3
+        obs_tensor = torch.from_numpy(obs)
+        if single_frame:
+            obs_tensor = obs_tensor.unsqueeze(0)
+
+        # (T, H, W, C) -> (T, C, H, W)
+        obs_tensor = obs_tensor.permute(0, 3, 1, 2).float() / 255.0
+
+        target_c, target_h, target_w = self.image_size
+        in_c, in_h, in_w = obs_tensor.shape[1], obs_tensor.shape[2], obs_tensor.shape[3]
+
+        if target_c == 1 and in_c == 3:
+            obs_tensor = TF.rgb_to_grayscale(obs_tensor, num_output_channels=1)
+        elif target_c == 3 and in_c == 1:
+            obs_tensor = obs_tensor.repeat(1, 3, 1, 1)
+
+        if (in_h, in_w) != (target_h, target_w):
+            obs_tensor = F.interpolate(
+                obs_tensor,
+                size=(target_h, target_w),
+                mode="bilinear",
+                align_corners=False,
+            )
+
+        low, high = self.obs_range
+        if (low, high) != (0.0, 1.0):
+            obs_tensor = obs_tensor * (high - low) + low
+
+        if single_frame:
+            return obs_tensor.squeeze(0)
+        return obs_tensor
+
     def __call__(self, episode: Episode) -> dict[str, torch.Tensor]:
         """
         Convert one Episode chunk into a dictionary of float32 PyTorch tensors.
@@ -88,38 +135,8 @@ class EpisodeToTensor(EpisodeTransform):
                 - ``"rewards"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32``
                 - ``"dones"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
         """
-        obs = torch.from_numpy(episode.obs)
-        if obs.ndim == 4:
-            # (T, H, W, C) -> (T, C, H, W)
-            obs = obs.permute(0, 3, 1, 2)
-        elif obs.ndim == 3:
-            # (T, H, W) -> (T, 1, H, W)
-            obs = obs.unsqueeze(1)
-
-        obs = obs.float() / 255.0
-
-        target_c, target_h, target_w = self.image_size
-        in_c, in_h, in_w = obs.shape[1], obs.shape[2], obs.shape[3]
-
-        if target_c == 1 and in_c == 3:
-            obs = TF.rgb_to_grayscale(obs, num_output_channels=1)
-        elif target_c == 3 and in_c == 1:
-            obs = obs.repeat(1, 3, 1, 1)
-
-        if (in_h, in_w) != (target_h, target_w):
-            obs = F.interpolate(
-                obs,
-                size=(target_h, target_w),
-                mode="bilinear",
-                align_corners=False,
-            )
-
-        low, high = self.obs_range
-        if (low, high) != (0.0, 1.0):
-            obs = obs * (high - low) + low
-
         return {
-            "obs": obs,
+            "obs": self.transform_obs(episode.obs),
             "actions": torch.from_numpy(episode.actions),
             "rewards": torch.from_numpy(episode.rewards),
             "dones": torch.from_numpy(episode.dones.astype(np.float32)),
