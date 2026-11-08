@@ -1,5 +1,5 @@
-import numpy as np
 import pytest
+import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
@@ -16,10 +16,10 @@ from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
     """Build a dummy episode filled with deterministic or pseudo-random data."""
     return Episode(
-        obs=np.random.randint(0, 256, (T + 1, H, W, C), dtype=np.uint8),
-        actions=np.random.randn(T, action_dim).astype(np.float32),
-        rewards=np.random.randn(T).astype(np.float32),
-        dones=np.zeros(T, dtype=bool),
+        obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
+        actions=torch.randn(T, action_dim, dtype=torch.float32),
+        rewards=torch.randn(T, dtype=torch.float32),
+        dones=torch.zeros(T, dtype=torch.bool),
     )
 
 

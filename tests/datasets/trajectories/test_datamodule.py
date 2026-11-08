@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import torch
 
@@ -12,10 +11,10 @@ from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
     """Build a dummy episode filled with random data."""
     return Episode(
-        obs=np.random.randint(0, 256, (T + 1, H, W, C), dtype=np.uint8),
-        actions=np.random.randn(T, action_dim).astype(np.float32),
-        rewards=np.random.randn(T).astype(np.float32),
-        dones=np.zeros(T, dtype=bool),
+        obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
+        actions=torch.randn(T, action_dim, dtype=torch.float32),
+        rewards=torch.randn(T, dtype=torch.float32),
+        dones=torch.zeros(T, dtype=torch.bool),
     )
 
 
@@ -89,10 +88,10 @@ def test_episode_to_tensor_resize_and_grayscale():
 
     # Test obs_range=(-1.0, 1.0)
     ep_extremes = Episode(
-        obs=np.array([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=np.uint8),
-        actions=np.zeros((1, 4), dtype=np.float32),
-        rewards=np.zeros((1,), dtype=np.float32),
-        dones=np.zeros((1,), dtype=bool),
+        obs=torch.tensor([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=torch.uint8),
+        actions=torch.zeros((1, 4), dtype=torch.float32),
+        rewards=torch.zeros((1,), dtype=torch.float32),
+        dones=torch.zeros((1,), dtype=torch.bool),
     )
     sym_transform = EpisodeToTensor(image_size=(3, 1, 1), obs_range=(-1.0, 1.0))
     out_sym = sym_transform(ep_extremes)

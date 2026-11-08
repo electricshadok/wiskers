@@ -1,10 +1,10 @@
 """
-One complete environment rollout stored as numpy arrays.
+One complete environment rollout stored as CPU PyTorch tensors.
 """
 
 from dataclasses import dataclass
 
-import numpy as np
+import torch
 
 
 @dataclass
@@ -25,10 +25,10 @@ class Episode:
         dones   (T,) bool               — True on the step the episode ended.
     """
 
-    obs: np.ndarray      # (T + 1, H, W, C) uint8
-    actions: np.ndarray  # (T, action_dim) float32
-    rewards: np.ndarray  # (T,) float32
-    dones: np.ndarray    # (T,) bool
+    obs: torch.Tensor      # (T + 1, H, W, C) uint8
+    actions: torch.Tensor  # (T, action_dim) float32
+    rewards: torch.Tensor  # (T,) float32
+    dones: torch.Tensor    # (T,) bool
 
     def __post_init__(self) -> None:
         T = len(self.actions)

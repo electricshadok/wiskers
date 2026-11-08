@@ -5,7 +5,6 @@ Episode-to-tensor transforms for trajectory datasets.
 from abc import ABC, abstractmethod
 from typing import Sequence
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
@@ -19,10 +18,10 @@ class EpisodeTransform(ABC):
     """
 
     @abstractmethod
-    def transform_obs(self, obs: np.ndarray) -> torch.Tensor:
+    def transform_obs(self, obs: torch.Tensor) -> torch.Tensor:
         """
-        Convert a raw observation array (single frame ``(H, W, C)`` or sequence ``(T, H, W, C)``)
-        into a normalized PyTorch tensor (``(C, H, W)`` or ``(T, C, H, W)``).
+        Convert a raw uint8 observation tensor (single frame ``(H, W, C)`` or sequence ``(T, H, W, C)``)
+        into a normalized float32 PyTorch tensor (``(C, H, W)`` or ``(T, C, H, W)``).
         """
         ...
 
@@ -43,7 +42,7 @@ class EpisodeTransform(ABC):
 
 class EpisodeToTensor(EpisodeTransform):
     """
-    Convert an Episode chunk (numpy arrays) into a dictionary of PyTorch tensors,
+    Convert an Episode chunk into a dictionary of normalized PyTorch tensors,
     normalizing observations to float32 in ``obs_range`` and converting to target
     ``image_size`` ``(C, H, W)``.
 
@@ -78,17 +77,15 @@ class EpisodeToTensor(EpisodeTransform):
         self.image_size: tuple[int, int, int] = (c, h, w)
         self.obs_range: tuple[float, float] = (low, high)
 
-    def transform_obs(self, obs: np.ndarray) -> torch.Tensor:
+    def transform_obs(self, obs: torch.Tensor) -> torch.Tensor:
         """
-        Convert a raw observation array into a normalized ``float32`` tensor in ``obs_range``.
+        Convert a raw uint8 observation tensor into a normalized ``float32`` tensor in ``obs_range``.
 
         Supports both a single frame ``(H, W, C)`` -> ``(C, H, W)`` and a
         sequence of frames ``(T, H, W, C)`` -> ``(T, C, H, W)``.
         """
         single_frame = obs.ndim == 3
-        obs_tensor = torch.from_numpy(obs)
-        if single_frame:
-            obs_tensor = obs_tensor.unsqueeze(0)
+        obs_tensor = obs.unsqueeze(0) if single_frame else obs
 
         # (T, H, W, C) -> (T, C, H, W)
         obs_tensor = obs_tensor.permute(0, 3, 1, 2).float() / 255.0
@@ -123,10 +120,10 @@ class EpisodeToTensor(EpisodeTransform):
 
         Args:
             episode (Episode): Trajectory chunk of ``T`` transitions containing:
-                - ``obs``: ``np.ndarray`` of shape ``(T + 1, H_in, W_in, C_in)``, dtype ``uint8``
-                - ``actions``: ``np.ndarray`` of shape ``(T, action_dim)``, dtype ``float32``
-                - ``rewards``: ``np.ndarray`` of shape ``(T,)``, dtype ``float32``
-                - ``dones``: ``np.ndarray`` of shape ``(T,)``, dtype ``bool``
+                - ``obs``: ``torch.Tensor`` of shape ``(T + 1, H_in, W_in, C_in)``, dtype ``uint8``
+                - ``actions``: ``torch.Tensor`` of shape ``(T, action_dim)``, dtype ``float32``
+                - ``rewards``: ``torch.Tensor`` of shape ``(T,)``, dtype ``float32``
+                - ``dones``: ``torch.Tensor`` of shape ``(T,)``, dtype ``bool``
 
         Returns:
             dict[str, torch.Tensor]: Dictionary of tensors (collated by DataLoader into ``(B, ...)``):
@@ -137,7 +134,7 @@ class EpisodeToTensor(EpisodeTransform):
         """
         return {
             "obs": self.transform_obs(episode.obs),
-            "actions": torch.from_numpy(episode.actions),
-            "rewards": torch.from_numpy(episode.rewards),
-            "dones": torch.from_numpy(episode.dones.astype(np.float32)),
+            "actions": episode.actions,
+            "rewards": episode.rewards,
+            "dones": episode.dones.float(),
         }

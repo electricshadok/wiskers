@@ -67,11 +67,12 @@ class Collector:
         """
         self.policy.reset()
 
-        obs, _ = self.env.reset(seed=self.seed + self._episode_idx)
+        raw_obs, _ = self.env.reset(seed=self.seed + self._episode_idx)
         self._episode_idx += 1
+        obs = torch.as_tensor(raw_obs, dtype=torch.uint8)
 
-        observations: list[np.ndarray] = [obs]
-        actions: list[np.ndarray] = []
+        observations: list[torch.Tensor] = [obs]
+        actions: list[torch.Tensor] = []
         rewards: list[float] = []
         dones: list[bool] = []
 
@@ -84,20 +85,20 @@ class Collector:
             action = self.policy(obs_tensor, step)
             env_action, stored_action = self._format_action(action)
 
-            next_obs, reward, terminated, truncated, _ = self.env.step(env_action)
+            raw_next_obs, reward, terminated, truncated, _ = self.env.step(env_action)
             done = terminated or truncated
 
-            obs = next_obs
-            observations.append(next_obs)
+            obs = torch.as_tensor(raw_next_obs, dtype=torch.uint8)
+            observations.append(obs)
             actions.append(stored_action)
             rewards.append(float(reward))
             dones.append(done)
 
         return Episode(
-            obs=np.array(observations, dtype=np.uint8),
-            actions=np.array(actions, dtype=np.float32),
-            rewards=np.array(rewards, dtype=np.float32),
-            dones=np.array(dones, dtype=bool),
+            obs=torch.stack(observations),
+            actions=torch.stack(actions),
+            rewards=torch.tensor(rewards, dtype=torch.float32),
+            dones=torch.tensor(dones, dtype=torch.bool),
         )
 
     def collect(
@@ -130,7 +131,7 @@ class Collector:
                 print(
                     f"[Collector] episode {collected}/{self.num_episodes} | "
                     f"T={len(episode)} steps | "
-                    f"reward={episode.rewards.sum():.1f} | "
+                    f"reward={episode.rewards.sum().item():.1f} | "
                     f"buffer={buffer}"
                 )
 
@@ -140,15 +141,15 @@ class Collector:
         self.env.close()
 
     @staticmethod
-    def _format_action(action: torch.Tensor) -> tuple[int | np.ndarray, np.ndarray]:
+    def _format_action(action: torch.Tensor) -> tuple[int | np.ndarray, torch.Tensor]:
         """
         Convert a policy action ``torch.Tensor`` into:
         - ``env_action``: primitive ``int`` for discrete actions or ``float32`` ``np.ndarray`` for continuous.
-        - ``stored_action``: ``float32`` ``np.ndarray`` of shape ``(action_dim,)`` for ``Episode.actions``.
+        - ``stored_action``: ``float32`` ``torch.Tensor`` of shape ``(action_dim,)`` for ``Episode.actions``.
         """
         action_cpu = action.detach().cpu()
         if not action_cpu.is_floating_point():
             act_int = int(action_cpu.item())
-            return act_int, np.array([act_int], dtype=np.float32)
-        act_arr = action_cpu.numpy().astype(np.float32)
-        return act_arr, act_arr
+            return act_int, torch.tensor([act_int], dtype=torch.float32)
+        act_float = action_cpu.to(dtype=torch.float32)
+        return act_float.numpy(), act_float

@@ -76,13 +76,13 @@ def test_collector_collect_one_episode_no_args():
     episode = collector.collect_one_episode()
 
     assert len(episode) == 8
-    assert episode.obs.dtype == np.uint8
+    assert episode.obs.dtype == torch.uint8
     assert episode.obs.shape == (9, 16, 16, 3)
     # Initial observation o_0 is zeros, terminal observation o_8 is 8s
-    assert np.all(episode.obs[0] == 0)
-    assert np.all(episode.obs[8] == 8)
+    assert torch.all(episode.obs[0] == 0)
+    assert torch.all(episode.obs[8] == 8)
     assert episode.actions.shape == (8, 1)
-    assert episode.actions.dtype == np.float32
+    assert episode.actions.dtype == torch.float32
 
 
 def test_collector_max_steps_clamping():
@@ -139,7 +139,7 @@ def test_collector_continuous_actions():
     assert total_steps == 12
     assert buffer.num_episodes == 2
     assert buffer[0].actions.shape == (6, 2)
-    assert buffer[0].actions.dtype == np.float32
+    assert buffer[0].actions.dtype == torch.float32
 
 
 def test_collector_hydra_instantiation():
@@ -188,5 +188,5 @@ def test_collector_with_transform():
     assert seen_obs[0].dtype == torch.float32
     assert torch.allclose(seen_obs[0], torch.full((3, 8, 8), -1.0))
     # Episode still stores raw uint8 (T+1, H, W, C)
-    assert ep.obs.dtype == np.uint8
+    assert ep.obs.dtype == torch.uint8
     assert ep.obs.shape == (5, 16, 16, 3)
