@@ -51,7 +51,7 @@ class EpisodeToTensor(EpisodeTransform):
             raise ValueError(
                 f"image_size must be a 3-element sequence (C, H, W), got {image_size}."
             )
-        c, h, w = int(image_size[0]), int(image_size[1]), int(image_size[2])
+        c, h, w = image_size[0], image_size[1], image_size[2]
         if c not in (1, 3):
             raise ValueError(f"image_size channel count C must be 1 or 3, got {c}.")
         if h <= 0 or w <= 0:
@@ -61,7 +61,7 @@ class EpisodeToTensor(EpisodeTransform):
             raise ValueError(
                 f"obs_range must be a 2-element sequence (low, high), got {obs_range}."
             )
-        low, high = float(obs_range[0]), float(obs_range[1])
+        low, high = obs_range[0], obs_range[1]
         if low >= high:
             raise ValueError(
                 f"obs_range must satisfy low < high, got ({low}, {high})."

@@ -14,6 +14,7 @@ from wiskers.common.heads import (
     Reward,
 )
 
+
 N = 4
 T = 8
 FEAT = 48

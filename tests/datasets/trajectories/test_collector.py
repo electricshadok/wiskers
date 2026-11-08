@@ -3,24 +3,20 @@ import numpy as np
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-from wiskers.common.policy import BasePolicy
+from wiskers.common.policy import ContinuousPolicy, DiscretePolicy
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 
 
-class DummyPolicy(BasePolicy):
-    action_dim = 1
-    action_type = "discrete"
-
-    def forward(self, obs, env=None, step=0):
+class DummyPolicy(DiscretePolicy):
+    def forward(self, obs: np.ndarray, step: int = 0) -> int:
         return 0
 
 
-class DummyContinuousPolicy(BasePolicy):
+class DummyContinuousPolicy(ContinuousPolicy):
     action_dim = 2
-    action_type = "continuous"
 
-    def forward(self, obs, env=None, step=0):
+    def forward(self, obs: np.ndarray, step: int = 0) -> np.ndarray:
         return np.array([0.25, -0.75], dtype=np.float32)
 
 

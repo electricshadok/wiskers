@@ -22,7 +22,7 @@ class NoZoomCarRacing(CarRacing):
     def _render_indicators(self, W, H):
         if self.show_indicators:
             super()._render_indicators(W, H)
-        else:
+        elif self.surf is not None:
             self._clean_surf = self.surf.copy()
 
     def _create_image_array(self, screen, size):

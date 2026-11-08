@@ -150,14 +150,11 @@ def test_rollout_buffer_reset():
 def test_collector_with_rollout_buffer():
     import gymnasium as gym
 
-    from wiskers.common.policy import BasePolicy
+    from wiskers.common.policy import DiscretePolicy
     from wiskers.datasets.trajectories.collector import Collector
 
-    class DummyPolicy(BasePolicy):
-        action_dim = 1
-        action_type = "discrete"
-
-        def forward(self, obs, env=None, step=0):
+    class DummyPolicy(DiscretePolicy):
+        def forward(self, obs: np.ndarray, step: int = 0) -> int:
             return 0
 
     class DummyEnv(gym.Env):

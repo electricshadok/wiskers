@@ -64,12 +64,11 @@ def test_franka_kitchen_available_tasks():
 
 
 def test_franka_random_policy(franka_env):
-    policy = FrankaKitchenRandomPolicy()
+    policy = FrankaKitchenRandomPolicy(env=franka_env)
     assert policy.action_dim == 9
-    assert policy.action_type == "continuous"
 
     obs, _ = franka_env.reset()
-    action = policy(obs, env=franka_env, step=0)
+    action = policy(obs, step=0)
     assert isinstance(action, np.ndarray)
     assert action.shape == (9,)
     assert action.dtype == np.float32
@@ -77,13 +76,12 @@ def test_franka_random_policy(franka_env):
 
 
 def test_franka_heuristic_policy(franka_env):
-    policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2)
+    policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=franka_env)
     assert policy.action_dim == 9
-    assert policy.action_type == "continuous"
 
     obs, _ = franka_env.reset()
-    act1 = policy(obs, env=franka_env, step=0)
-    act2 = policy(obs, env=franka_env, step=1)
+    act1 = policy(obs, step=0)
+    act2 = policy(obs, step=1)
     assert act1.shape == (9,)
     assert act2.shape == (9,)
     assert np.all(act1 >= -1.0) and np.all(act1 <= 1.0)

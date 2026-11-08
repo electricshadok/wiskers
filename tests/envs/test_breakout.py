@@ -100,7 +100,7 @@ def test_breakout_datamodule_setup_and_dataloader():
 
 def test_breakout_datamodule_custom_policy():
     class ConstantFirePolicy(BreakoutPolicy):
-        def forward(self, obs, env=None, step=0):
+        def forward(self, obs, step=0):
             return 1
 
     policy = ConstantFirePolicy()
@@ -121,11 +121,11 @@ def test_breakout_datamodule_custom_policy():
 
 def test_breakout_random_policy():
     env = make_breakout_env(image_size=(64, 64))
-    policy = BreakoutRandomPolicy(fire_frequency=5)
+    policy = BreakoutRandomPolicy(fire_frequency=5, env=env)
+    obs, _ = env.reset()
     assert policy.action_dim == 1
-    assert policy.action_type == "discrete"
-    assert policy(None, env, step=0) == 1
-    assert policy(None, env, step=1) in {0, 1, 2, 3}
+    assert policy(obs, step=0) == 1
+    assert policy(obs, step=1) in {0, 1, 2, 3}
     env.close()
 
 

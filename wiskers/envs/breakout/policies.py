@@ -1,29 +1,28 @@
 import random
+from typing import Optional
 
 import gymnasium as gym
 import numpy as np
 
-from wiskers.common.policy import BasePolicy
+from wiskers.common.policy import DiscretePolicy
 
 
-class BreakoutPolicy(BasePolicy):
+class BreakoutPolicy(DiscretePolicy):
     """Base policy for ALE/Breakout. Discrete action space (0..3)."""
-
-    action_dim: int = 1
-    action_type: str = "discrete"
+    pass
 
 
 class BreakoutRandomPolicy(BreakoutPolicy):
     """Uniform random exploration for Breakout with periodic FIRE to unstick the ball."""
 
-    def __init__(self, fire_frequency: int = 30):
-        super().__init__()
+    def __init__(self, fire_frequency: int = 30, env: Optional[gym.Env] = None):
+        super().__init__(env=env)
         self.fire_frequency = fire_frequency
 
-    def forward(self, obs: np.ndarray, env: gym.Env, step: int = 0) -> int:
+    def forward(self, obs: np.ndarray, step: int = 0) -> int:
         if step % self.fire_frequency == 0:
             return 1  # FIRE
-        return int(env.action_space.sample())
+        return self.sample_random()
 
 
 class BreakoutHeuristicPolicy(BreakoutPolicy):
@@ -36,18 +35,18 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         101 : ball y-coordinate
     """
 
-    def __init__(self, epsilon: float = 0.1):
-        super().__init__()
+    def __init__(self, epsilon: float = 0.1, env: Optional[gym.Env] = None):
+        super().__init__(env=env)
         self.epsilon = epsilon
 
-    def forward(self, obs: np.ndarray, env: gym.Env, step: int = 0) -> int:
-        if random.random() < self.epsilon:
-            return 1 if step == 0 else int(env.action_space.sample())
+    def forward(self, obs: np.ndarray, step: int = 0) -> int:
+        if random.random() < self.epsilon or self.env is None:
+            return 1 if step == 0 else self.sample_random()
 
         try:
-            ale = getattr(env.unwrapped, "ale", None)
+            ale = getattr(self.env.unwrapped, "ale", None)
             if ale is None:
-                return int(env.action_space.sample())
+                return self.sample_random()
 
             ram = ale.getRAM()
             paddle_x = int(ram[72])
@@ -66,5 +65,4 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
             else:
                 return random.choice([0, 2, 3])
         except Exception:
-            return int(env.action_space.sample())
-
+            return self.sample_random()

@@ -45,6 +45,7 @@ class Collector:
     ) -> None:
         self.env = env
         self.policy = policy
+        self.policy.set_env(env)
         self.num_episodes = num_episodes
         self.min_steps = min_steps
         self.max_steps = max_steps
@@ -74,7 +75,7 @@ class Collector:
             if done:
                 break
 
-            action = self.policy(obs, self.env, step)
+            action = self.policy(obs, step)
             env_action, stored_action = self._format_action(action)
 
             next_obs, reward, terminated, truncated, _ = self.env.step(env_action)

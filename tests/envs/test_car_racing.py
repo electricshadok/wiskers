@@ -101,7 +101,7 @@ def test_car_racing_datamodule_setup_and_dataloader():
 
 def test_car_racing_datamodule_custom_policy():
     class StraightLinePolicy(CarRacingPolicy):
-        def forward(self, obs, env=None, step=0):
+        def forward(self, obs, step=0):
             return np.array([0.0, 0.5, 0.0], dtype=np.float32)
 
     policy = StraightLinePolicy()
@@ -122,13 +122,13 @@ def test_car_racing_datamodule_custom_policy():
 
 def test_car_racing_heuristic_policy():
     env = make_car_racing_env(image_size=(64, 64))
-    policy = CarRacingHeuristicPolicy()
+    policy = CarRacingHeuristicPolicy(env=env)
+    obs, _ = env.reset()
     assert policy.action_dim == 3
-    assert policy.action_type == "continuous"
     policy.steering = 0.5
     policy.reset()
     assert policy.steering == 0.0
-    action = policy(None, env, step=0)
+    action = policy(obs, step=0)
     assert isinstance(action, np.ndarray)
     assert action.shape == (3,)
     env.close()
@@ -136,8 +136,9 @@ def test_car_racing_heuristic_policy():
 
 def test_car_racing_random_policy():
     env = make_car_racing_env(image_size=(64, 64))
-    policy = CarRacingRandomPolicy()
-    action = policy(None, env, step=0)
+    policy = CarRacingRandomPolicy(env=env)
+    obs, _ = env.reset()
+    action = policy(obs, step=0)
     assert isinstance(action, np.ndarray)
     assert action.shape == (3,)
     env.close()

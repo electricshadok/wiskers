@@ -58,11 +58,9 @@ def test_adroit_hand_available_tasks():
 
 
 def test_adroit_random_policy(adroit_env):
-    policy = AdroitHandRandomPolicy()
-    assert policy.action_type == "continuous"
-
+    policy = AdroitHandRandomPolicy(env=adroit_env)
     obs, _ = adroit_env.reset()
-    action = policy(obs, env=adroit_env, step=0)
+    action = policy(obs, step=0)
     assert isinstance(action, np.ndarray)
     assert action.shape == (28,)
     assert action.dtype == np.float32
@@ -70,12 +68,10 @@ def test_adroit_random_policy(adroit_env):
 
 
 def test_adroit_heuristic_policy(adroit_env):
-    policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2)
-    assert policy.action_type == "continuous"
-
+    policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=adroit_env)
     obs, _ = adroit_env.reset()
-    act1 = policy(obs, env=adroit_env, step=0)
-    act2 = policy(obs, env=adroit_env, step=1)
+    act1 = policy(obs, step=0)
+    act2 = policy(obs, step=1)
     assert act1.shape == (28,)
     assert act2.shape == (28,)
     assert np.all(act1 >= -1.0) and np.all(act1 <= 1.0)

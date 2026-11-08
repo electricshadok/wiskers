@@ -121,7 +121,7 @@ class RecencyWeightedSampler(TrajectorySampler):
         if num_steps < 1:
             raise ValueError(f"num_steps must be >= 1, got {num_steps}")
         self.num_steps = num_steps
-        self.recency_factor = float(recency_factor)
+        self.recency_factor = recency_factor
 
     def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
         if buffer.is_empty:

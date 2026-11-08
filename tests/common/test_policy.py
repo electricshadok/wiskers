@@ -26,17 +26,38 @@ def test_env_policies_inherit_from_base_policy():
     assert issubclass(AdroitHandPolicy, BasePolicy)
     assert issubclass(FrankaKitchenPolicy, BasePolicy)
 
-    breakout_pol = BreakoutRandomPolicy()
-    car_pol = CarRacingRandomPolicy()
-    adroit_pol = AdroitHandRandomPolicy()
-    franka_pol = FrankaKitchenRandomPolicy()
+    breakout_pol = BreakoutRandomPolicy(env=_DummyEnv(gym.spaces.Discrete(4)))
+    car_pol = CarRacingRandomPolicy(env=_DummyEnv(gym.spaces.Box(-1.0, 1.0, (3,))))
+    adroit_pol = AdroitHandRandomPolicy(env=_DummyEnv(gym.spaces.Box(-1.0, 1.0, (28,))))
+    franka_pol = FrankaKitchenRandomPolicy(env=_DummyEnv(gym.spaces.Box(-1.0, 1.0, (9,))))
 
     for pol in (breakout_pol, car_pol, adroit_pol, franka_pol):
         assert isinstance(pol, BasePolicy)
         pol.reset()
 
     dummy_obs = np.zeros((64, 64, 3), dtype=np.uint8)
-    assert isinstance(breakout_pol(dummy_obs, _DummyEnv(gym.spaces.Discrete(4)), step=0), int)
-    assert car_pol(dummy_obs, _DummyEnv(gym.spaces.Box(-1.0, 1.0, (3,))), step=0).shape == (3,)
-    assert adroit_pol(dummy_obs, _DummyEnv(gym.spaces.Box(-1.0, 1.0, (28,))), step=0).shape == (28,)
-    assert franka_pol(dummy_obs, _DummyEnv(gym.spaces.Box(-1.0, 1.0, (9,))), step=0).shape == (9,)
+    assert isinstance(breakout_pol(dummy_obs, step=0), int)
+    assert car_pol(dummy_obs, step=0).shape == (3,)
+    assert adroit_pol(dummy_obs, step=0).shape == (28,)
+    assert franka_pol(dummy_obs, step=0).shape == (9,)
+
+
+def test_policy_env_validation():
+    # DiscretePolicy rejects Box space
+    with pytest.raises(ValueError, match="requires a Discrete action_space"):
+        BreakoutRandomPolicy(env=_DummyEnv(gym.spaces.Box(-1.0, 1.0, (3,))))
+
+    # ContinuousPolicy rejects Discrete space
+    with pytest.raises(ValueError, match="requires a continuous Box action_space"):
+        CarRacingRandomPolicy(env=_DummyEnv(gym.spaces.Discrete(4)))
+
+    # ContinuousPolicy rejects wrong action_dim
+    with pytest.raises(ValueError, match="expects action_dim=3"):
+        CarRacingRandomPolicy(env=_DummyEnv(gym.spaces.Box(-1.0, 1.0, (5,))))
+
+    # Calling sample_random without setting env raises RuntimeError
+    pol = CarRacingRandomPolicy()
+    dummy_obs = np.zeros((64, 64, 3), dtype=np.uint8)
+    with pytest.raises(RuntimeError, match="env is not set"):
+        pol(dummy_obs, step=0)
+
