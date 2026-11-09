@@ -47,6 +47,12 @@ Launch training with a chosen experiment configuration file (`<config_yaml>`):
 
 ```bash
 python wiskers/cli/train.py --config <config_yaml>
+
+# World Models on CarRacing-v3
+python wiskers/cli/train.py --config configs/training/carracing_world_models.yaml
+
+# World Models on Franka Kitchen
+python wiskers/cli/train.py --config configs/training/franka_kitchen_world_models.yaml
 ```
 
 ## Prediction & Evaluation

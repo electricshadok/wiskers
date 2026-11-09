@@ -1,5 +1,7 @@
 import lightning as L
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.optim import Adam
 
 from wiskers.models.world_models.controller import Controller
@@ -62,6 +64,36 @@ class WorldModels(L.LightningModule):
             param.requires_grad_(False)
 
         self.learning_rate = learning_rate
+
+    def _shared_step(self, batch, stage: str):
+        obs = batch["obs"]  # [B, T + 1, C, H, W]
+        actions = batch["actions"]  # [B, T, A]
+        dones = batch["dones"]  # [B, T]
+        B, T1 = obs.shape[:2]
+
+        # Encode observations with the frozen V model
+        with torch.no_grad():
+            z = self.encoder(obs.flatten(0, 1)).view(B, T1, -1)  # [B, T + 1, Z]
+
+        # Predict z_{t+1} from (z_t, a_t)
+        pi, mu, sigma, done, _ = self.mdn_rnn(z[:, :-1], actions)
+        mdn_loss = MDNRNN.mdn_loss(pi, mu, sigma, z[:, 1:])
+        done_loss = F.binary_cross_entropy(done.squeeze(-1), dones)
+        loss = mdn_loss + done_loss
+
+        self.log(f"{stage}_loss", loss, prog_bar=True)
+        self.log(f"{stage}_mdn_loss", mdn_loss)
+        self.log(f"{stage}_done_loss", done_loss)
+        return loss
+
+    def training_step(self, batch, batch_idx):
+        return self._shared_step(batch, "train")
+
+    def validation_step(self, batch, batch_idx):
+        return self._shared_step(batch, "val")
+
+    def test_step(self, batch, batch_idx):
+        return self._shared_step(batch, "test")
 
     def configure_optimizers(self):
         return Adam(self.mdn_rnn.parameters(), lr=self.learning_rate)

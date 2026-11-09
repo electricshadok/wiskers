@@ -112,3 +112,10 @@ class TrajectoryDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
         )
+
+    # NOTE: no held-out split yet — validation/test reuse the replay buffer.
+    def val_dataloader(self) -> DataLoader:
+        return self.train_dataloader()
+
+    def test_dataloader(self) -> DataLoader:
+        return self.train_dataloader()
