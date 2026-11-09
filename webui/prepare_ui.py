@@ -54,8 +54,10 @@ def apply_ui_overrides(config: Any) -> Any:
         config.data_module.collector.max_steps = MAX_STEPS
         config.data_module.collector.min_steps = MIN_STEPS
 
-        if hasattr(config.data_module.collector, "env"):
-            config.data_module.collector.env.image_size = IMAGE_SIZE
+        if hasattr(config.data_module.collector, "env") and hasattr(
+            config.data_module.collector.env, "env"
+        ):
+            config.data_module.collector.env.env.image_size = IMAGE_SIZE
 
         if hasattr(config.data_module, "sampler"):
             config.data_module.sampler.num_steps = SAMPLER_NUM_STEPS

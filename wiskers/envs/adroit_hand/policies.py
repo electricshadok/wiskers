@@ -8,6 +8,7 @@ import gymnasium as gym
 import torch
 
 from wiskers.common.policy import ContinuousPolicy
+from wiskers.envs.torch_env import TorchGymEnv
 
 
 class AdroitHandPolicy(ContinuousPolicy):
@@ -15,7 +16,7 @@ class AdroitHandPolicy(ContinuousPolicy):
 
     action_dim: int = 28
 
-    def _validate_env(self, env: gym.Env) -> None:
+    def _validate_env(self, env: TorchGymEnv) -> None:
         if not isinstance(env.action_space, gym.spaces.Box) or not env.action_space.shape:
             raise ValueError(
                 f"{self.__class__.__name__} requires a continuous Box action_space, "
@@ -40,14 +41,14 @@ class AdroitHandHeuristicPolicy(AdroitHandPolicy):
     Args:
         momentum: Autoregressive decay factor in [0, 1). Higher values yield smoother trajectories.
         noise_scale: Standard deviation of injected action noise.
-        env: Optional Gymnasium environment instance.
+        env: Optional TorchGymEnv environment instance.
     """
 
     def __init__(
         self,
         momentum: float = 0.85,
         noise_scale: float = 0.25,
-        env: Optional[gym.Env] = None,
+        env: Optional[TorchGymEnv] = None,
     ):
         self.current_action: torch.Tensor = torch.zeros(self.action_dim, dtype=torch.float32)
         super().__init__(env=env)

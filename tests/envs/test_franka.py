@@ -6,6 +6,7 @@ from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+from wiskers.envs import TorchGymEnv
 from wiskers.envs.franka import (
     AVAILABLE_TASKS,
     FrankaKitchenHeuristicPolicy,
@@ -66,12 +67,12 @@ def test_franka_kitchen_available_tasks():
 
 
 def test_franka_random_policy(franka_env):
-    policy = FrankaKitchenRandomPolicy(env=franka_env)
+    torch_env = TorchGymEnv(franka_env)
+    policy = FrankaKitchenRandomPolicy(env=torch_env)
     assert policy.action_dim == 9
 
-    obs, _ = franka_env.reset()
-    obs_t = torch.from_numpy(obs)
-    action = policy(obs_t, step=0)
+    obs, _ = torch_env.reset()
+    action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (9,)
     assert action.dtype == torch.float32
@@ -79,13 +80,13 @@ def test_franka_random_policy(franka_env):
 
 
 def test_franka_heuristic_policy(franka_env):
-    policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=franka_env)
+    torch_env = TorchGymEnv(franka_env)
+    policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=torch_env)
     assert policy.action_dim == 9
 
-    obs, _ = franka_env.reset()
-    obs_t = torch.from_numpy(obs)
-    act1 = policy(obs_t, step=0)
-    act2 = policy(obs_t, step=1)
+    obs, _ = torch_env.reset()
+    act1 = policy(obs, step=0)
+    act2 = policy(obs, step=1)
     assert act1.shape == (9,)
     assert act2.shape == (9,)
     assert torch.all(act1 >= -1.0) and torch.all(act1 <= 1.0)
@@ -99,7 +100,7 @@ def test_franka_kitchen_collector_integration(franka_env):
     policy = FrankaKitchenHeuristicPolicy()
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=franka_env,
+        env=TorchGymEnv(franka_env),
         policy=policy,
         transform=transform,
         num_episodes=1,

@@ -1,10 +1,10 @@
+import random
 from typing import Optional
 
-import gymnasium as gym
-import numpy as np
 import torch
 
 from wiskers.common.policy import ContinuousPolicy
+from wiskers.envs.torch_env import TorchGymEnv
 
 
 class CarRacingPolicy(ContinuousPolicy):
@@ -28,7 +28,7 @@ class CarRacingHeuristicPolicy(CarRacingPolicy):
         steering: smoothed steering angle in [-1, 1], reset to 0.0 at episode start.
     """
 
-    def __init__(self, env: Optional[gym.Env] = None):
+    def __init__(self, env: Optional[TorchGymEnv] = None):
         super().__init__(env=env)
         self.steering = 0.0
 
@@ -36,8 +36,8 @@ class CarRacingHeuristicPolicy(CarRacingPolicy):
         self.steering = 0.0
 
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        self.steering = self.steering * 0.8 + np.random.uniform(-0.2, 0.2)
-        self.steering = float(np.clip(self.steering, -1.0, 1.0))
-        gas = float(np.random.uniform(0.4, 0.8))
-        brake = float(np.random.uniform(0.0, 0.05))
+        self.steering = self.steering * 0.8 + random.uniform(-0.2, 0.2)
+        self.steering = max(-1.0, min(1.0, self.steering))
+        gas = random.uniform(0.4, 0.8)
+        brake = random.uniform(0.0, 0.05)
         return torch.tensor([self.steering, gas, brake], dtype=torch.float32)

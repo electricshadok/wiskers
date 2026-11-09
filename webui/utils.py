@@ -1,7 +1,6 @@
 from typing import Any
 
 import streamlit as st
-import torch
 
 from webui.dataset.adapters import get_adapter
 
@@ -65,22 +64,22 @@ def dataset_ui(data_module: Any):
     col1, col2 = st.columns(2)
 
     obs_curr = episode.obs[step_idx]
-    obs_next = episode.obs[step_idx + 1] if step_idx + 1 < T else episode.obs[step_idx]
+    obs_next = episode.obs[step_idx + 1]
 
     with col1:
-        st.markdown(f"**Current Observation (`obs[{step_idx}]`, shape `{obs_curr.shape}`)**")
-        st.image(obs_curr, width="stretch")
+        st.markdown(f"**Current Observation (`obs[{step_idx}]`, shape `{tuple(obs_curr.shape)}`)**")
+        st.image(obs_curr.numpy(), width="stretch")
 
     with col2:
-        next_label = f"obs[{step_idx + 1}]" if step_idx + 1 < T else f"obs[{step_idx}] (terminal)"
-        st.markdown(f"**Next Observation (`{next_label}`, shape `{obs_next.shape}`)**")
-        st.image(obs_next, width="stretch")
+        next_label = f"obs[{step_idx + 1}]"
+        st.markdown(f"**Next Observation (`{next_label}`, shape `{tuple(obs_next.shape)}`)**")
+        st.image(obs_next.numpy(), width="stretch")
 
     # ── Action & Status ──────────────────────────────────────────────────
     st.markdown("#### 🕹️ Control Action & Status")
-    action = torch.from_numpy(episode.actions[step_idx])
-    reward_val = float(episode.rewards[step_idx])
-    done_val = bool(episode.dones[step_idx])
+    action = episode.actions[step_idx]
+    reward_val = float(episode.rewards[step_idx].item())
+    done_val = bool(episode.dones[step_idx].item())
 
     adapter = get_adapter(data_module)
     step_info = adapter.describe_step(action, reward_val, done_val)
@@ -100,7 +99,7 @@ def dataset_ui(data_module: Any):
 
     # ── Return trajectory curve ──────────────────────────────────────────
     st.markdown("#### 📈 Episode Return Curve")
-    cum_rewards = episode.rewards.cumsum()
+    cum_rewards = episode.rewards.cumsum(dim=0).numpy()
     st.line_chart(cum_rewards, height=180)
     st.caption(
         f"Step {step_idx}: reward = **{reward_val:+.3f}**  |  "

@@ -6,6 +6,7 @@ from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 from wiskers.datasets.trajectories.buffer import ReplayBuffer
 from wiskers.datasets.trajectories.collector import Collector
 from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand import (
     AVAILABLE_TASKS,
     AdroitHandHeuristicPolicy,
@@ -60,10 +61,10 @@ def test_adroit_hand_available_tasks():
 
 
 def test_adroit_random_policy(adroit_env):
-    policy = AdroitHandRandomPolicy(env=adroit_env)
-    obs, _ = adroit_env.reset()
-    obs_t = torch.from_numpy(obs)
-    action = policy(obs_t, step=0)
+    torch_env = TorchGymEnv(adroit_env)
+    policy = AdroitHandRandomPolicy(env=torch_env)
+    obs, _ = torch_env.reset()
+    action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (28,)
     assert action.dtype == torch.float32
@@ -71,11 +72,11 @@ def test_adroit_random_policy(adroit_env):
 
 
 def test_adroit_heuristic_policy(adroit_env):
-    policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=adroit_env)
-    obs, _ = adroit_env.reset()
-    obs_t = torch.from_numpy(obs)
-    act1 = policy(obs_t, step=0)
-    act2 = policy(obs_t, step=1)
+    torch_env = TorchGymEnv(adroit_env)
+    policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=torch_env)
+    obs, _ = torch_env.reset()
+    act1 = policy(obs, step=0)
+    act2 = policy(obs, step=1)
     assert act1.shape == (28,)
     assert act2.shape == (28,)
     assert torch.all(act1 >= -1.0) and torch.all(act1 <= 1.0)
@@ -89,7 +90,7 @@ def test_adroit_hand_collector_integration(adroit_env):
     policy = AdroitHandHeuristicPolicy()
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=adroit_env,
+        env=TorchGymEnv(adroit_env),
         policy=policy,
         transform=transform,
         num_episodes=1,

@@ -2,33 +2,32 @@
 Modular rollout collector for trajectory-based RL and world models.
 """
 
-import gymnasium as gym
-import numpy as np
 import torch
 
 from wiskers.common.policy import BasePolicy
 from wiskers.datasets.trajectories.buffer import Buffer
 from wiskers.datasets.trajectories.episode import Episode
 from wiskers.datasets.trajectories.transforms import EpisodeTransform
+from wiskers.envs.torch_env import TorchGymEnv
 
 
 class Collector:
     """
-    Rollout collector that gathers episodes from an environment using a policy
-    and stores them in a ReplayBuffer.
+    Rollout collector that gathers episodes from a TorchGymEnv using a policy
+    and stores them in a Buffer as CPU PyTorch tensors.
 
     Guarantees:
         - Collects ``num_episodes`` valid episodes.
         - Enforces ``min_steps``: any episode ending earlier than ``min_steps`` is discarded.
         - Enforces ``max_steps``: clamps episodes from exceeding ``max_steps``.
-        - Stores observations as compact ``uint8`` numpy arrays while passing transformed
+        - Stores observations as compact ``uint8`` CPU tensors while passing transformed
           PyTorch tensors to the policy.
 
     Args:
-        env (gym.Env): The Gymnasium environment instance.
+        env (TorchGymEnv): The PyTorch-wrapped Gymnasium environment instance.
         policy (BasePolicy): Policy instance implementing ``BasePolicy``.
         transform (EpisodeTransform): Transform used to convert raw ``uint8``
-            observations into ``torch.Tensor`` before passing them to ``policy``.
+            observations into normalized ``torch.Tensor`` before passing them to ``policy``.
         num_episodes (int): Target number of valid episodes to collect.
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
         max_steps (int): Maximum step cutoff per episode (clamped).
@@ -38,7 +37,7 @@ class Collector:
 
     def __init__(
         self,
-        env: gym.Env,
+        env: TorchGymEnv,
         policy: BasePolicy,
         transform: EpisodeTransform,
         num_episodes: int = 10,
@@ -63,13 +62,12 @@ class Collector:
         Run a single environment rollout using self.env and self.policy up to self.max_steps.
 
         Returns:
-            Episode containing collected transitions.
+            Episode containing collected transitions as CPU tensors.
         """
         self.policy.reset()
 
-        raw_obs, _ = self.env.reset(seed=self.seed + self._episode_idx)
+        obs, _ = self.env.reset(seed=self.seed + self._episode_idx)
         self._episode_idx += 1
-        obs = torch.as_tensor(raw_obs, dtype=torch.uint8)
 
         observations: list[torch.Tensor] = [obs]
         actions: list[torch.Tensor] = []
@@ -83,15 +81,14 @@ class Collector:
 
             obs_tensor = self.transform.transform_obs(obs)
             action = self.policy(obs_tensor, step)
-            env_action, stored_action = self._format_action(action)
 
-            raw_next_obs, reward, terminated, truncated, _ = self.env.step(env_action)
+            next_obs, reward, terminated, truncated, _ = self.env.step(action)
             done = terminated or truncated
 
-            obs = torch.as_tensor(raw_next_obs, dtype=torch.uint8)
+            obs = next_obs
             observations.append(obs)
-            actions.append(stored_action)
-            rewards.append(float(reward))
+            actions.append(action.detach().cpu().reshape(-1).to(dtype=torch.float32))
+            rewards.append(reward)
             dones.append(done)
 
         return Episode(
@@ -139,17 +136,3 @@ class Collector:
 
     def close(self) -> None:
         self.env.close()
-
-    @staticmethod
-    def _format_action(action: torch.Tensor) -> tuple[int | np.ndarray, torch.Tensor]:
-        """
-        Convert a policy action ``torch.Tensor`` into:
-        - ``env_action``: primitive ``int`` for discrete actions or ``float32`` ``np.ndarray`` for continuous.
-        - ``stored_action``: ``float32`` ``torch.Tensor`` of shape ``(action_dim,)`` for ``Episode.actions``.
-        """
-        action_cpu = action.detach().cpu()
-        if not action_cpu.is_floating_point():
-            act_int = int(action_cpu.item())
-            return act_int, torch.tensor([act_int], dtype=torch.float32)
-        act_float = action_cpu.to(dtype=torch.float32)
-        return act_float.numpy(), act_float

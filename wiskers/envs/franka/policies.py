@@ -4,10 +4,10 @@ Policies for FrankaKitchen environment.
 
 from typing import Optional
 
-import gymnasium as gym
 import torch
 
 from wiskers.common.policy import ContinuousPolicy
+from wiskers.envs.torch_env import TorchGymEnv
 
 
 class FrankaKitchenPolicy(ContinuousPolicy):
@@ -32,14 +32,14 @@ class FrankaKitchenHeuristicPolicy(FrankaKitchenPolicy):
     Args:
         momentum: Autoregressive decay factor in [0, 1). Higher values yield smoother trajectories.
         noise_scale: Standard deviation of injected action noise.
-        env: Optional Gymnasium environment instance.
+        env: Optional TorchGymEnv environment instance.
     """
 
     def __init__(
         self,
         momentum: float = 0.85,
         noise_scale: float = 0.25,
-        env: Optional[gym.Env] = None,
+        env: Optional[TorchGymEnv] = None,
     ):
         super().__init__(env=env)
         self.momentum = momentum

@@ -1,10 +1,10 @@
 import random
 from typing import Optional
 
-import gymnasium as gym
 import torch
 
 from wiskers.common.policy import DiscretePolicy
+from wiskers.envs.torch_env import TorchGymEnv
 
 
 class BreakoutPolicy(DiscretePolicy):
@@ -15,7 +15,7 @@ class BreakoutPolicy(DiscretePolicy):
 class BreakoutRandomPolicy(BreakoutPolicy):
     """Uniform random exploration for Breakout with periodic FIRE to unstick the ball."""
 
-    def __init__(self, fire_frequency: int = 30, env: Optional[gym.Env] = None):
+    def __init__(self, fire_frequency: int = 30, env: Optional[TorchGymEnv] = None):
         super().__init__(env=env)
         self.fire_frequency = fire_frequency
 
@@ -35,7 +35,7 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         101 : ball y-coordinate
     """
 
-    def __init__(self, epsilon: float = 0.1, env: Optional[gym.Env] = None):
+    def __init__(self, epsilon: float = 0.1, env: Optional[TorchGymEnv] = None):
         super().__init__(env=env)
         self.epsilon = epsilon
 
