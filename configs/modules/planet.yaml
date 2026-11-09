@@ -1,0 +1,5 @@
+# PlaNet Architecture (Hafner et al., 2019)
+module:
+  _target_: wiskers.planet.PlaNet
+  learning_rate: 1e-3
+

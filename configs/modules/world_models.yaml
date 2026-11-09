@@ -1,0 +1,51 @@
+# World Models Architecture (Ha & Schmidhuber, 2018)
+module:
+  _target_: wiskers.world_models.WorldModels
+
+  # V model (frozen): [N, 3, 64, 64] -> z [N, 32]
+  encoder:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: wiskers.models.world_models.encoder_decoder.CNNEncoder
+        in_channels: 3
+        block_channels: [32, 64, 128, 256]
+        block_attentions: [False, False, False, False]
+      - _target_: torch.nn.Flatten
+      - _target_: torch.nn.Linear
+        in_features: 4096  # 256 * 4 * 4
+        out_features: ${module.mdn_rnn.latent_size}
+
+  # z [N, 32] -> [N, 3, 64, 64]
+  decoder:
+    _target_: torch.nn.Sequential
+    _args_:
+      - _target_: torch.nn.Linear
+        in_features: ${module.mdn_rnn.latent_size}
+        out_features: 4096  # 256 * 4 * 4
+      - _target_: torch.nn.Unflatten
+        dim: 1
+        unflattened_size: [256, 4, 4]
+      - _target_: wiskers.models.world_models.encoder_decoder.CNNDecoder
+        out_channels: 3
+        stem_channels: 256
+        block_channels: [256, 128, 64, 32]
+        block_attentions: [False, False, False, False]
+
+  # M model (trained)
+  mdn_rnn:
+    _target_: wiskers.models.world_models.mdn_rnn.MDNRNN
+    latent_size: 32
+    action_size: 3  # Default action dimension (can be overridden per environment)
+    hidden_size: 256
+    num_gaussians: 5
+
+  # C model (not trained here)
+  controller:
+    _target_: wiskers.models.world_models.controller.Controller
+    latent_size: ${module.mdn_rnn.latent_size}
+    hidden_size: ${module.mdn_rnn.hidden_size}
+    action_size: ${module.mdn_rnn.action_size}
+
+  # Optimizer Configuration
+  learning_rate: 1e-3
+
