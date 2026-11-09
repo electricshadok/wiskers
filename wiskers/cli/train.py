@@ -35,7 +35,18 @@ class TrainCLI:
         # Initialize random number generators
         L.seed_everything(seed=self.config.seed, workers=True)
 
-        # Prepare callbacks, loggers, model and data loaders
+        self.model = instantiate(self.config.module, _convert_="all")
+        self.datamodule = instantiate(self.config.data_module, _convert_="all")
+
+        self.logger = None
+        self.checkpoint_callback = None
+        self.callbacks = []
+
+    def _setup_logging_and_callbacks(self) -> None:
+        """Sets up the logger and callbacks for training."""
+        if self.logger is not None:
+            return
+
         self.logger = TensorBoardLogger(**self.config.tensor_board_logger)
         checkpoint_dir = os.path.join(self.logger.log_dir, "checkpoints")
 
@@ -56,15 +67,21 @@ class TrainCLI:
                 EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5)
             )
 
-        self.model = instantiate(self.config.module, _convert_="all")
-
-        self.datamodule = instantiate(self.config.data_module, _convert_="all")
-
     def run(self, fast_dev_run=False, quick_run=False):
         """
         Runs the training and testing of the model using the user settings.
         """
         trainer_args = dict(self.config.trainer)
+
+        if fast_dev_run:
+            logger = False
+            callbacks = []
+            profiler = None
+        else:
+            self._setup_logging_and_callbacks()
+            logger = self.logger
+            callbacks = self.callbacks
+            profiler = PyTorchProfiler()
 
         if quick_run:
             # override to run a few quick batches/epochs
@@ -79,9 +96,9 @@ class TrainCLI:
 
         # Train the model
         trainer = L.Trainer(
-            logger=self.logger,
-            callbacks=self.callbacks,
-            profiler=PyTorchProfiler(),
+            logger=logger,
+            callbacks=callbacks,
+            profiler=profiler,
             fast_dev_run=fast_dev_run,
             **trainer_args,
         )
@@ -96,6 +113,7 @@ class TrainCLI:
 
         # Export best ONNX
         if self.config.export_onnx:
+            assert self.checkpoint_callback is not None
             best_model_path = self.checkpoint_callback.best_model_path
             onnx_path = pathlib.Path(best_model_path).with_suffix(".onnx")
             self.model.to_onnx(onnx_path, export_params=True)
@@ -103,6 +121,7 @@ class TrainCLI:
 
         # Export best safetensors
         if self.config.export_safetensors:
+            assert self.checkpoint_callback is not None
             best_model_path = self.checkpoint_callback.best_model_path
             st_path = pathlib.Path(best_model_path).with_suffix(".safetensors")
             save_model(self.model, st_path)
