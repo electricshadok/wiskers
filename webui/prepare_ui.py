@@ -49,19 +49,11 @@ def get_cache_path(config_path: str) -> Path:
 
 def apply_ui_overrides(config: Any) -> Any:
     """Apply fast WebUI preview overrides (10 episodes, 10 max steps, 5 min steps, native image_size)."""
-    if hasattr(config, "data_module") and hasattr(config.data_module, "collector"):
-        config.data_module.collector.num_episodes = NUM_EPISODES
-        config.data_module.collector.max_steps = MAX_STEPS
-        config.data_module.collector.min_steps = MIN_STEPS
-
-        if hasattr(config.data_module.collector, "env") and hasattr(
-            config.data_module.collector.env, "env"
-        ):
-            config.data_module.collector.env.env.image_size = IMAGE_SIZE
-
-        if hasattr(config.data_module, "sampler"):
-            config.data_module.sampler.num_steps = SAMPLER_NUM_STEPS
-
+    config.data_module.collector.num_episodes = NUM_EPISODES
+    config.data_module.collector.max_steps = MAX_STEPS
+    config.data_module.collector.min_steps = MIN_STEPS
+    config.data_module.collector.env.env.image_size = IMAGE_SIZE
+    config.data_module.sampler.num_steps = SAMPLER_NUM_STEPS
     return config
 
 
@@ -79,8 +71,7 @@ def prepare_dataset_cache(config_path: str, force: bool = False) -> Path:
     data_module = instantiate(config.data_module, _convert_="all")
     data_module.prepare_data()
     data_module.setup("fit")
-    if hasattr(data_module, "collector") and hasattr(data_module.collector, "close"):
-        data_module.collector.close()
+    data_module.collector.close()
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     torch.save(data_module.replay_buffer, cache_path)

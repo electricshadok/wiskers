@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Dict
 
-import numpy as np
 import torch
+
+from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
 
 
 # ── Contract ──────────────────────────────────────────────────────────────────
@@ -47,7 +48,8 @@ class CarRacingUIAdapter(DataModuleUIAdapter):
     """UI adapter for CarRacing-v3 (continuous action space)."""
 
     def describe_step(self, action: torch.Tensor, reward: float, done: bool) -> Dict[str, StepInfo]:
-        a = action.cpu().numpy()
+        a = action.detach().cpu().flatten()
+        steering, gas, brake = float(a[0].item()), float(a[1].item()), float(a[2].item())
 
         if reward > 0:
             reward_status, reward_note = "success", "✅ new tile visited"
@@ -57,10 +59,10 @@ class CarRacingUIAdapter(DataModuleUIAdapter):
             reward_status, reward_note = "error", "⚠️ large penalty"
 
         return {
-            "Steering": StepInfo(value=f"{a[0]:.3f}", bar=float((a[0] + 1.0) / 2.0), status=None, note=None),
-            "Gas":      StepInfo(value=f"{a[1]:.3f}", bar=float(a[1]),                status=None, note=None),
-            "Brake":    StepInfo(value=f"{a[2]:.3f}", bar=float(a[2]),                status=None, note=None),
-            "Reward":   StepInfo(value=f"{reward:.3f}", bar=None, status=reward_status, note=reward_note),
+            "Steering": StepInfo(value=f"{steering:.3f}", bar=(steering + 1.0) / 2.0, status=None, note=None),
+            "Gas":      StepInfo(value=f"{gas:.3f}",      bar=gas,                     status=None, note=None),
+            "Brake":    StepInfo(value=f"{brake:.3f}",    bar=brake,                   status=None, note=None),
+            "Reward":   StepInfo(value=f"{reward:.3f}",   bar=None, status=reward_status, note=reward_note),
             "Done":     StepInfo(
                 value=str(done), bar=None,
                 status="error" if done else "success",
@@ -97,20 +99,20 @@ class FrankaKitchenUIAdapter(DataModuleUIAdapter):
     """UI adapter for FrankaKitchen-v1 (continuous 9-DoF action space)."""
 
     def describe_step(self, action: torch.Tensor, reward: float, done: bool) -> Dict[str, StepInfo]:
-        a = action.cpu().numpy().flatten()
-        arm_norm = float(np.linalg.norm(a[:7])) if len(a) >= 7 else 0.0
-        gripper_val = float(a[7:].mean()) if len(a) >= 9 else (float(a[-1]) if len(a) > 0 else 0.0)
+        a = action.detach().cpu().flatten()
+        arm_norm = float(torch.linalg.norm(a[:7]).item())
+        gripper_val = float(a[7:].mean().item())
 
         return {
             "Arm Velocity (L2)": StepInfo(
                 value=f"{arm_norm:.3f}",
-                bar=min(1.0, float(arm_norm / 2.65)),
+                bar=min(1.0, arm_norm / 2.65),
                 status=None,
                 note="Joints 1-7 velocity norm",
             ),
             "Gripper Action": StepInfo(
                 value=f"{gripper_val:+.3f}",
-                bar=float((gripper_val + 1.0) / 2.0),
+                bar=(gripper_val + 1.0) / 2.0,
                 status=None,
                 note="Close (-1) / Open (+1)",
             ),
@@ -133,27 +135,27 @@ class AdroitHandUIAdapter(DataModuleUIAdapter):
     """UI adapter for AdroitHand-v1 (continuous 24..30-DoF dexterous hand action space)."""
 
     def describe_step(self, action: torch.Tensor, reward: float, done: bool) -> Dict[str, StepInfo]:
-        a = action.cpu().numpy().flatten()
-        wrist_norm = float(np.linalg.norm(a[:4])) if len(a) >= 4 else 0.0
-        finger_norm = float(np.linalg.norm(a[4:])) if len(a) > 4 else 0.0
-        grip_mean = float(a[4:].mean()) if len(a) > 4 else (float(a.mean()) if len(a) > 0 else 0.0)
+        a = action.detach().cpu().flatten()
+        wrist_norm = float(torch.linalg.norm(a[:4]).item())
+        finger_norm = float(torch.linalg.norm(a[4:]).item())
+        grip_mean = float(a[4:].mean().item())
 
         return {
             "Wrist / Arm (L2)": StepInfo(
                 value=f"{wrist_norm:.3f}",
-                bar=min(1.0, float(wrist_norm / 2.0)),
+                bar=min(1.0, wrist_norm / 2.0),
                 status=None,
                 note="Base & wrist joints norm",
             ),
             "Finger Joints (L2)": StepInfo(
                 value=f"{finger_norm:.3f}",
-                bar=min(1.0, float(finger_norm / 5.0)),
+                bar=min(1.0, finger_norm / 5.0),
                 status=None,
                 note="Dexterous finger actuation norm",
             ),
             "Mean Grip": StepInfo(
                 value=f"{grip_mean:+.3f}",
-                bar=float((grip_mean + 1.0) / 2.0),
+                bar=(grip_mean + 1.0) / 2.0,
                 status=None,
                 note="Extend (-1) / Flex (+1)",
             ),
@@ -185,28 +187,21 @@ class DefaultUIAdapter(DataModuleUIAdapter):
 
 # ── Registry & Factory ────────────────────────────────────────────────────────
 
-def get_adapter(data_module: Any) -> DataModuleUIAdapter:
+def get_adapter(data_module: TrajectoryDataModule) -> DataModuleUIAdapter:
     """
-    Return the UI adapter for the given DataModule instance.
+    Return the UI adapter for the given TrajectoryDataModule instance.
     """
-    env = getattr(getattr(data_module, "collector", None), "env", None)
-    env_str = ""
-    if env is not None:
-        spec = getattr(env, "spec", None) or getattr(getattr(env, "unwrapped", None), "spec", None)
-        if spec is not None and getattr(spec, "id", None):
-            env_str = str(spec.id).lower()
-        else:
-            env_str = f"{type(env).__name__} {type(getattr(env, 'unwrapped', None)).__name__}".lower()
+    env = data_module.collector.env
+    spec = env.spec or env.unwrapped.spec
+    env_str = spec.id.lower() if (spec is not None and spec.id) else type(env.unwrapped).__name__.lower()
 
-    cls_name = type(data_module).__name__.lower()
-
-    if "carracing" in env_str or "car_racing" in env_str or "carracing" in cls_name:
+    if "carracing" in env_str or "car_racing" in env_str:
         return CarRacingUIAdapter()
-    if "breakout" in env_str or "breakout" in cls_name:
+    if "breakout" in env_str:
         return BreakoutUIAdapter()
-    if "franka" in env_str or "kitchen" in env_str or "franka" in cls_name:
+    if "franka" in env_str or "kitchen" in env_str:
         return FrankaKitchenUIAdapter()
-    if "adroit" in env_str or "hand" in env_str or "adroit" in cls_name:
+    if "adroit" in env_str or "hand" in env_str:
         return AdroitHandUIAdapter()
 
     return DefaultUIAdapter()
