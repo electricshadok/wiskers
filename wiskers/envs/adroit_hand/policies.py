@@ -2,11 +2,12 @@
 Policies for AdroitHand dexterous manipulation environments.
 """
 
-from typing import Optional
+from typing import Optional, Sequence
 
 import gymnasium as gym
 import torch
 
+from wiskers.common.heads import ContinuousActor
 from wiskers.common.policy import ContinuousPolicy
 from wiskers.envs.torch_env import TorchGymEnv
 
@@ -50,7 +51,6 @@ class AdroitHandHeuristicPolicy(AdroitHandPolicy):
         noise_scale: float = 0.25,
         env: Optional[TorchGymEnv] = None,
     ):
-        self.current_action: torch.Tensor = torch.zeros(self.action_dim, dtype=torch.float32)
         super().__init__(env=env)
         self.momentum = momentum
         self.noise_scale = noise_scale
@@ -66,3 +66,50 @@ class AdroitHandHeuristicPolicy(AdroitHandPolicy):
         action = self.momentum * self.current_action + (1.0 - self.momentum) * noise
         self.current_action = torch.clamp(action, -1.0, 1.0)
         return self.current_action.clone()
+
+
+class AdroitHandNeuralPolicy(AdroitHandPolicy):
+    """
+    Minimal trainable policy for AdroitHand: flattened pixels → MLP → squashed Gaussian in (-1, 1).
+
+    Samples in train mode and uses the mean in eval mode. Unlike the random/heuristic
+    policies, the network size is fixed at construction, so ``action_dim`` must match
+    the task's action space (validated in ``set_env``).
+
+    Args:
+        image_size: Transformed observation shape ``(C, H, W)``.
+        action_dim: Action dimensionality of the target task (e.g. 28 for ``door``).
+        hidden_size: MLP hidden width.
+        num_layers: Number of MLP hidden layers.
+        env: Optional TorchGymEnv environment instance.
+    """
+
+    def __init__(
+        self,
+        image_size: Sequence[int],
+        action_dim: int = 28,
+        hidden_size: int = 64,
+        num_layers: int = 2,
+        env: Optional[TorchGymEnv] = None,
+    ):
+        self.action_dim = action_dim
+        super().__init__(env=env)
+        c, h, w = image_size
+        self.actor = ContinuousActor(
+            feat_size=c * h * w,
+            action_size=action_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+        )
+
+    def _validate_env(self, env: TorchGymEnv) -> None:
+        if env.action_space.shape != (self.action_dim,):
+            raise ValueError(
+                f"{self.__class__.__name__} expects action_dim={self.action_dim}, "
+                f"got action_space shape {env.action_space.shape}."
+            )
+        super()._validate_env(env)
+
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        feat = obs.flatten(start_dim=-3)
+        return self.actor.sample(feat)[0] if self.training else self.actor(feat)[0]

@@ -10,6 +10,7 @@ from wiskers.envs import TorchGymEnv
 from wiskers.envs.franka import (
     AVAILABLE_TASKS,
     FrankaKitchenHeuristicPolicy,
+    FrankaKitchenNeuralPolicy,
     FrankaKitchenRandomPolicy,
     make_franka_kitchen_env,
 )
@@ -119,3 +120,51 @@ def test_franka_kitchen_collector_integration(franka_env):
     assert buffer[0].actions.shape == (10, 9)
     assert buffer[0].actions.dtype == torch.float32
 
+
+
+def test_franka_neural_policy():
+    image_size = (3, 64, 64)
+    policy = FrankaKitchenNeuralPolicy(image_size=image_size, hidden_size=32, num_layers=2)
+
+    params = list(policy.parameters())
+    assert params and all(p.requires_grad for p in params)
+
+    obs = torch.rand(image_size)
+    action = policy(obs, step=0)
+    assert isinstance(action, torch.Tensor)
+    assert action.shape == (9,)
+    assert action.dtype == torch.float32
+    assert torch.all(action >= -1.0) and torch.all(action <= 1.0)
+
+    # Backward gradient flow
+    feat = obs.flatten()
+    out = policy.actor(feat)[0]
+    out.sum().backward()
+    assert all(p.grad is not None for p in params)
+
+    # Eval mode is deterministic
+    policy.eval()
+    assert torch.equal(policy(obs), policy(obs))
+
+
+def test_franka_policies_share_action_contract(franka_env):
+    env = TorchGymEnv(franka_env)
+    ref_action = env.sample_action()
+    obs = torch.rand(3, 64, 64)
+
+    policies = [
+        FrankaKitchenRandomPolicy(),
+        FrankaKitchenHeuristicPolicy(),
+        FrankaKitchenNeuralPolicy(image_size=(3, 64, 64)),
+    ]
+
+    for policy in policies:
+        policy.set_env(env)
+        policy.reset()
+        for step in range(3):
+            action = policy(obs, step=step)
+            name = type(policy).__name__
+            assert isinstance(action, torch.Tensor), name
+            assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
+            assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
+            assert env.action_space.contains(env._to_env_action(action)), name

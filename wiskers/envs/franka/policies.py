@@ -2,10 +2,11 @@
 Policies for FrankaKitchen environment.
 """
 
-from typing import Optional
+from typing import Optional, Sequence
 
 import torch
 
+from wiskers.common.heads import ContinuousActor
 from wiskers.common.policy import ContinuousPolicy
 from wiskers.envs.torch_env import TorchGymEnv
 
@@ -54,3 +55,37 @@ class FrankaKitchenHeuristicPolicy(FrankaKitchenPolicy):
         action = self.momentum * self.current_action + (1.0 - self.momentum) * noise
         self.current_action = torch.clamp(action, -1.0, 1.0)
         return self.current_action.clone()
+
+
+class FrankaKitchenNeuralPolicy(FrankaKitchenPolicy):
+    """
+    Minimal trainable policy for FrankaKitchen: flattened pixels → MLP → squashed Gaussian in (-1, 1).
+
+    Samples in train mode and uses the mean in eval mode.
+
+    Args:
+        image_size: Transformed observation shape ``(C, H, W)``.
+        hidden_size: MLP hidden width.
+        num_layers: Number of MLP hidden layers.
+        env: Optional TorchGymEnv environment instance.
+    """
+
+    def __init__(
+        self,
+        image_size: Sequence[int],
+        hidden_size: int = 64,
+        num_layers: int = 2,
+        env: Optional[TorchGymEnv] = None,
+    ):
+        super().__init__(env=env)
+        c, h, w = image_size
+        self.actor = ContinuousActor(
+            feat_size=c * h * w,
+            action_size=self.action_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+        )
+
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        feat = obs.flatten(start_dim=-3)
+        return self.actor.sample(feat)[0] if self.training else self.actor(feat)[0]

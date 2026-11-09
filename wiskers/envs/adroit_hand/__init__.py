@@ -5,6 +5,7 @@ from wiskers.envs.adroit_hand.env import (
 )
 from wiskers.envs.adroit_hand.policies import (
     AdroitHandHeuristicPolicy,
+    AdroitHandNeuralPolicy,
     AdroitHandPolicy,
     AdroitHandRandomPolicy,
 )
@@ -17,5 +18,6 @@ __all__ = [
     "AdroitHandPolicy",
     "AdroitHandRandomPolicy",
     "AdroitHandHeuristicPolicy",
+    "AdroitHandNeuralPolicy",
 ]
 

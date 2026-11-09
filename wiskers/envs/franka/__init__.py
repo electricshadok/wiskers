@@ -5,6 +5,7 @@ from wiskers.envs.franka.env import (
 )
 from wiskers.envs.franka.policies import (
     FrankaKitchenHeuristicPolicy,
+    FrankaKitchenNeuralPolicy,
     FrankaKitchenPolicy,
     FrankaKitchenRandomPolicy,
 )
@@ -17,5 +18,6 @@ __all__ = [
     "FrankaKitchenPolicy",
     "FrankaKitchenRandomPolicy",
     "FrankaKitchenHeuristicPolicy",
+    "FrankaKitchenNeuralPolicy",
 ]
 

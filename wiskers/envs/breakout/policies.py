@@ -1,8 +1,9 @@
 import random
-from typing import Optional
+from typing import Optional, Sequence
 
 import torch
 
+from wiskers.common.heads import CategoricalActor
 from wiskers.common.policy import DiscretePolicy
 from wiskers.envs.torch_env import TorchGymEnv
 
@@ -66,3 +67,41 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
                 return torch.tensor(random.choice([0, 2, 3]), dtype=torch.long)
         except Exception:
             return self.sample_random()
+
+
+class BreakoutNeuralPolicy(BreakoutPolicy):
+    """
+    Minimal trainable policy for Breakout: flattened pixels → MLP → categorical logits.
+
+    Samples from the categorical distribution in train mode and takes the argmax in eval mode.
+
+    Args:
+        image_size: Transformed observation shape ``(C, H, W)``.
+        hidden_size: MLP hidden width.
+        num_layers: Number of MLP hidden layers.
+        env: Optional TorchGymEnv environment instance.
+    """
+
+    num_actions: int = 4
+
+    def __init__(
+        self,
+        image_size: Sequence[int],
+        hidden_size: int = 64,
+        num_layers: int = 2,
+        env: Optional[TorchGymEnv] = None,
+    ):
+        super().__init__(env=env)
+        c, h, w = image_size
+        self.actor = CategoricalActor(
+            feat_size=c * h * w,
+            num_actions=self.num_actions,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+        )
+
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        feat = obs.flatten(start_dim=-3)
+        if self.training:
+            return self.actor.dist(feat).sample()
+        return self.actor(feat).argmax(dim=-1)

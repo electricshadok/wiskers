@@ -9,6 +9,7 @@ from wiskers.datasets.trajectories.transforms import EpisodeToTensor
 from wiskers.envs import TorchGymEnv
 from wiskers.envs.breakout import (
     BreakoutHeuristicPolicy,
+    BreakoutNeuralPolicy,
     BreakoutPolicy,
     BreakoutRandomPolicy,
     make_breakout_env,
@@ -162,3 +163,53 @@ def test_breakout_datamodule_with_sampler():
     loader = dm.train_dataloader()
     batch = next(iter(loader))
     assert batch["obs"].shape == (2, 6, 3, 64, 64)
+
+
+def test_breakout_neural_policy():
+    image_size = (3, 64, 64)
+    policy = BreakoutNeuralPolicy(image_size=image_size, hidden_size=32, num_layers=2)
+
+    params = list(policy.parameters())
+    assert params and all(p.requires_grad for p in params)
+
+    obs = torch.rand(image_size)
+    action = policy(obs, step=0)
+    assert isinstance(action, torch.Tensor)
+    assert action.shape == ()
+    assert action.dtype == torch.long
+    assert int(action.item()) in {0, 1, 2, 3}
+
+    # Backward gradient flow
+    feat = obs.flatten()
+    logits = policy.actor(feat)
+    logits.sum().backward()
+    assert all(p.grad is not None for p in params)
+
+    # Eval mode is deterministic
+    policy.eval()
+    assert torch.equal(policy(obs), policy(obs))
+
+
+def test_breakout_policies_share_action_contract():
+    env = TorchGymEnv(make_breakout_env(image_size=(64, 64)))
+    ref_action = env.sample_action()
+    obs = torch.rand(3, 64, 64)
+
+    policies = [
+        BreakoutRandomPolicy(),
+        BreakoutHeuristicPolicy(),
+        BreakoutNeuralPolicy(image_size=(3, 64, 64)),
+    ]
+
+    for policy in policies:
+        policy.set_env(env)
+        policy.reset()
+        for step in range(3):
+            action = policy(obs, step=step)
+            name = type(policy).__name__
+            assert isinstance(action, torch.Tensor), name
+            assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
+            assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
+            assert env.action_space.contains(env._to_env_action(action)), name
+
+    env.close()

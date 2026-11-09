@@ -10,6 +10,8 @@ from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand import (
     AVAILABLE_TASKS,
     AdroitHandHeuristicPolicy,
+    AdroitHandNeuralPolicy,
+    AdroitHandPolicy,
     AdroitHandRandomPolicy,
     make_adroit_hand_env,
 )
@@ -109,3 +111,51 @@ def test_adroit_hand_collector_integration(adroit_env):
     assert buffer[0].actions.shape == (10, 28)
     assert buffer[0].actions.dtype == torch.float32
 
+
+def test_adroit_neural_policy():
+    image_size = (3, 64, 64)
+    policy = AdroitHandNeuralPolicy(image_size=image_size, action_dim=28, hidden_size=32, num_layers=2)
+    assert isinstance(policy, AdroitHandPolicy)
+
+    params = list(policy.parameters())
+    assert params and all(p.requires_grad for p in params)
+
+    obs = torch.rand(image_size)
+    action = policy(obs, step=0)
+    assert isinstance(action, torch.Tensor)
+    assert action.shape == (28,)
+    assert action.dtype == torch.float32
+    assert torch.all(action >= -1.0) and torch.all(action <= 1.0)
+
+    # Backward gradient flow
+    feat = obs.flatten()
+    out = policy.actor(feat)[0]
+    out.sum().backward()
+    assert all(p.grad is not None for p in params)
+
+    # Eval mode is deterministic
+    policy.eval()
+    assert torch.equal(policy(obs), policy(obs))
+
+
+def test_adroit_policies_share_action_contract(adroit_env):
+    env = TorchGymEnv(adroit_env)
+    ref_action = env.sample_action()
+    obs = torch.rand(3, 64, 64)
+
+    policies = [
+        AdroitHandRandomPolicy(),
+        AdroitHandHeuristicPolicy(),
+        AdroitHandNeuralPolicy(image_size=(3, 64, 64), action_dim=28),
+    ]
+
+    for policy in policies:
+        policy.set_env(env)
+        policy.reset()
+        for step in range(3):
+            action = policy(obs, step=step)
+            name = type(policy).__name__
+            assert isinstance(action, torch.Tensor), name
+            assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
+            assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
+            assert env.action_space.contains(env._to_env_action(action)), name
