@@ -126,12 +126,14 @@ tensorboard --logdir=experiments/ --port=6006
 docker run --rm -it wiskers:1.0
 ```
 
-## Code Formatter
-
-Check and format code with ruff (configured in `pyproject.toml`):
+## Code Formatter & Type Checking
 
 ```bash
+# Check and format code with ruff (configured in pyproject.toml)
 ruff check --fix
+
+# Check static types with Pyrefly (configured in pyrefly.toml)
+pyrefly check
 ```
 
 ## License

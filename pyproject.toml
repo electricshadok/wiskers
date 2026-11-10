@@ -49,3 +49,12 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra -q"
 
+[tool.pyrefly]
+preset = "basic"
+project-includes = ["."]
+project-excludes = [
+    "archive/**",
+    "**/.venv/**",
+]
+use-ignore-files = true
+

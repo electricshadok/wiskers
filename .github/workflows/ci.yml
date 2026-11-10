@@ -32,6 +32,16 @@ jobs:
       - name: Run Ruff check
         run: ruff check --output-format=github .
 
+  typecheck:
+    name: Type Check (Pyrefly)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pyrefly
+        uses: facebook/pyrefly@main
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
