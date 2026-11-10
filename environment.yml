@@ -29,3 +29,4 @@ dependencies:
       - gymnasium-robotics>=1.4.2
       - mujoco>=3.1.0
       - pyrefly
+      - tensordict>=0.7.0,<0.8.0
