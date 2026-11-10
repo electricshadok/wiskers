@@ -4,7 +4,17 @@
 
 Wiskers is a modular framework to build, train, and evaluate world models and policies in simulation. Starting with core world model and policy training, Wiskers is designed to progressively support diverse architectures for reinforcement learning and generative dynamics—including latent world models, diffusion policies, Vision-Language-Action models (VLAs), behavior cloning, and actor-critic RL—providing an experimental playground to train policies and benchmark agent intelligence from imagination to simulated execution.
 
-> 📘 For the full philosophy and system blueprint, see [PROJECT.md](https://github.com/electricshadok/wiskers/blob/main/PROJECT.md)
+> 📘 For the full architecture, component breakdown, and system blueprint, see [PROJECT.md](PROJECT.md)
+
+## Architecture & Modular Configs
+
+Wiskers decouples environments, trajectory collection, buffers, and neural architectures into plug-and-play components configured via Hydra:
+
+- **`configs/datasets/`**: Simulation environments, policies, collectors, replay buffers, and chunk samplers.
+- **`configs/modules/`**: Neural world models, perception encoders/decoders, dynamics, and controllers.
+- **`configs/training/`**: Composes a dataset and module via `defaults:`, specifying training loops and environment-specific overrides.
+
+For an in-depth component diagram and paper walkthroughs (World Models, DIAMOND), read [PROJECT.md](PROJECT.md).
 
 ## Installation
 
