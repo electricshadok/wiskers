@@ -1,0 +1,7 @@
+preset = "basic"
+project-includes = ["."]
+project-excludes = [
+    "archive/**",
+    "**/.venv/**",
+]
+use-ignore-files = true

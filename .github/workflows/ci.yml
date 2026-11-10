@@ -12,38 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint (Ruff)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff
-
-      - name: Run Ruff check
-        run: ruff check --output-format=github .
-
-  typecheck:
-    name: Type Check (Pyrefly)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Pyrefly
-        uses: facebook/pyrefly@main
-
-  test:
-    name: Unit Tests
+  ci:
+    name: Lint, Type Check & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -56,6 +26,16 @@ jobs:
           environment-name: wiskers
           cache-environment: true
           cache-downloads: true
+
+      - name: Run Ruff lint
+        shell: bash -el {0}
+        run: |
+          ruff check --output-format=github .
+
+      - name: Run Pyrefly type check
+        shell: bash -el {0}
+        run: |
+          pyrefly check
 
       - name: Run pytest
         shell: bash -el {0}
