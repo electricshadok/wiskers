@@ -2,7 +2,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from wiskers.cli.train import TrainCLI
+from wiskers.cli.train import TrainCLI, TrainPipelineCLI
 from wiskers.cli.utils import load_config
 
 
@@ -44,35 +44,31 @@ data_module:
         assert cfg.data_module.sampler.num_steps == 50
 
 
-def test_train_cli_fast_dev_run_does_not_create_folders():
+def test_train_cli_fast_dev_run_does_not_create_pipeline_folders():
     with tempfile.TemporaryDirectory() as tmpdir:
         cli = TrainCLI("configs/training/carracing_world_models.yaml")
         cli.config.tensor_board_logger.save_dir = tmpdir
 
-        # Nothing should be created on initialization
+        with patch("lightning.Trainer.fit"):
+            cli.run(fast_dev_run=True)
+            # TrainCLI has no loggers or checkpoints
+            assert os.listdir(tmpdir) == []
+
+
+def test_train_pipeline_cli_creates_folders_and_runs_pipeline():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cli = TrainPipelineCLI("configs/training/carracing_world_models.yaml")
+        cli.config.tensor_board_logger.save_dir = tmpdir
+
+        # Nothing should be created before run()
         assert cli.logger is None
         assert cli.checkpoint_callback is None
         assert os.listdir(tmpdir) == []
 
-        # Running in fast_dev_run mode should not create checkpoints or log dir
-        with patch("lightning.Trainer.fit"):
-            cli.run(fast_dev_run=True)
-            assert os.listdir(tmpdir) == []
-
-
-def test_train_cli_regular_run_creates_folders():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        cli = TrainCLI("configs/training/carracing_world_models.yaml")
-        cli.config.tensor_board_logger.save_dir = tmpdir
-
-        # Nothing should be created before run()
-        assert os.listdir(tmpdir) == []
-
-        # Running quick_run / regular setup creates checkpoint directory
+        # Running with quick_run=True sets up pipeline and directories
         with patch("lightning.Trainer.fit"), patch("lightning.Trainer.test"):
             cli.run(quick_run=True)
             assert cli.logger is not None
             assert cli.checkpoint_callback is not None
             checkpoint_dir = os.path.join(cli.logger.log_dir, "checkpoints")
             assert os.path.exists(checkpoint_dir)
-

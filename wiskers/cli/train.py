@@ -16,28 +16,57 @@ from wiskers.cli.utils import load_config
 
 class TrainCLI:
     """
-    Command-line interface for training a PyTorch Lightning model.
+    Lightweight interface for training a PyTorch Lightning model.
+
+    Executes model and datamodule fit without experiment pipeline overhead
+    (no loggers, callbacks, profiler, testing, or artifact export).
 
     Args:
         config_path (str): Path to the configuration file.
     """
 
     def __init__(self, config_path: str) -> None:
-        """
-        Initializes the TrainCLI.
-
-        Args:
-            config_path (str): Path to the configuration file.
-        """
-        # Load the configuration
         self.config = load_config(config_path)
-
-        # Initialize random number generators
         L.seed_everything(seed=self.config.seed, workers=True)
 
         self.model = instantiate(self.config.module, _convert_="all")
         self.datamodule = instantiate(self.config.data_module, _convert_="all")
 
+    def run(self, fast_dev_run: bool = True) -> L.Trainer:
+        """
+        Runs model training fit without pipeline overhead.
+
+        Args:
+            fast_dev_run (bool): If True, runs a single batch sanity check.
+
+        Returns:
+            L.Trainer: The PyTorch Lightning trainer instance.
+        """
+        trainer_args = dict(self.config.trainer)
+        trainer = L.Trainer(
+            logger=False,
+            callbacks=[],
+            profiler=None,
+            fast_dev_run=fast_dev_run,
+            **trainer_args,
+        )
+        trainer.fit(model=self.model, datamodule=self.datamodule)
+        return trainer
+
+
+class TrainPipelineCLI(TrainCLI):
+    """
+    Full-featured experiment training pipeline.
+
+    Extends TrainCLI with experiment logging, checkpoints, early stopping,
+    profiling, testing, and model export (ONNX, safetensors).
+
+    Args:
+        config_path (str): Path to the configuration file.
+    """
+
+    def __init__(self, config_path: str) -> None:
+        super().__init__(config_path)
         self.logger = None
         self.checkpoint_callback = None
         self.callbacks = []
@@ -67,24 +96,36 @@ class TrainCLI:
                 EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5)
             )
 
-    def run(self, fast_dev_run=False, quick_run=False):
+    def _export_models(self) -> None:
+        """Exports best model checkpoints to ONNX and safetensors if configured."""
+        if self.config.export_onnx:
+            assert self.checkpoint_callback is not None
+            best_model_path = self.checkpoint_callback.best_model_path
+            onnx_path = pathlib.Path(best_model_path).with_suffix(".onnx")
+            self.model.to_onnx(onnx_path, export_params=True)
+            print(f"Saved {onnx_path}")
+
+        if self.config.export_safetensors:
+            assert self.checkpoint_callback is not None
+            best_model_path = self.checkpoint_callback.best_model_path
+            st_path = pathlib.Path(best_model_path).with_suffix(".safetensors")
+            save_model(self.model, st_path)
+            print(f"Saved {st_path}")
+
+    def run(self, quick_run: bool = False) -> L.Trainer:
         """
-        Runs the training and testing of the model using the user settings.
+        Runs the full training pipeline: fit, test, and artifact export.
+
+        Args:
+            quick_run (bool): If True, runs a few quick batches/epochs with testing and export.
+
+        Returns:
+            L.Trainer: The PyTorch Lightning trainer instance.
         """
+        self._setup_logging_and_callbacks()
         trainer_args = dict(self.config.trainer)
 
-        if fast_dev_run:
-            logger = False
-            callbacks = []
-            profiler = None
-        else:
-            self._setup_logging_and_callbacks()
-            logger = self.logger
-            callbacks = self.callbacks
-            profiler = PyTorchProfiler()
-
         if quick_run:
-            # override to run a few quick batches/epochs
             trainer_args.update(
                 {
                     "max_epochs": 1,
@@ -94,38 +135,17 @@ class TrainCLI:
                 }
             )
 
-        # Train the model
         trainer = L.Trainer(
-            logger=logger,
-            callbacks=callbacks,
-            profiler=profiler,
-            fast_dev_run=fast_dev_run,
+            logger=self.logger,
+            callbacks=self.callbacks,
+            profiler=PyTorchProfiler(),
+            fast_dev_run=False,
             **trainer_args,
         )
         trainer.fit(model=self.model, datamodule=self.datamodule)
-
-        if fast_dev_run:
-            # Early exit in development mode
-            return
-
-        # Test the model
         trainer.test(datamodule=self.datamodule)
-
-        # Export best ONNX
-        if self.config.export_onnx:
-            assert self.checkpoint_callback is not None
-            best_model_path = self.checkpoint_callback.best_model_path
-            onnx_path = pathlib.Path(best_model_path).with_suffix(".onnx")
-            self.model.to_onnx(onnx_path, export_params=True)
-            print(f"Saved {onnx_path}")
-
-        # Export best safetensors
-        if self.config.export_safetensors:
-            assert self.checkpoint_callback is not None
-            best_model_path = self.checkpoint_callback.best_model_path
-            st_path = pathlib.Path(best_model_path).with_suffix(".safetensors")
-            save_model(self.model, st_path)
-            print(f"Saved {st_path}")
+        self._export_models()
+        return trainer
 
 
 if __name__ == "__main__":
@@ -138,13 +158,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--fast_dev_run",
         action="store_true",
-        help="Run a single batch to test configuration",
+        help="Run a single batch to test configuration without pipeline",
     )
     parser.add_argument(
         "--quick_run",
         action="store_true",
-        help="Run a short real training + test + export",
+        help="Run a short real training with pipeline + test + export",
     )
     args = parser.parse_args()
-    cmd = TrainCLI(args.config)
-    cmd.run(fast_dev_run=args.fast_dev_run, quick_run=args.quick_run)
+
+    if args.fast_dev_run:
+        cmd = TrainCLI(args.config)
+        cmd.run(fast_dev_run=True)
+    else:
+        cmd = TrainPipelineCLI(args.config)
+        cmd.run(quick_run=args.quick_run)
