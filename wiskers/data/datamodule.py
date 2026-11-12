@@ -31,11 +31,11 @@ from typing import Any, Optional
 import lightning as L
 from torch.utils.data import DataLoader
 
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.collector import Collector
-from wiskers.datasets.trajectories.dataset import TrajectoryDataset
-from wiskers.datasets.trajectories.sampler import TrajectorySampler
-from wiskers.datasets.trajectories.transforms import EpisodeTransform
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.collector import Collector
+from wiskers.data.dataset import TrajectoryDataset
+from wiskers.data.sampler import TrajectorySampler
+from wiskers.data.transforms import EpisodeTransform
 
 
 class TrajectoryDataModule(L.LightningDataModule):

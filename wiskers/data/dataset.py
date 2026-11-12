@@ -21,9 +21,9 @@ at fork time and will not see new episodes added during training.
 
 from torch.utils.data import IterableDataset
 
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.sampler import TrajectorySampler
-from wiskers.datasets.trajectories.transforms import EpisodeTransform
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.sampler import TrajectorySampler
+from wiskers.data.transforms import EpisodeTransform
 
 
 class TrajectoryDataset(IterableDataset):

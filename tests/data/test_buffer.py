@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import torch
 
-from wiskers.datasets.trajectories.buffer import Buffer, ReplayBuffer, RolloutBuffer
-from wiskers.datasets.trajectories.episode import Episode
+from wiskers.data.buffer import Buffer, ReplayBuffer, RolloutBuffer
+from wiskers.data.episode import Episode
 
 
 def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: int = 2) -> Episode:
@@ -153,8 +153,8 @@ def test_collector_with_rollout_buffer():
     import torch
 
     from wiskers.common.policy import DiscretePolicy
-    from wiskers.datasets.trajectories.collector import Collector
-    from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+    from wiskers.data.collector import Collector
+    from wiskers.data.transforms import EpisodeToTensor
     from wiskers.envs import TorchGymEnv
 
     class DummyPolicy(DiscretePolicy):

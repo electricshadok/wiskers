@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 
-from wiskers.datasets.trajectories.episode import Episode
+from wiskers.data.episode import Episode
 
 
 class EpisodeTransform(ABC):

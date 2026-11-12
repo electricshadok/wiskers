@@ -73,7 +73,7 @@ flowchart TD
     - **Heuristic**: Rule-based expert/exploration controllers (e.g., PID tracking for CarRacing, target reacher for Franka).
     - **Neural**: Trainable actors or latent controllers optimized via RL or Evolutionary Strategies.
 
-### 2.3 Collector (`wiskers.datasets.trajectories.collector`)
+### 2.3 Collector (`wiskers.data.collector`)
 - **Role**: Orchestrates rollouts by stepping a `Policy` inside an `Env` and assembling complete `Episode` records.
 - **Contract**:
   - Runs for a configured number of episodes with constraints (`min_steps`, `max_steps`).
@@ -84,28 +84,28 @@ flowchart TD
     - `dones`: $(T,)$
   - Seeds the buffer offline before training, or runs asynchronously online to continuously collect new transitions.
 
-### 2.4 Buffer (`wiskers.datasets.trajectories.buffer`)
+### 2.4 Buffer (`wiskers.data.buffer`)
 - **Role**: Trajectory storage container decoupled from neural network batching.
 - **Key Abstraction — `ReplayBuffer`**:
   - Stores complete episode rollouts up to `capacity_episodes`.
   - Fast random indexing by episode ID, tracking global step counts and total episodes.
   - Designed strictly as a data store without coupling to training losses or algorithms.
 
-### 2.5 Sampler (`wiskers.datasets.trajectories.sampler`)
+### 2.5 Sampler (`wiskers.data.sampler`)
 - **Role**: Temporal slicing strategy that cuts fixed-length trajectory chunks from variable-length stored episodes.
 - **Key Abstraction — `UniformChunkSampler`**:
   - Samples contiguous sequences of length $T$ across all available episodes in the buffer:
     $$(\text{obs}_{t:t+T+1}, a_{t:t+T}, r_{t:t+T}, d_{t:t+T})$$
   - Enforces bounds checking and episode length validation.
 
-### 2.6 Transforms (`wiskers.datasets.trajectories.transforms`)
+### 2.6 Transforms (`wiskers.data.transforms`)
 - **Role**: Functional data preparation from raw environment arrays to training tensor batches.
 - **Key Abstraction — `EpisodeToTensor`**:
   - Rescales uint8 visual frames to normalized float32 ranges (e.g. $[0, 1]$ or $[-1, 1]$).
   - Handles shape permutes between channels-last $(H, W, C)$ and channels-first $(C, H, W)$.
   - Applies spatial resizing and channel conversions (Grayscale $\leftrightarrow$ RGB).
 
-### 2.7 DataModule (`wiskers.datasets.trajectories.datamodule`)
+### 2.7 DataModule (`wiskers.data.datamodule`)
 - **Role**: PyTorch Lightning integration binding the ReplayBuffer, Sampler, Transform, and PyTorch DataLoaders.
 - **Key Abstraction — `TrajectoryDataModule`**:
   - Self-contained: automatically triggers `collector.collect()` to seed the buffer during `setup()` if empty.

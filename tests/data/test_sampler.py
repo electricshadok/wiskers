@@ -3,14 +3,14 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
-from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.sampler import (
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.datamodule import TrajectoryDataModule
+from wiskers.data.episode import Episode
+from wiskers.data.sampler import (
     RecencyWeightedSampler,
     UniformChunkSampler,
 )
-from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+from wiskers.data.transforms import EpisodeToTensor
 
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
@@ -71,7 +71,7 @@ def test_recency_weighted_sampler():
 
 def test_hydra_sampler_instantiation():
     cfg = OmegaConf.create({
-        "_target_": "wiskers.datasets.trajectories.sampler.UniformChunkSampler",
+        "_target_": "wiskers.data.sampler.UniformChunkSampler",
         "num_steps": 35,
     })
     sampler = instantiate(cfg)

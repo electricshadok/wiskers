@@ -3,9 +3,9 @@ import pytest
 import torch
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.collector import Collector
-from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.collector import Collector
+from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand import (
     AVAILABLE_TASKS,

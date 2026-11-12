@@ -1,11 +1,11 @@
 import pytest
 import torch
 
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
-from wiskers.datasets.trajectories.episode import Episode
-from wiskers.datasets.trajectories.sampler import UniformChunkSampler
-from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.datamodule import TrajectoryDataModule
+from wiskers.data.episode import Episode
+from wiskers.data.sampler import UniformChunkSampler
+from wiskers.data.transforms import EpisodeToTensor
 
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:

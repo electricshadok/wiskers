@@ -3,7 +3,7 @@ import streamlit as st
 import torch
 
 from webui.dataset.adapters import get_adapter
-from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
+from wiskers.data.datamodule import TrajectoryDataModule
 
 
 def _obs_to_display_numpy(obs_frame: torch.Tensor, obs_range: tuple[float, float] = (0.0, 1.0)) -> np.ndarray:

@@ -5,9 +5,9 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from wiskers.common.policy import ContinuousPolicy, DiscretePolicy
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.collector import Collector
-from wiskers.datasets.trajectories.transforms import EpisodeToTensor
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.collector import Collector
+from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs import TorchGymEnv
 
 
@@ -146,19 +146,19 @@ def test_collector_continuous_actions():
 def test_collector_hydra_instantiation():
     """Collector can be instantiated via Hydra configuration with _target_."""
     cfg = OmegaConf.create({
-        "_target_": "wiskers.datasets.trajectories.collector.Collector",
+        "_target_": "wiskers.data.collector.Collector",
         "env": {
             "_target_": "wiskers.envs.TorchGymEnv",
             "env": {
-                "_target_": "tests.datasets.trajectories.test_collector.DummyDiscreteEnv",
+                "_target_": "tests.data.test_collector.DummyDiscreteEnv",
                 "step_limit": 20,
             },
         },
         "policy": {
-            "_target_": "tests.datasets.trajectories.test_collector.DummyPolicy",
+            "_target_": "tests.data.test_collector.DummyPolicy",
         },
         "transform": {
-            "_target_": "wiskers.datasets.trajectories.transforms.EpisodeToTensor",
+            "_target_": "wiskers.data.transforms.EpisodeToTensor",
             "image_size": [3, 16, 16],
             "obs_range": [0.0, 1.0],
         },

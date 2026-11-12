@@ -3,7 +3,7 @@ from typing import Dict
 
 import torch
 
-from wiskers.datasets.trajectories.datamodule import TrajectoryDataModule
+from wiskers.data.datamodule import TrajectoryDataModule
 
 
 # ── Contract ──────────────────────────────────────────────────────────────────

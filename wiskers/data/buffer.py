@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Iterator, Sequence, Union
 
-from wiskers.datasets.trajectories.episode import Episode
+from wiskers.data.episode import Episode
 
 
 class Buffer(ABC):

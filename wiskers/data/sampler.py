@@ -5,7 +5,7 @@ Designed to be instantiated directly in Hydra configs via `_target_`:
 
     # in configs/datasets/breakout.yaml
     sampler:
-      _target_: wiskers.datasets.trajectories.sampler.UniformChunkSampler
+      _target_: wiskers.data.sampler.UniformChunkSampler
       num_steps: 50
 """
 
@@ -14,8 +14,8 @@ import random
 from abc import ABC, abstractmethod
 from typing import List
 
-from wiskers.datasets.trajectories.buffer import ReplayBuffer
-from wiskers.datasets.trajectories.episode import Episode
+from wiskers.data.buffer import ReplayBuffer
+from wiskers.data.episode import Episode
 
 
 class TrajectorySampler(ABC):
