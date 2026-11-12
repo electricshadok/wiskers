@@ -18,7 +18,7 @@ from wiskers.envs.breakout import (
 
 def test_breakout_datamodule_init():
     policy = BreakoutHeuristicPolicy()
-    env = TorchGymEnv(make_breakout_env())
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     replay_buffer = ReplayBuffer(capacity_episodes=100)
     sampler = UniformChunkSampler(num_steps=20)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -39,7 +39,7 @@ def test_breakout_datamodule_init():
 
 def test_breakout_datamodule_validation():
     policy = BreakoutHeuristicPolicy()
-    env = TorchGymEnv(make_breakout_env())
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
@@ -77,7 +77,7 @@ def test_breakout_datamodule_validation():
 
 def test_breakout_datamodule_setup_and_dataloader():
     policy = BreakoutHeuristicPolicy(epsilon=0.0)
-    env = TorchGymEnv(make_breakout_env(image_size=(64, 64)))
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -114,7 +114,7 @@ def test_breakout_datamodule_custom_policy():
             return torch.tensor(1, dtype=torch.long)
 
     policy = ConstantFirePolicy()
-    env = TorchGymEnv(make_breakout_env(image_size=(64, 64)))
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -133,7 +133,7 @@ def test_breakout_datamodule_custom_policy():
 
 
 def test_breakout_random_policy():
-    env = TorchGymEnv(make_breakout_env(image_size=(64, 64)))
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     policy = BreakoutRandomPolicy(fire_frequency=5, env=env)
     obs, _ = env.reset()
     assert policy.action_dim == 1
@@ -144,7 +144,7 @@ def test_breakout_random_policy():
 
 def test_breakout_datamodule_with_sampler():
     policy = BreakoutHeuristicPolicy(epsilon=0.0)
-    env = TorchGymEnv(make_breakout_env(image_size=(64, 64)))
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     sampler = UniformChunkSampler(num_steps=5)
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -191,7 +191,7 @@ def test_breakout_neural_policy():
 
 
 def test_breakout_policies_share_action_contract():
-    env = TorchGymEnv(make_breakout_env(image_size=(64, 64)))
+    env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
     ref_action = env.sample_action()
     obs = torch.rand(3, 64, 64)
 

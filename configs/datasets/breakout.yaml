@@ -27,9 +27,9 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.TorchGymEnv
+      image_size: [64, 64]
       env:
         _target_: wiskers.envs.breakout.make_breakout_env
-        image_size: [64, 64]
     policy:
       _target_: wiskers.envs.breakout.BreakoutHeuristicPolicy
       epsilon: 0.1

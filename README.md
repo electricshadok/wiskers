@@ -18,11 +18,21 @@ For an in-depth component diagram and paper walkthroughs (World Models, DIAMOND)
 
 ## Installation
 
-Create and activate your environment:
+Wiskers uses [uv](https://github.com/astral-sh/uv) for fast and reproducible environment.
 
+1. Install `uv` if not already installed:
 ```bash
-mamba env create -f environment.yml
-mamba activate wiskers
+brew install uv
+```
+
+2. Create the virtual environment and install all dependencies:
+```bash
+uv sync --all-extras
+```
+
+3. Activate the virtual environment:
+```bash
+source .venv/bin/activate
 ```
 
 ## Tests

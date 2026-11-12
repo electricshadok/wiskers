@@ -2,7 +2,7 @@
 AdroitHand-v1 environment factory with visual camera observations.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 import gymnasium as gym
 import gymnasium_robotics
@@ -46,18 +46,13 @@ class AdroitHandVisualObservation(gym.ObservationWrapper):
         return np.asarray(frame, dtype=np.uint8)
 
 
-def make_adroit_hand_env(
-    task: str = "door",
-    image_size: Optional[tuple[int, int]] = (64, 64),
-) -> gym.Env:
+def make_adroit_hand_env(task: str = "door") -> gym.Env:
     """
     Construct an AdroitHand-v1 environment with camera visual observations.
 
     Args:
         task: Manipulation task for the Adroit dexterous hand. Valid tasks:
               'door', 'hammer', 'pen', 'relocate'. Defaults to 'door'.
-        image_size: Target (height, width) to resize frames to. If None, native
-                    resolution (480, 480) is preserved.
 
     Returns:
         Gymnasium environment instance emitting visual RGB frames.
@@ -72,8 +67,4 @@ def make_adroit_hand_env(
         AVAILABLE_TASKS[task_key],
         render_mode="rgb_array",
     )
-    env = AdroitHandVisualObservation(env)
-    if image_size is not None:
-        env = gym.wrappers.ResizeObservation(env, tuple(image_size))
-    return env
-
+    return AdroitHandVisualObservation(env)

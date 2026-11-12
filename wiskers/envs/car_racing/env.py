@@ -2,8 +2,6 @@
 CarRacing-v3 environment factory and wrappers.
 """
 
-from typing import Optional
-
 import gymnasium as gym
 from gymnasium.envs.box2d.car_racing import CarRacing
 
@@ -46,23 +44,14 @@ class NoZoomCarRacing(CarRacing):
         return obs
 
 
-def make_car_racing_env(
-    image_size: Optional[tuple[int, int]] = (64, 64),
-    show_indicators: bool = False,
-) -> gym.Env:
+def make_car_racing_env(show_indicators: bool = False) -> gym.Env:
     """
-    Construct a NoZoomCarRacing environment with optional observation resizing.
+    Construct a NoZoomCarRacing environment.
 
     Args:
-        image_size: Target (height, width) to resize frames to. If None, native
-                    resolution (96, 96) is preserved.
         show_indicators: Whether to render the bottom black HUD bar and score text.
 
     Returns:
         Gymnasium environment instance.
     """
-    env = NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)
-    if image_size is not None:
-        env = gym.wrappers.ResizeObservation(env, tuple(image_size))
-    return env
-
+    return NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)

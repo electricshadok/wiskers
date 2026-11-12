@@ -28,7 +28,7 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def franka_env():
-    env = make_franka_kitchen_env(tasks_to_complete=["microwave"], image_size=(64, 64))
+    env = make_franka_kitchen_env(tasks_to_complete=["microwave"])
     yield env
     env.close()
 
@@ -36,13 +36,13 @@ def franka_env():
 def test_make_franka_kitchen_env_observation_shape(franka_env):
     obs, info = franka_env.reset(seed=42)
     assert isinstance(obs, np.ndarray)
-    assert obs.shape == (64, 64, 3)
+    assert obs.shape == (480, 480, 3)
     assert obs.dtype == np.uint8
 
     action = franka_env.action_space.sample()
     assert action.shape == (9,)
     next_obs, reward, terminated, truncated, info = franka_env.step(action)
-    assert next_obs.shape == (64, 64, 3)
+    assert next_obs.shape == (480, 480, 3)
     assert next_obs.dtype == np.uint8
     assert isinstance(reward, (int, float, np.floating))
     assert isinstance(terminated, (bool, np.bool_))
@@ -50,9 +50,9 @@ def test_make_franka_kitchen_env_observation_shape(franka_env):
 
 
 def test_make_franka_kitchen_env_multiple_tasks():
-    env = make_franka_kitchen_env(tasks_to_complete=["microwave", "kettle"], image_size=(32, 32))
+    env = make_franka_kitchen_env(tasks_to_complete=["microwave", "kettle"])
     obs, _ = env.reset(seed=0)
-    assert obs.shape == (32, 32, 3)
+    assert obs.shape == (480, 480, 3)
     env.close()
 
 
@@ -68,7 +68,7 @@ def test_franka_kitchen_available_tasks():
 
 
 def test_franka_random_policy(franka_env):
-    torch_env = TorchGymEnv(franka_env)
+    torch_env = TorchGymEnv(franka_env, image_size=(64, 64))
     policy = FrankaKitchenRandomPolicy(env=torch_env)
     assert policy.action_dim == 9
 
@@ -81,7 +81,7 @@ def test_franka_random_policy(franka_env):
 
 
 def test_franka_heuristic_policy(franka_env):
-    torch_env = TorchGymEnv(franka_env)
+    torch_env = TorchGymEnv(franka_env, image_size=(64, 64))
     policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=torch_env)
     assert policy.action_dim == 9
 
@@ -101,7 +101,7 @@ def test_franka_kitchen_collector_integration(franka_env):
     policy = FrankaKitchenHeuristicPolicy()
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=TorchGymEnv(franka_env),
+        env=TorchGymEnv(franka_env, image_size=(64, 64)),
         policy=policy,
         transform=transform,
         num_episodes=1,

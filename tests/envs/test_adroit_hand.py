@@ -29,7 +29,7 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def adroit_env():
-    env = make_adroit_hand_env(task="door", image_size=(64, 64))
+    env = make_adroit_hand_env(task="door")
     yield env
     env.close()
 
@@ -37,13 +37,13 @@ def adroit_env():
 def test_make_adroit_hand_env_observation_shape(adroit_env):
     obs, info = adroit_env.reset(seed=42)
     assert isinstance(obs, np.ndarray)
-    assert obs.shape == (64, 64, 3)
+    assert obs.shape == (480, 480, 3)
     assert obs.dtype == np.uint8
 
     action = adroit_env.action_space.sample()
     assert action.shape == (28,)
     next_obs, reward, terminated, truncated, info = adroit_env.step(action)
-    assert next_obs.shape == (64, 64, 3)
+    assert next_obs.shape == (480, 480, 3)
     assert next_obs.dtype == np.uint8
     assert isinstance(reward, (int, float, np.floating))
     assert isinstance(terminated, (bool, np.bool_))
@@ -63,7 +63,7 @@ def test_adroit_hand_available_tasks():
 
 
 def test_adroit_random_policy(adroit_env):
-    torch_env = TorchGymEnv(adroit_env)
+    torch_env = TorchGymEnv(adroit_env, image_size=(64, 64))
     policy = AdroitHandRandomPolicy(env=torch_env)
     obs, _ = torch_env.reset()
     action = policy(obs, step=0)
@@ -74,7 +74,7 @@ def test_adroit_random_policy(adroit_env):
 
 
 def test_adroit_heuristic_policy(adroit_env):
-    torch_env = TorchGymEnv(adroit_env)
+    torch_env = TorchGymEnv(adroit_env, image_size=(64, 64))
     policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=torch_env)
     obs, _ = torch_env.reset()
     act1 = policy(obs, step=0)
@@ -92,7 +92,7 @@ def test_adroit_hand_collector_integration(adroit_env):
     policy = AdroitHandHeuristicPolicy()
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=TorchGymEnv(adroit_env),
+        env=TorchGymEnv(adroit_env, image_size=(64, 64)),
         policy=policy,
         transform=transform,
         num_episodes=1,

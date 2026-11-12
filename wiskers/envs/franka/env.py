@@ -51,7 +51,6 @@ class FrankaKitchenVisualObservation(gym.ObservationWrapper):
 
 def make_franka_kitchen_env(
     tasks_to_complete: Optional[Sequence[str]] = ("microwave",),
-    image_size: Optional[tuple[int, int]] = (64, 64),
 ) -> gym.Env:
     """
     Construct a FrankaKitchen-v1 environment with camera visual observations.
@@ -61,8 +60,6 @@ def make_franka_kitchen_env(
                            'bottom burner', 'top burner', 'light switch',
                            'slide cabinet', 'hinge cabinet', 'microwave', 'kettle'.
                            Defaults to ('microwave',).
-        image_size: Target (height, width) to resize frames to. If None, native
-                    resolution (480, 480) is preserved.
 
     Returns:
         Gymnasium environment instance emitting visual RGB frames.
@@ -79,8 +76,4 @@ def make_franka_kitchen_env(
         tasks_to_complete=tasks,
         render_mode="rgb_array",
     )
-    env = FrankaKitchenVisualObservation(env)
-    if image_size is not None:
-        env = gym.wrappers.ResizeObservation(env, tuple(image_size))
-    return env
-
+    return FrankaKitchenVisualObservation(env)

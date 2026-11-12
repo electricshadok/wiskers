@@ -19,25 +19,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Micromamba
-        uses: mamba-org/setup-micromamba@v2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          environment-file: environment.yml
-          environment-name: wiskers
-          cache-environment: true
-          cache-downloads: true
+          enable-cache: true
+
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --all-extras
 
       - name: Run Ruff lint
-        shell: bash -el {0}
-        run: |
-          ruff check --output-format=github .
+        run: uv run ruff check --output-format=github .
 
       - name: Run Pyrefly type check
-        shell: bash -el {0}
-        run: |
-          pyrefly check
+        run: uv run pyrefly check
 
       - name: Run pytest
-        shell: bash -el {0}
-        run: |
-          pytest
+        run: uv run pytest tests
