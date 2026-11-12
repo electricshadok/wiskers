@@ -3,7 +3,7 @@ Samplers for drawing trajectory chunks from a ReplayBuffer.
 
 Designed to be instantiated directly in Hydra configs via `_target_`:
 
-    # in configs/datasets/breakout.yaml
+    # in configs/dataset/breakout.yaml
     sampler:
       _target_: wiskers.data.sampler.UniformChunkSampler
       num_steps: 50

@@ -10,9 +10,16 @@ Wiskers is a modular framework to build, train, and evaluate world models and po
 
 Wiskers decouples environments, trajectory collection, buffers, and neural architectures into plug-and-play components configured via Hydra:
 
-- **`configs/datasets/`**: Simulation environments, policies, collectors, replay buffers, and chunk samplers.
-- **`configs/modules/`**: Neural world models, perception encoders/decoders, dynamics, and controllers.
-- **`configs/training/`**: Composes a dataset and module via `defaults:`, specifying training loops and environment-specific overrides.
+- **`configs/dataset/`**: Simulation environments, policies, collectors, replay buffers, and chunk samplers.
+- **`configs/module/`**: Neural world models, perception encoders/decoders, dynamics, and controllers.
+- **`configs/training/`**: Composes a dataset and module via Hydra config groups in `defaults:`, specifying training loops and environment-specific overrides:
+
+```yaml
+defaults:
+  - dataset: carracing
+  - module: world_models
+  - _self_
+```
 
 For an in-depth component diagram and paper walkthroughs (World Models, DIAMOND), read [PROJECT.md](PROJECT.md).
 
@@ -50,7 +57,7 @@ pytest tests
 Use this for the fastest sanity check that everything compiles and runs without executing the full training pipeline:
 
 ```bash
-python wiskers/cli/train.py --config <config_yaml> --fast_dev_run
+python wiskers/cli/train.py --config training/carracing_world_models --fast_dev_run
 ```
 
 `--quick_run`
@@ -58,21 +65,37 @@ python wiskers/cli/train.py --config <config_yaml> --fast_dev_run
 Use this to simulate a short training run and catch bugs across the full pipeline (checkpointing, logging, etc.):
 
 ```bash
-python wiskers/cli/train.py --config <config_yaml> --quick_run
+python wiskers/cli/train.py --config training/carracing_world_models --quick_run
 ```
 
 ## Training
 
-Launch training with a chosen experiment configuration file (`<config_yaml>`):
+Launch training with a chosen experiment configuration (`--config-name` or `--config`):
 
 ```bash
-python wiskers/cli/train.py --config <config_yaml>
-
 # World Models on CarRacing-v3
-python wiskers/cli/train.py --config configs/training/carracing_world_models.yaml
+python wiskers/cli/train.py --config training/carracing_world_models
 
 # World Models on Franka Kitchen
-python wiskers/cli/train.py --config configs/training/franka_kitchen_world_models.yaml
+python wiskers/cli/train.py --config training/franka_kitchen_world_models
+
+# Custom config root directory (--config-path or -cp)
+python wiskers/cli/train.py --config-path configs --config training/carracing_world_models
+```
+
+### Dynamic CLI Overrides (Hydra Config Groups & Parameters)
+
+You can override config groups (`dataset`, `module`) or any nested parameter directly from the command line:
+
+```bash
+# Swap dataset group (e.g. train World Models on Breakout instead of CarRacing)
+python wiskers/cli/train.py --config training/carracing_world_models dataset=breakout
+
+# Override trainer hyperparameters or module architectures
+python wiskers/cli/train.py --config training/carracing_world_models trainer.max_epochs=20 module.vae.latent_dim=64
+
+# Combine group selection with fast development run
+python wiskers/cli/train.py --config training/carracing_world_models dataset=breakout --fast_dev_run
 ```
 
 ## Prediction & Evaluation
@@ -80,7 +103,7 @@ python wiskers/cli/train.py --config configs/training/franka_kitchen_world_model
 Run evaluation or inference with a configuration:
 
 ```bash
-python wiskers/cli/predict.py --config <config_yaml>
+python wiskers/cli/predict.py --config training/carracing_world_models
 ```
 
 ## Inspect Datasets
@@ -89,16 +112,16 @@ Inspect and verify trajectory dataloaders and rollout replay buffers:
 
 ```bash
 # Atari Breakout trajectory dataloader
-python wiskers/cli/inspect_dataset.py --config configs/datasets/breakout.yaml
+python wiskers/cli/inspect_dataset.py --config dataset/breakout
 
 # CarRacing-v3 trajectory dataloader
-python wiskers/cli/inspect_dataset.py --config configs/datasets/carracing.yaml
+python wiskers/cli/inspect_dataset.py --config dataset/carracing
 
 # Franka Kitchen robotics manipulator trajectory dataloader
-python wiskers/cli/inspect_dataset.py --config configs/datasets/franka_kitchen.yaml
+python wiskers/cli/inspect_dataset.py --config dataset/franka_kitchen
 
 # Adroit Hand dexterous manipulation trajectory dataloader
-python wiskers/cli/inspect_dataset.py --config configs/datasets/adroit_hand.yaml
+python wiskers/cli/inspect_dataset.py --config dataset/adroit_hand
 ```
 
 ## Streamlit WebUI

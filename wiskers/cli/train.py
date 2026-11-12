@@ -2,6 +2,7 @@ import argparse
 import os
 import pathlib
 import shutil
+from typing import List, Optional
 
 import lightning as L
 from hydra.utils import instantiate
@@ -22,11 +23,20 @@ class TrainCLI:
     (no loggers, callbacks, profiler, testing, or artifact export).
 
     Args:
-        config_path (str): Path to the configuration file.
+        config_name (str): Configuration name (e.g. 'training/carracing_world_models') or path.
+        config_path (str): Root configuration directory (default: 'configs').
+        overrides (Optional[List[str]]): CLI configuration overrides.
     """
 
-    def __init__(self, config_path: str) -> None:
-        self.config = load_config(config_path)
+    def __init__(
+        self,
+        config_name: str,
+        config_path: str = "./configs",
+        overrides: Optional[List[str]] = None,
+    ) -> None:
+        self.config = load_config(
+            config_name, config_path=config_path, overrides=overrides
+        )
         L.seed_everything(seed=self.config.seed, workers=True)
 
         self.model = instantiate(self.config.module, _convert_="all")
@@ -62,11 +72,18 @@ class TrainPipelineCLI(TrainCLI):
     profiling, testing, and model export (ONNX, safetensors).
 
     Args:
-        config_path (str): Path to the configuration file.
+        config_name (str): Configuration name (e.g. 'training/carracing_world_models') or path.
+        config_path (str): Root configuration directory (default: 'configs').
+        overrides (Optional[List[str]]): CLI configuration overrides.
     """
 
-    def __init__(self, config_path: str) -> None:
-        super().__init__(config_path)
+    def __init__(
+        self,
+        config_name: str,
+        config_path: str = "./configs",
+        overrides: Optional[List[str]] = None,
+    ) -> None:
+        super().__init__(config_name, config_path=config_path, overrides=overrides)
         self.logger = None
         self.checkpoint_callback = None
         self.callbacks = []
@@ -150,10 +167,22 @@ class TrainPipelineCLI(TrainCLI):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Run the training script with a given configuration file."
+        description="Run training with Hydra configuration."
     )
     parser.add_argument(
-        "--config", type=str, required=True, help="Path to the configuration file"
+        "--config-path",
+        "-cp",
+        type=str,
+        default="./configs",
+        help="Root directory for configurations (default: ./configs)",
+    )
+    parser.add_argument(
+        "--config-name",
+        "--config",
+        "-cn",
+        type=str,
+        required=True,
+        help="Configuration name relative to config-path (e.g. training/carracing_world_models)",
     )
     parser.add_argument(
         "--fast_dev_run",
@@ -165,11 +194,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Run a short real training with pipeline + test + export",
     )
-    args = parser.parse_args()
+    args, extra_args = parser.parse_known_args()
 
     if args.fast_dev_run:
-        cmd = TrainCLI(args.config)
+        cmd = TrainCLI(
+            args.config_name, config_path=args.config_path, overrides=extra_args
+        )
         cmd.run(fast_dev_run=True)
     else:
-        cmd = TrainPipelineCLI(args.config)
+        cmd = TrainPipelineCLI(
+            args.config_name, config_path=args.config_path, overrides=extra_args
+        )
         cmd.run(quick_run=args.quick_run)

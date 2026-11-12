@@ -1,7 +1,8 @@
 # Composition of dataset, model, and training configuration
 defaults:
-  - configs/datasets/carracing.yaml
-  - configs/modules/world_models.yaml
+  - dataset: carracing
+  - module: world_models
+  - _self_
 
 # Logger Configs
 tensor_board_logger:

@@ -13,18 +13,12 @@ class PredictCLI:
     Command-line interface for running image prediction using a trained PyTorch Lightning model checkpoint.
 
     Args:
-        config_path (str): Path to the configuration file.
+        config_name (str): Configuration name (e.g. 'training/carracing_world_models') or path.
+        config_path (str): Root configuration directory (default: 'configs').
     """
 
-    def __init__(self, config_path: str) -> None:
-        """
-        Initializes the PredictCLI.
-
-        Args:
-            config_path (str): Path to the configuration file.
-        """
-        # Load the configuration
-        self.config = load_config(config_path)
+    def __init__(self, config_name: str, config_path: str = "./configs") -> None:
+        self.config = load_config(config_name, config_path=config_path)
 
         # Initialize random number generators
         L.seed_everything(seed=self.config.seed, workers=True)
@@ -55,11 +49,23 @@ class PredictCLI:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Run the training script with a given configuration file."
+        description="Run prediction with Hydra configuration."
     )
     parser.add_argument(
-        "--config", type=str, required=True, help="Path to the configuration file"
+        "--config-path",
+        "-cp",
+        type=str,
+        default="./configs",
+        help="Root directory for configurations (default: ./configs)",
+    )
+    parser.add_argument(
+        "--config-name",
+        "--config",
+        "-cn",
+        type=str,
+        required=True,
+        help="Configuration name relative to config-path (e.g. training/carracing_world_models)",
     )
     args = parser.parse_args()
-    cmd = PredictCLI(args.config)
+    cmd = PredictCLI(args.config_name, config_path=args.config_path)
     cmd.run()

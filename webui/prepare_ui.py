@@ -3,7 +3,7 @@ Pre-collect short rollout trajectories on the main thread for the Streamlit WebU
 
 Usage:
     python webui/prepare_ui.py
-    python webui/prepare_ui.py --config configs/datasets/franka_kitchen.yaml --force
+    python webui/prepare_ui.py --config configs/dataset/franka_kitchen.yaml --force
 """
 
 import argparse
@@ -32,10 +32,10 @@ CACHE_DIR = PROJECT_ROOT / "datasets" / "webui_cache"
 
 
 def get_config_files() -> List[str]:
-    """List all dataset config YAML files in configs/datasets."""
-    config_dir = Path("configs/datasets")
+    """List all dataset config YAML files in configs/dataset."""
+    config_dir = Path("configs/dataset")
     if not config_dir.is_dir():
-        config_dir = PROJECT_ROOT / "configs" / "datasets"
+        config_dir = PROJECT_ROOT / "configs" / "dataset"
 
     files = sorted(config_dir.glob("*.yaml")) + sorted(config_dir.glob("*.yml"))
     return [str(f) for f in files]
@@ -87,7 +87,7 @@ def main() -> None:
         "--config",
         type=str,
         default=None,
-        help="Optional single dataset config YAML to prepare (defaults to all in configs/datasets/).",
+        help="Optional single dataset config YAML to prepare (defaults to all in configs/dataset/).",
     )
     parser.add_argument(
         "--force",

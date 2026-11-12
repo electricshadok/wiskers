@@ -144,8 +144,9 @@ A training config simply references a dataset and a module using Hydra `defaults
 ```yaml
 # configs/training/carracing_world_models.yaml
 defaults:
-  - configs/datasets/carracing.yaml
-  - configs/modules/world_models.yaml
+  - dataset: carracing
+  - module: world_models
+  - _self_
 
 tensor_board_logger:
   save_dir: "./experiments"
