@@ -2,7 +2,7 @@ import gymnasium as gym
 import pytest
 import torch
 
-from wiskers.common.policy import BasePolicy
+from wiskers.common.policy import Policy
 from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
@@ -16,16 +16,17 @@ class _DummyEnv(gym.Env):
         self.action_space = action_space
 
 
-def test_base_policy_is_abstract():
-    with pytest.raises(TypeError):
-        BasePolicy()
+def test_policy_forward_raises_not_implemented():
+    policy = Policy()
+    with pytest.raises(NotImplementedError):
+        policy(torch.zeros(3, 64, 64))
 
 
-def test_env_policies_inherit_from_base_policy():
-    assert issubclass(BreakoutPolicy, BasePolicy)
-    assert issubclass(CarRacingPolicy, BasePolicy)
-    assert issubclass(AdroitHandPolicy, BasePolicy)
-    assert issubclass(FrankaKitchenPolicy, BasePolicy)
+def test_env_policies_inherit_from_policy():
+    assert issubclass(BreakoutPolicy, Policy)
+    assert issubclass(CarRacingPolicy, Policy)
+    assert issubclass(AdroitHandPolicy, Policy)
+    assert issubclass(FrankaKitchenPolicy, Policy)
 
     breakout_pol = BreakoutRandomPolicy(env=TorchGymEnv(_DummyEnv(gym.spaces.Discrete(4))))
     car_pol = CarRacingRandomPolicy(env=TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, (3,)))))
@@ -33,7 +34,7 @@ def test_env_policies_inherit_from_base_policy():
     franka_pol = FrankaKitchenRandomPolicy(env=TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, (9,)))))
 
     for pol in (breakout_pol, car_pol, adroit_pol, franka_pol):
-        assert isinstance(pol, BasePolicy)
+        assert isinstance(pol, Policy)
         pol.reset()
 
     dummy_obs = torch.zeros((3, 64, 64), dtype=torch.float32)

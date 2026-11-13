@@ -4,7 +4,7 @@ Modular rollout collector for trajectory-based RL and world models.
 
 import torch
 
-from wiskers.common.policy import BasePolicy
+from wiskers.common.policy import Policy
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
 from wiskers.data.transforms import EpisodeTransform
@@ -25,7 +25,7 @@ class Collector:
 
     Args:
         env (TorchGymEnv): The PyTorch-wrapped Gymnasium environment instance.
-        policy (BasePolicy): Policy instance implementing ``BasePolicy``.
+        policy (Policy): Policy instance implementing ``Policy``.
         transform (EpisodeTransform): Transform used to convert raw ``uint8``
             observations into normalized ``torch.Tensor`` before passing them to ``policy``.
         num_episodes (int): Target number of valid episodes to collect.
@@ -38,7 +38,7 @@ class Collector:
     def __init__(
         self,
         env: TorchGymEnv,
-        policy: BasePolicy,
+        policy: Policy,
         transform: EpisodeTransform,
         num_episodes: int = 10,
         min_steps: int = 0,

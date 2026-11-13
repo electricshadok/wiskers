@@ -2,7 +2,6 @@
 Common base policy interfaces for discrete and continuous environment rollouts.
 """
 
-from abc import ABC, abstractmethod
 from typing import Optional
 
 import gymnasium as gym
@@ -12,9 +11,9 @@ import torch.nn as nn
 from wiskers.envs.torch_env import TorchGymEnv
 
 
-class BasePolicy(nn.Module, ABC):
+class Policy(nn.Module):
     """
-    Abstract base class for all rollout policies (random, heuristic, or learned).
+    Base class for all rollout policies (random, heuristic, or learned).
 
     Attributes:
         action_dim (int): Dimensionality of the stored action vector in Episode.actions
@@ -50,7 +49,6 @@ class BasePolicy(nn.Module, ABC):
         """Reset any internal recurrent or episodic state at the start of an episode."""
         pass
 
-    @abstractmethod
     def forward(
         self,
         obs: torch.Tensor,
@@ -70,8 +68,8 @@ class BasePolicy(nn.Module, ABC):
         raise NotImplementedError
 
 
-class DiscretePolicy(BasePolicy):
-    """Base policy for discrete action spaces returning a scalar ``int64`` ``torch.Tensor``."""
+class DiscretePolicy(Policy):
+    """Policy for discrete action spaces returning a scalar ``int64`` ``torch.Tensor``."""
 
     action_dim: int = 1
 
@@ -83,8 +81,8 @@ class DiscretePolicy(BasePolicy):
             )
 
 
-class ContinuousPolicy(BasePolicy):
-    """Base policy for continuous action spaces returning a ``float32`` ``torch.Tensor``."""
+class ContinuousPolicy(Policy):
+    """Policy for continuous action spaces returning a ``float32`` ``torch.Tensor``."""
 
     def _validate_env(self, env: TorchGymEnv) -> None:
         if not isinstance(env.action_space, gym.spaces.Box):

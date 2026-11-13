@@ -15,7 +15,7 @@ flowchart TD
     subgraph Environment & Collection ["Data Collection Loop"]
         Env["Gym Environment\n(CarRacing, Breakout, Franka Kitchen, Adroit)"]
         TorchEnv["TorchGymEnv\n(Tensor Action & Obs Wrapper)"]
-        Policy["Policy / Heuristic\n(BasePolicy: Random, Heuristic, Neural)"]
+        Policy["Policy / Heuristic\n(Policy: Random, Heuristic, Neural)"]
         Collector["Collector\n(Rollout Engine)"]
         Buffer["ReplayBuffer\n(Stores Full Episode Trajectories)"]
     end
@@ -66,7 +66,7 @@ flowchart TD
 
 ### 2.2 Policies (`wiskers.common.policies`)
 - **Role**: Implements action selection strategies during environment rollout or inference.
-- **Key Abstraction — `BasePolicy`**:
+- **Key Abstraction — `Policy`**:
   - Exposes `policy(obs, step) -> torch.Tensor` with explicit `reset()` lifecycle.
   - Pluggable variants:
     - **Random**: Uniform exploration over action spaces.
