@@ -85,6 +85,13 @@ def test_train_pipeline_cli_creates_folders_and_runs_pipeline():
             checkpoint_dir = os.path.join(cli.logger.log_dir, "checkpoints")
             assert os.path.exists(checkpoint_dir)
 
+            # Fully resolved config is saved for reproducibility
+            saved_config_path = os.path.join(cli.logger.log_dir, "config.yaml")
+            assert os.path.exists(saved_config_path)
+            loaded = load_config(saved_config_path)
+            assert "data_module" in loaded
+            assert "module" in loaded
+
 
 def test_load_config_with_custom_config_path():
     with tempfile.TemporaryDirectory() as tmpdir:

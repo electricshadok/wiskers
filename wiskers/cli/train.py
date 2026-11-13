@@ -10,6 +10,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.profilers import PyTorchProfiler
+from omegaconf import OmegaConf
 from safetensors.torch import save_model
 
 from wiskers.cli.utils import load_config
@@ -94,6 +95,12 @@ class TrainPipelineCLI(TrainCLI):
             return
 
         self.logger = TensorBoardLogger(**self.config.tensor_board_logger)
+        os.makedirs(self.logger.log_dir, exist_ok=True)
+
+        # Save fully resolved configuration for experiment reproducibility
+        config_save_path = os.path.join(self.logger.log_dir, "config.yaml")
+        OmegaConf.save(self.config, config_save_path)
+
         checkpoint_dir = os.path.join(self.logger.log_dir, "checkpoints")
 
         if os.path.exists(checkpoint_dir):

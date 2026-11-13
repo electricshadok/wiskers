@@ -70,20 +70,25 @@ python wiskers/cli/train.py --config training/carracing_world_models --quick_run
 
 ## Training
 
-Launch training with a chosen experiment configuration (`--config-name` or `--config`):
+Launch training with a chosen experiment configuration (`--config-name`, `--config`, or `-cn`):
 
 ```bash
-# World Models on CarRacing-v3
+# Shorthand name (resolves to ./configs/training/carracing_world_models.yaml)
 python wiskers/cli/train.py --config training/carracing_world_models
 
-# World Models on Franka Kitchen
-python wiskers/cli/train.py --config training/franka_kitchen_world_models
+# Direct path to a YAML file
+python wiskers/cli/train.py --config ./configs/training/carracing_world_models.yaml
+
+# Reproduce an exact previous run using its saved config snapshot
+python wiskers/cli/train.py --config experiments/world_models/version_0/config.yaml
 
 # Custom config root directory (--config-path or -cp)
-python wiskers/cli/train.py --config-path configs --config training/carracing_world_models
+python wiskers/cli/train.py --config-path ./configs --config training/carracing_world_models
 ```
 
-### Dynamic CLI Overrides (Hydra Config Groups & Parameters)
+> 💡 **Experiment Reproducibility**: Every full training run saves a self-contained snapshot of the complete, resolved configuration to `experiments/<name>/<version>/config.yaml`. You can re-run or evaluate that exact run at any time by passing that YAML file directly to `--config`.
+
+### CLI Overrides
 
 You can override config groups (`dataset`, `module`) or any nested parameter directly from the command line:
 

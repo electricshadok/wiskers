@@ -28,7 +28,7 @@ MAX_STEPS = 10
 MIN_STEPS = 5
 SAMPLER_NUM_STEPS = 5
 IMAGE_SIZE = None
-CACHE_DIR = PROJECT_ROOT / "datasets" / "webui_cache"
+CACHE_DIR = PROJECT_ROOT / ".cache" / "webui"
 
 
 def get_config_files() -> List[str]:
