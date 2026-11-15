@@ -2,8 +2,8 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from wiskers.cli.train import TrainCLI, TrainPipelineCLI
-from wiskers.cli.utils import load_config
+from wiskers.pipeline.config import load_config
+from wiskers.pipeline.train import TrainCLI, TrainPipelineCLI
 
 
 def test_load_config_defaults_inheritance():

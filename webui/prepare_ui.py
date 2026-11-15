@@ -20,7 +20,7 @@ if str(PROJECT_ROOT) not in sys.path:
 import torch  # noqa: E402
 from hydra.utils import instantiate  # noqa: E402
 
-from wiskers.cli.utils import load_config  # noqa: E402
+from wiskers.pipeline.config import load_config  # noqa: E402
 
 
 NUM_EPISODES = 10

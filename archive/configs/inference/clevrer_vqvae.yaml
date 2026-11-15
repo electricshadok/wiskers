@@ -27,7 +27,7 @@ data_module:
 
 # Model and output paths
 best_model_path:
-  _target_: wiskers.cli.utils.get_latest_checkpoint
+  _target_: wiskers.pipeline.config.get_latest_checkpoint
   experiment_dir: ${experiment_dir}
   run_name: ${run_name}
   ext: ckpt

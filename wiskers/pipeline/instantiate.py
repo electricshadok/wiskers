@@ -4,7 +4,7 @@ from hydra.utils import instantiate as hydra_instantiate
 from omegaconf import DictConfig
 
 
-def instantiate(target: Union[str, Dict[str, Any], DictConfig, Any], **kwargs):
+def instantiate(target: Union[str, Dict[str, Any], DictConfig, Any], **kwargs: Any) -> Any:
     """
     Instantiate an object using Hydra. Strings are converted into a Hydra dict.
     If target is already an instantiated object (not a string or dict-like config),
@@ -25,5 +25,3 @@ def instantiate(target: Union[str, Dict[str, Any], DictConfig, Any], **kwargs):
         return hydra_instantiate(target, **kwargs)
 
     return target
-
-

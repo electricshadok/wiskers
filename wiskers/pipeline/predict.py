@@ -3,9 +3,9 @@ import os
 
 import lightning as L
 import torchvision
-from hydra.utils import instantiate
 
-from wiskers.cli.utils import load_config
+from wiskers.pipeline.config import load_config
+from wiskers.pipeline.instantiate import instantiate
 
 
 class PredictCLI:
@@ -32,10 +32,6 @@ class PredictCLI:
         """
         datamodule = instantiate(self.config.data_module, _convert_="all")
         datamodule.prepare_data()
-        # NOTE: In future, this section will be extended to perform video prediction
-        # from image sequences in the test set.
-        # test_loader = datamodule.test_dataloader()
-        # batch = next(iter(test_loader))
 
         os.makedirs(self.config.output_dir, exist_ok=True)
 

@@ -5,7 +5,6 @@ import shutil
 from typing import List, Optional
 
 import lightning as L
-from hydra.utils import instantiate
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -13,7 +12,8 @@ from lightning.pytorch.profilers import PyTorchProfiler
 from omegaconf import OmegaConf
 from safetensors.torch import save_model
 
-from wiskers.cli.utils import load_config
+from wiskers.pipeline.config import load_config
+from wiskers.pipeline.instantiate import instantiate
 
 
 class TrainCLI:

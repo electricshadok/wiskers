@@ -16,12 +16,6 @@ class ONNXInference:
     ext = "onnx"
 
     def __call__(self, filepath: str, num_samples: int):
-        # TODO - add implementation for ONNXInference
-        # import onnxruntime
-        # model = onnxruntime.InferenceSession(filepath)
-        # inputs = {self.model.get_inputs()[0].name: x}
-        # outputs = self.model.run(None, inputs)
-        # return outputs[0]
         raise NotImplementedError("ONNXInference._call() not implemented")
 
 
@@ -29,8 +23,6 @@ class SafeTensorInference:
     ext = "safetensors"
 
     def __call__(self, filepath: str, num_samples: int):
-        # from safetensors.torch import load_model
-        # TODO - add implementation for SafeTensorInference
         raise NotImplementedError("SafeTensorInference._call() not implemented")
 
 

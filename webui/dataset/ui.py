@@ -13,7 +13,7 @@ from webui.prepare_ui import (
     get_config_files,
 )
 from webui.utils import dataset_ui
-from wiskers.cli.utils import load_config
+from wiskers.pipeline.config import load_config
 
 
 def format_config_name(path: str) -> str:

@@ -1,11 +1,7 @@
-from typing import Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics.functional.image.ssim import structural_similarity_index_measure
-
-from wiskers.common.runtime.arg_utils import instantiate
 
 
 class L1Loss(nn.Module):
@@ -79,22 +75,27 @@ def ssim_with_loss(
     return ssim_value, 1 - ssim_value
 
 
-class Losses:
-    """Container for loss configuration so it can be Hydra-instantiated."""
+class VQVAELoss(nn.Module):
+    """Loss module for VQ-VAE models combining reconstruction, VQ, and optional SSIM loss."""
 
     def __init__(
         self,
-        reconstruction: Union[str, dict] = "wiskers.common.losses.MixedL1L2Loss",
+        reconstruction: nn.Module = MixedL1L2Loss(),
         vq_weight: float = 1.0,
         reconstruction_weight: float = 1.0,
         ssim_weight: float = 0.0,
     ) -> None:
-        self.reconstruction = instantiate(reconstruction)
+        super().__init__()
+        self.reconstruction = (
+            reconstruction if reconstruction is not None else MixedL1L2Loss()
+        )
         self.vq_weight = vq_weight
         self.reconstruction_weight = reconstruction_weight
         self.ssim_weight = ssim_weight
 
-    def __call__(self, images: torch.Tensor, recon_x: torch.Tensor, vq_loss: torch.Tensor) -> dict:
+    def forward(
+        self, images: torch.Tensor, recon_x: torch.Tensor, vq_loss: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
         rec_loss = self.reconstruction(images, recon_x)
         if self.ssim_weight > 0.0:
             ssim_val, ssim_loss = ssim_with_loss(recon_x, images, data_range=1.0)
@@ -107,7 +108,7 @@ class Losses:
             + self.reconstruction_weight * rec_loss
             + self.ssim_weight * ssim_loss
         )
-        losses = {
+        return {
             "loss": loss,
             "vq_loss": vq_loss,
             "vq_loss_weighted": self.vq_weight * vq_loss,
@@ -115,4 +116,3 @@ class Losses:
             "ssim": ssim_val,
             "ssim_loss": ssim_loss,
         }
-        return losses

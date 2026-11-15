@@ -70,8 +70,9 @@ module:
       eps: 1e-5
   # Losses
   losses:
-    _target_: wiskers.common.losses.Losses
-    reconstruction: wiskers.common.losses.MixedL1L2Loss
+    _target_: wiskers.common.losses.VQVAELoss
+    reconstruction:
+      _target_: wiskers.common.losses.MixedL1L2Loss
     vq_weight: 1.0
     reconstruction_weight: 1.0
     ssim_weight: 0.3
