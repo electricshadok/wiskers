@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn as nn
 
-from wiskers.common.blocks.conv_blocks_2d import DoubleConv2D
+from wiskers.nn.blocks.conv_blocks_2d import DoubleConv2D
 from wiskers.models.gen.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 
 

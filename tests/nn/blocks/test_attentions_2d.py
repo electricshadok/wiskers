@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.attentions_2d import SelfMultiheadAttention2D, SelfScaledDotProductAttention2D
+from wiskers.nn.blocks.attentions_2d import SelfMultiheadAttention2D, SelfScaledDotProductAttention2D
 
 
 @pytest.mark.parametrize(

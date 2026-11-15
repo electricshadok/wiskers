@@ -3,9 +3,9 @@ from typing import Optional, Sequence
 
 import torch
 
-from wiskers.common.heads import CategoricalActor
-from wiskers.common.policy import DiscretePolicy
 from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.nn.heads import CategoricalActor
+from wiskers.policies import DiscretePolicy
 
 
 class BreakoutPolicy(DiscretePolicy):

@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.causal_conv import (
+from wiskers.nn.blocks.causal_conv import (
     CausalConv1d,
     CausalConv2d,
     CausalConv3d,

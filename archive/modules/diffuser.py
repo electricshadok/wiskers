@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.runtime.arg_utils import instantiate
+from wiskers.pipeline.instantiate import instantiate
 from wiskers.models.gen.diffusion.schedulers.registry import Schedulers
 from wiskers.models.gen.diffusion.unet_2d import UNet2D
 from wiskers.modules.gen.base import BaseLightningModule

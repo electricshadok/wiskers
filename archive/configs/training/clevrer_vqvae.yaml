@@ -61,7 +61,7 @@ module:
         _target_: torch.nn.ReLU
     # latent model (e.g. VQ or VAE)
     quantizer:
-      _target_: wiskers.common.blocks.quantizer.VectorQuantizer
+      _target_: wiskers.nn.blocks.quantizer.VectorQuantizer
       num_codes: 128
       code_dim: 256 # matches encoder's latent channels
       commitment_weight: 0.1
@@ -70,9 +70,9 @@ module:
       eps: 1e-5
   # Losses
   losses:
-    _target_: wiskers.common.losses.VQVAELoss
+    _target_: wiskers.nn.losses.VQVAELoss
     reconstruction:
-      _target_: wiskers.common.losses.MixedL1L2Loss
+      _target_: wiskers.nn.losses.MixedL1L2Loss
     vq_weight: 1.0
     reconstruction_weight: 1.0
     ssim_weight: 0.3

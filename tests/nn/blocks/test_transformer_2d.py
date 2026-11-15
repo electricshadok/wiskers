@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.transformer_2d import TransformerSelfAttention2D
+from wiskers.nn.blocks.transformer_2d import TransformerSelfAttention2D
 
 
 @pytest.mark.parametrize(

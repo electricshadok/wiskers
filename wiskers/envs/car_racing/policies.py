@@ -3,9 +3,9 @@ from typing import Optional, Sequence
 
 import torch
 
-from wiskers.common.heads import ContinuousActor
-from wiskers.common.policy import ContinuousPolicy
 from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.nn.heads import ContinuousActor
+from wiskers.policies import ContinuousPolicy
 
 
 class CarRacingPolicy(ContinuousPolicy):

@@ -5,8 +5,8 @@ import torchvision.utils as vutils
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.utilities.types import OptimizerLRScheduler
 
-from wiskers.common.metrics import codebook_usage_metrics
-from wiskers.common.runtime.arg_utils import instantiate
+from wiskers.metrics import codebook_usage_metrics
+from wiskers.pipeline.instantiate import instantiate
 from wiskers.modules.gen.base import BaseLightningModule
 
 

@@ -3,8 +3,8 @@ from typing import List, Optional, Tuple
 import torch
 import torch.nn.functional as F
 
-from wiskers.common.losses import kl_divergence_standard_normal
-from wiskers.common.runtime.arg_utils import instantiate
+from wiskers.nn.losses import kl_divergence_standard_normal
+from wiskers.pipeline.instantiate import instantiate
 from wiskers.models.gen.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.gen.autoencoder.vae_2d import VAE2D
 from wiskers.modules.gen.base import BaseLightningModule

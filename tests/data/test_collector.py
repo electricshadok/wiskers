@@ -4,11 +4,11 @@ import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-from wiskers.common.policy import ContinuousPolicy, DiscretePolicy
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs import TorchGymEnv
+from wiskers.policies import ContinuousPolicy, DiscretePolicy
 
 
 class DummyPolicy(DiscretePolicy):

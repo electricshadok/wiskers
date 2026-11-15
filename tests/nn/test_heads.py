@@ -1,12 +1,12 @@
 """
-Tests for shared RL heads in wiskers.common.heads
+Tests for shared RL heads in wiskers.nn.heads
 (ContinuousActor, CategoricalActor, Critic, Reward, Done).
 """
 
 import pytest
 import torch
 
-from wiskers.common.heads import (
+from wiskers.nn.heads import (
     CategoricalActor,
     ContinuousActor,
     Critic,

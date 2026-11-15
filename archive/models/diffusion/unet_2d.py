@@ -2,11 +2,11 @@ from typing import List, Optional
 
 import torch.nn as nn
 
-from wiskers.common.blocks.conv_blocks_2d import (
+from wiskers.nn.blocks.conv_blocks_2d import (
     DoubleConv2D,
     ResDoubleConv2D,
 )
-from wiskers.common.blocks.positional_encoding import SinusoidalPositionEmbedding
+from wiskers.nn.blocks.positional_encoding import SinusoidalPositionEmbedding
 from wiskers.models.gen.diffusion.conv_blocks_2d import (
     AttnDownBlock2D,
     AttnUpBlock2D,

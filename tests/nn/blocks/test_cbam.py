@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.cbam import CBAM, ChannelAttention, SpatialAttention
+from wiskers.nn.blocks.cbam import CBAM, ChannelAttention, SpatialAttention
 
 
 @pytest.mark.parametrize(

@@ -2,12 +2,12 @@ import gymnasium as gym
 import pytest
 import torch
 
-from wiskers.common.policy import Policy
 from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
 from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPolicy
 from wiskers.envs.franka.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
+from wiskers.policies import Policy
 
 
 class _DummyEnv(gym.Env):

@@ -4,11 +4,11 @@ Modular rollout collector for trajectory-based RL and world models.
 
 import torch
 
-from wiskers.common.policy import Policy
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
 from wiskers.data.transforms import EpisodeTransform
 from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.policies import Policy
 
 
 class Collector:

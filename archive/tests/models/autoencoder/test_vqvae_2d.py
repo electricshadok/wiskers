@@ -4,7 +4,7 @@ import onnxruntime as ort
 import pytest
 import torch
 
-from wiskers.common.blocks.quantizer import VectorQuantizer
+from wiskers.nn.blocks.quantizer import VectorQuantizer
 from wiskers.models.gen.autoencoder.encoder_decoder import CNNDecoder, CNNEncoder
 from wiskers.models.gen.autoencoder.vqvae_2d import VQ_VAE2D
 

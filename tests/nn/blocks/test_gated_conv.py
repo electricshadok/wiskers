@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.gated_conv import (
+from wiskers.nn.blocks.gated_conv import (
     GatedConv1d,
     GatedConv2d,
     GatedConv3d,

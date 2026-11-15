@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.quantizer import Codebook, EMA_Codebook, VectorQuantizer
+from wiskers.nn.blocks.quantizer import Codebook, EMA_Codebook, VectorQuantizer
 
 
 @pytest.mark.parametrize(

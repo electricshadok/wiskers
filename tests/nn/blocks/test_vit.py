@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.vit import PatchEmbedding
+from wiskers.nn.blocks.vit import PatchEmbedding
 
 
 @pytest.mark.parametrize(

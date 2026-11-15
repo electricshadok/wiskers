@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from wiskers.common.blocks.bam import BAM, ChannelAttention, SpatialAttention
+from wiskers.nn.blocks.bam import BAM, ChannelAttention, SpatialAttention
 
 
 @pytest.mark.parametrize(

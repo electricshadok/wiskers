@@ -86,9 +86,7 @@ class VQVAELoss(nn.Module):
         ssim_weight: float = 0.0,
     ) -> None:
         super().__init__()
-        self.reconstruction = (
-            reconstruction if reconstruction is not None else MixedL1L2Loss()
-        )
+        self.reconstruction = reconstruction
         self.vq_weight = vq_weight
         self.reconstruction_weight = reconstruction_weight
         self.ssim_weight = ssim_weight
