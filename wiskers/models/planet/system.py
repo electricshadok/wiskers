@@ -34,4 +34,3 @@ class PlaNet(L.LightningModule):
 
     def configure_optimizers(self):
         return Adam(self.parameters(), lr=self.learning_rate)
-

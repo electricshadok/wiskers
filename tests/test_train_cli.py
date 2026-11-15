@@ -10,7 +10,7 @@ def test_load_config_defaults_inheritance():
     cfg = load_config("training/carracing_world_models")
     assert "data_module" in cfg
     assert cfg.data_module.batch_size == 16
-    assert cfg.module._target_ == "wiskers.world_models.WorldModels"
+    assert cfg.module._target_ == "wiskers.models.world_models.system.WorldModels"
     assert cfg.module.mdn_rnn.action_size == 3
     assert "defaults" not in cfg
 
@@ -18,7 +18,7 @@ def test_load_config_defaults_inheritance():
 def test_load_config_franka_kitchen_world_models_override():
     cfg = load_config("training/franka_kitchen_world_models")
     assert "data_module" in cfg
-    assert cfg.module._target_ == "wiskers.world_models.WorldModels"
+    assert cfg.module._target_ == "wiskers.models.world_models.system.WorldModels"
     assert cfg.module.mdn_rnn.action_size == 9
     assert cfg.module.controller.action_size == 9
     assert "defaults" not in cfg

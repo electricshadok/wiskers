@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from wiskers.planet import PlaNet
+from wiskers.models.planet.system import PlaNet
 
 
 def test_planet_init():

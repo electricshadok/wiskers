@@ -119,8 +119,8 @@ flowchart TD
     }
     ```
 
-### 2.8 World Models & Modules (`wiskers.modules`, `wiskers.world_models`)
-- **Role**: PyTorch Lightning modules implementing the perception, memory dynamics, and imagination loop.
+### 2.8 World Models & Systems (`wiskers.models.*.system`)
+- **Role**: PyTorch Lightning systems coordinating perception, memory dynamics, and training loops.
 - **Sub-components**:
   - **Vision / Perception ($V$)**: Encoders mapping high-dimensional observations $o_t$ to compact latents $z_t$, and decoders reconstructing $\hat{o}_t$ from $z_t$.
   - **Memory / Dynamics ($M$)**: Autoregressive or generative models predicting future latents $z_{t+1}$ conditioned on previous history $(z_{\le t}, a_{\le t})$.
@@ -189,7 +189,7 @@ Action (a_t) ─────────┬────────────�
 
 #### Execution in Wiskers:
 - **Data Ingestion**: `TrajectoryDataModule` supplies chunks of 50 steps from `CarRacing` or `FrankaKitchen`.
-- **Training Step (`wiskers/world_models.py`)**:
+- **Training Step (`wiskers/models/world_models/system.py`)**:
   1. The frozen encoder computes $z_t = \text{encoder}(o_t)$ for the sequence.
   2. The MDN-RNN consumes $(z_{0:T-1}, a_{0:T-1})$ to output mixture parameters $(\pi, \mu, \sigma)$ and termination probabilities $\hat{d}$.
   3. The model optimizes the MDN negative log-likelihood (`MDNRNN.mdn_loss`) and binary cross-entropy (`done_loss`).

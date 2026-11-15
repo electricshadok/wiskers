@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from wiskers.models.world_models.controller import Controller
 from wiskers.models.world_models.mdn_rnn import MDNRNN
-from wiskers.world_models import WorldModels
+from wiskers.models.world_models.system import WorldModels
 
 
 def test_world_models_init():

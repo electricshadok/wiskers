@@ -97,4 +97,3 @@ class WorldModels(L.LightningModule):
 
     def configure_optimizers(self):
         return Adam(self.mdn_rnn.parameters(), lr=self.learning_rate)
-

@@ -1,6 +1,6 @@
 # World Models Architecture (Ha & Schmidhuber, 2018)
 module:
-  _target_: wiskers.world_models.WorldModels
+  _target_: wiskers.models.world_models.system.WorldModels
 
   # V model (frozen): [N, 3, 64, 64] -> z [N, 32]
   encoder:
