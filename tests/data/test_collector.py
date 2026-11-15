@@ -84,6 +84,49 @@ def test_collector_collect_one_episode_no_args():
     assert torch.all(episode.obs[8] == 8)
     assert episode.actions.shape == (8, 1)
     assert episode.actions.dtype == torch.float32
+    assert episode.rewards.shape == (8,)
+    assert episode.done.shape == (8,)
+    assert episode.terminated.shape == (8,)
+    assert episode.truncated.shape == (8,)
+    assert episode.terminated[-1].item() is True
+    assert episode.terminated[:-1].any().item() is False
+    assert episode.truncated.any().item() is False
+    assert torch.equal(episode.done, episode.terminated | episode.truncated)
+
+
+def test_collector_terminated_and_truncated_distinction():
+    """Verify that Gymnasium terminated and truncated flags flow accurately into Episode."""
+    class TruncatedEnv(gym.Env):
+        metadata = {}
+
+        def __init__(self):
+            super().__init__()
+            self.observation_space = gym.spaces.Box(0, 255, shape=(16, 16, 3), dtype=np.uint8)
+            self.action_space = gym.spaces.Discrete(4)
+            self.step_count = 0
+
+        def reset(self, seed=None, options=None):
+            super().reset(seed=seed)
+            self.step_count = 0
+            return np.zeros((16, 16, 3), dtype=np.uint8), {}
+
+        def step(self, action):
+            self.step_count += 1
+            terminated = False
+            truncated = self.step_count >= 5
+            return np.ones((16, 16, 3), dtype=np.uint8), 1.0, terminated, truncated, {}
+
+    env = TorchGymEnv(TruncatedEnv())
+    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
+    episode = collector.collect_one_episode()
+
+    assert len(episode) == 5
+    assert episode.terminated.any().item() is False
+    assert episode.truncated[-1].item() is True
+    assert episode.truncated[:-1].any().item() is False
+    assert episode.done[-1].item() is True
+    assert torch.equal(episode.done, episode.terminated | episode.truncated)
 
 
 def test_collector_max_steps_clamping():

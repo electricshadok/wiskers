@@ -7,11 +7,15 @@ from wiskers.data.episode import Episode
 
 
 def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: int = 2) -> Episode:
+    terminated = torch.zeros(T, dtype=torch.bool)
+    truncated = torch.zeros(T, dtype=torch.bool)
     return Episode(
         obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.ones(T, dtype=torch.float32),
-        dones=torch.zeros(T, dtype=torch.bool),
+        done=terminated | truncated,
+        terminated=terminated,
+        truncated=truncated,
     )
 
 
@@ -78,7 +82,9 @@ def test_replay_buffer_empty_episode_ignored():
         obs=torch.empty((0, 4, 4, 3), dtype=torch.uint8),
         actions=torch.empty((0, 2), dtype=torch.float32),
         rewards=torch.empty(0, dtype=torch.float32),
-        dones=torch.empty(0, dtype=torch.bool),
+        done=torch.empty(0, dtype=torch.bool),
+        terminated=torch.empty(0, dtype=torch.bool),
+        truncated=torch.empty(0, dtype=torch.bool),
     )
     buf.add(empty_ep)
     assert buf.is_empty
@@ -90,7 +96,9 @@ def test_episode_validation_and_slice():
             obs=torch.zeros((5, 4, 4, 3), dtype=torch.uint8),
             actions=torch.zeros((5, 2), dtype=torch.float32),
             rewards=torch.zeros(5, dtype=torch.float32),
-            dones=torch.zeros(5, dtype=torch.bool),
+            done=torch.zeros(5, dtype=torch.bool),
+            terminated=torch.zeros(5, dtype=torch.bool),
+            truncated=torch.zeros(5, dtype=torch.bool),
         )
 
     ep = _make_episode(T=10)
@@ -99,7 +107,9 @@ def test_episode_validation_and_slice():
     assert chunk.obs.shape == (6, 4, 4, 3)
     assert chunk.actions.shape == (5, 2)
     assert chunk.rewards.shape == (5,)
-    assert chunk.dones.shape == (5,)
+    assert chunk.done.shape == (5,)
+    assert chunk.terminated.shape == (5,)
+    assert chunk.truncated.shape == (5,)
     assert torch.equal(chunk.obs, ep.obs[3:9])
     assert torch.equal(chunk.actions, ep.actions[3:8])
 

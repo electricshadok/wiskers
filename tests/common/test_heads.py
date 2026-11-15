@@ -157,13 +157,13 @@ def test_lambda_return_td_limit():
     assert torch.allclose(returns, torch.full_like(returns, 3.0), atol=1e-4)
 
 
-def test_lambda_return_with_dones():
+def test_lambda_return_with_done():
     rewards = torch.ones(4, 1, 1)
     values = torch.full((5, 1, 1), 10.0)
-    dones = torch.zeros(4, 1, 1)
-    dones[1] = 1.0  # Episode terminates at step t=1
+    done = torch.zeros(4, 1, 1)
+    done[1] = 1.0  # Episode terminates at step t=1
 
-    returns = Critic.lambda_return(rewards, values, gamma=0.99, lam=0.95, dones=dones)
+    returns = Critic.lambda_return(rewards, values, gamma=0.99, lam=0.95, done=done)
     assert returns.shape == (4, 1, 1)
     # At t=1 where done=1, future bootstrap values must be masked out: G_1 = r_1 = 1.0
     assert torch.isclose(returns[1], torch.tensor(1.0))

@@ -254,7 +254,7 @@ class Critic(nn.Module):
         values: torch.Tensor,
         gamma: float = 0.99,
         lam: float = 0.95,
-        dones: Optional[torch.Tensor] = None,
+        done: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Compute lambda-returns over an imagined trajectory.
@@ -271,8 +271,8 @@ class Critic(nn.Module):
                 The last entry values[T] is the bootstrap value for the final step.
             gamma   (float): Discount factor. Default: 0.99.
             lam     (float): Lambda for TD(λ). Default: 0.95.
-            dones   (Optional[torch.Tensor]): Termination flags or probabilities
-                in [0, 1] of same shape as ``rewards``. When ``dones[t] == 1``,
+            done    (Optional[torch.Tensor]): Termination flags or probabilities
+                in [0, 1] of same shape as ``rewards``. When ``done[t] == 1``,
                 future bootstrap values are masked out (``G_t^λ = r_t``).
 
         Returns:
@@ -285,8 +285,8 @@ class Critic(nn.Module):
         next_return = values[T]
 
         for t in reversed(range(T)):
-            if dones is not None:
-                gamma_t = gamma * (1.0 - dones[t].to(rewards.dtype))
+            if done is not None:
+                gamma_t = gamma * (1.0 - done[t].to(rewards.dtype))
             else:
                 gamma_t = gamma
 

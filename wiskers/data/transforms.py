@@ -123,18 +123,24 @@ class EpisodeToTensor(EpisodeTransform):
                 - ``obs``: ``torch.Tensor`` of shape ``(T + 1, H_in, W_in, C_in)``, dtype ``uint8``
                 - ``actions``: ``torch.Tensor`` of shape ``(T, action_dim)``, dtype ``float32``
                 - ``rewards``: ``torch.Tensor`` of shape ``(T,)``, dtype ``float32``
-                - ``dones``: ``torch.Tensor`` of shape ``(T,)``, dtype ``bool``
+                - ``done``: ``torch.Tensor`` of shape ``(T,)``, dtype ``bool``
+                - ``terminated``: ``torch.Tensor`` of shape ``(T,)``, dtype ``bool``
+                - ``truncated``: ``torch.Tensor`` of shape ``(T,)``, dtype ``bool``
 
         Returns:
             dict[str, torch.Tensor]: Dictionary of tensors (collated by DataLoader into ``(B, ...)``):
                 - ``"obs"``: ``torch.Tensor`` of shape ``(T + 1, C, H, W)``, dtype ``torch.float32`` in ``obs_range``
                 - ``"actions"``: ``torch.Tensor`` of shape ``(T, action_dim)``, dtype ``torch.float32``
                 - ``"rewards"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32``
-                - ``"dones"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
+                - ``"done"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
+                - ``"terminated"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
+                - ``"truncated"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
         """
         return {
             "obs": self.transform_obs(episode.obs),
             "actions": episode.actions,
             "rewards": episode.rewards,
-            "dones": episode.dones.float(),
+            "done": episode.done.float(),
+            "terminated": episode.terminated.float(),
+            "truncated": episode.truncated.float(),
         }

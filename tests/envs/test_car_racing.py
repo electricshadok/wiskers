@@ -98,11 +98,13 @@ def test_car_racing_datamodule_setup_and_dataloader():
     loader = dm.train_dataloader()
     batch = next(iter(loader))
 
-    assert set(batch.keys()) == {"obs", "actions", "rewards", "dones"}
+    assert set(batch.keys()) == {"obs", "actions", "rewards", "done", "terminated", "truncated"}
     assert batch["obs"].shape == (2, 6, 3, 64, 64)
     assert batch["actions"].shape == (2, 5, 3)
     assert batch["rewards"].shape == (2, 5)
-    assert batch["dones"].shape == (2, 5)
+    assert batch["done"].shape == (2, 5)
+    assert batch["terminated"].shape == (2, 5)
+    assert batch["truncated"].shape == (2, 5)
     assert batch["obs"].dtype == torch.float32
     assert batch["obs"].min() >= 0.0
     assert batch["obs"].max() <= 1.0

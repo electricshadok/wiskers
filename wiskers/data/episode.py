@@ -15,27 +15,37 @@ class Episode:
         o_0 --(a_0, r_0, d_0)--> o_1 --(a_1, r_1, d_1)--> ... --(a_{T-1}, r_{T-1}, d_{T-1})--> o_T
 
     Because each step ``t`` transitions from ``o_t`` to ``o_{t+1}``, ``obs`` has
-    leading dimension ``T + 1`` while ``actions``, ``rewards``, and ``dones``
-    have leading dimension ``T``.
+    leading dimension ``T + 1`` while ``actions``, ``rewards``, ``done``,
+    ``terminated``, and ``truncated`` have leading dimension ``T``.
 
     Fields:
-        obs     (T + 1, H, W, C) uint8  — pixel observations [o_0, ..., o_T].
-        actions (T, action_dim) float32 — action taken at each step [a_0, ..., a_{T-1}].
-        rewards (T,) float32            — scalar reward received after each action.
-        dones   (T,) bool               — True on the step the episode ended.
+        obs        (T + 1, H, W, C) uint8  — pixel observations [o_0, ..., o_T].
+        actions    (T, action_dim) float32 — action taken at each step [a_0, ..., a_{T-1}].
+        rewards    (T,) float32            — scalar reward received after each action.
+        done       (T,) bool               — True on the step the episode ended (terminated | truncated).
+        terminated (T,) bool               — True if the episode reached a terminal state.
+        truncated  (T,) bool               — True if the episode ended due to time limit/cutoff.
     """
 
-    obs: torch.Tensor      # (T + 1, H, W, C) uint8
-    actions: torch.Tensor  # (T, action_dim) float32
-    rewards: torch.Tensor  # (T,) float32
-    dones: torch.Tensor    # (T,) bool
+    obs: torch.Tensor          # (T + 1, H, W, C) uint8
+    actions: torch.Tensor      # (T, action_dim) float32
+    rewards: torch.Tensor      # (T,) float32
+    done: torch.Tensor         # (T,) bool
+    terminated: torch.Tensor   # (T,) bool
+    truncated: torch.Tensor    # (T,) bool
 
     def __post_init__(self) -> None:
         T = len(self.actions)
-        if len(self.rewards) != T or len(self.dones) != T:
+        if (
+            len(self.rewards) != T
+            or len(self.done) != T
+            or len(self.terminated) != T
+            or len(self.truncated) != T
+        ):
             raise ValueError(
-                f"Episode actions ({T}), rewards ({len(self.rewards)}), and "
-                f"dones ({len(self.dones)}) must have the same length T."
+                f"Episode actions ({T}), rewards ({len(self.rewards)}), "
+                f"done ({len(self.done)}), terminated ({len(self.terminated)}), "
+                f"and truncated ({len(self.truncated)}) must have the same length T."
             )
         if T == 0:
             if len(self.obs) not in (0, 1):
@@ -60,18 +70,24 @@ class Episode:
             - ``obs``: ``self.obs[start : end + 1]`` of length ``H + 1``
             - ``actions``: ``self.actions[start : end]`` of length ``H``
             - ``rewards``: ``self.rewards[start : end]`` of length ``H``
-            - ``dones``: ``self.dones[start : end]`` of length ``H``
+            - ``done``: ``self.done[start : end]`` of length ``H``
+            - ``terminated``: ``self.terminated[start : end]`` of length ``H``
+            - ``truncated``: ``self.truncated[start : end]`` of length ``H``
         """
         if start >= end:
             return Episode(
                 obs=self.obs[start:start],
                 actions=self.actions[start:start],
                 rewards=self.rewards[start:start],
-                dones=self.dones[start:start],
+                done=self.done[start:start],
+                terminated=self.terminated[start:start],
+                truncated=self.truncated[start:start],
             )
         return Episode(
             obs=self.obs[start : end + 1],
             actions=self.actions[start:end],
             rewards=self.rewards[start:end],
-            dones=self.dones[start:end],
+            done=self.done[start:end],
+            terminated=self.terminated[start:end],
+            truncated=self.truncated[start:end],
         )
