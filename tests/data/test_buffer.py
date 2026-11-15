@@ -13,7 +13,6 @@ def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: i
         obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.ones(T, dtype=torch.float32),
-        done=terminated | truncated,
         terminated=terminated,
         truncated=truncated,
     )
@@ -82,7 +81,6 @@ def test_replay_buffer_empty_episode_ignored():
         obs=torch.empty((0, 4, 4, 3), dtype=torch.uint8),
         actions=torch.empty((0, 2), dtype=torch.float32),
         rewards=torch.empty(0, dtype=torch.float32),
-        done=torch.empty(0, dtype=torch.bool),
         terminated=torch.empty(0, dtype=torch.bool),
         truncated=torch.empty(0, dtype=torch.bool),
     )
@@ -91,26 +89,55 @@ def test_replay_buffer_empty_episode_ignored():
 
 
 def test_episode_validation_and_slice():
-    with pytest.raises(ValueError, match="must have T \\+ 1 = 6 observations"):
-        Episode(
-            obs=torch.zeros((5, 4, 4, 3), dtype=torch.uint8),
-            actions=torch.zeros((5, 2), dtype=torch.float32),
-            rewards=torch.zeros(5, dtype=torch.float32),
-            done=torch.zeros(5, dtype=torch.bool),
-            terminated=torch.zeros(5, dtype=torch.bool),
-            truncated=torch.zeros(5, dtype=torch.bool),
-        )
+    missing_key_ep = Episode.from_dict(
+        {
+            "obs": torch.zeros(5, 4, 4, 3),
+            "actions": torch.zeros(5, 2),
+            "next": {
+                "obs": torch.zeros(5, 4, 4, 3),
+                "rewards": torch.zeros(5),
+                "truncated": torch.zeros(5, dtype=torch.bool),
+            },
+        },
+        batch_size=[5],
+    )
+    assert not missing_key_ep.is_valid()
+    with pytest.raises(KeyError, match="Episode 'next' missing key: 'done'"):
+        missing_key_ep.validate()
+
+    inconsistent_done_ep = Episode.from_dict(
+        {
+            "obs": torch.zeros(5, 4, 4, 3),
+            "actions": torch.zeros(5, 2),
+            "next": {
+                "obs": torch.zeros(5, 4, 4, 3),
+                "rewards": torch.zeros(5),
+                "done": torch.zeros(5, dtype=torch.bool),
+                "terminated": torch.ones(5, dtype=torch.bool),
+                "truncated": torch.zeros(5, dtype=torch.bool),
+            },
+        },
+        batch_size=[5],
+    )
+    assert not inconsistent_done_ep.is_valid()
+    with pytest.raises(ValueError, match="Episode 'next/done' must equal"):
+        inconsistent_done_ep.validate()
 
     ep = _make_episode(T=10)
+    assert ep.is_valid()
     chunk = ep.slice(3, 8)
+    assert isinstance(chunk, Episode)
     assert len(chunk) == 5
-    assert chunk.obs.shape == (6, 4, 4, 3)
+    assert chunk.is_valid()
+    assert chunk.obs.shape == (5, 4, 4, 3)
+    assert chunk.all_obs.shape == (6, 4, 4, 3)
     assert chunk.actions.shape == (5, 2)
     assert chunk.rewards.shape == (5,)
     assert chunk.done.shape == (5,)
     assert chunk.terminated.shape == (5,)
     assert chunk.truncated.shape == (5,)
-    assert torch.equal(chunk.obs, ep.obs[3:9])
+    assert torch.equal(chunk.obs, ep.obs[3:8])
+    assert torch.equal(chunk.all_obs, ep.all_obs[3:9])
     assert torch.equal(chunk.actions, ep.actions[3:8])
 
 

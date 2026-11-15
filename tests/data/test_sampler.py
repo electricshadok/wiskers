@@ -21,7 +21,6 @@ def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: i
         obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.randn(T, dtype=torch.float32),
-        done=terminated | truncated,
         terminated=terminated,
         truncated=truncated,
     )
@@ -39,7 +38,8 @@ def test_uniform_chunk_sampler():
     assert len(chunks) == 4
     for chunk in chunks:
         assert len(chunk) == 10
-        assert chunk.obs.shape[0] == 11
+        assert chunk.obs.shape[0] == 10
+        assert chunk.all_obs.shape[0] == 11
         assert chunk.actions.shape[0] == 10
 
 

@@ -72,7 +72,6 @@ class Collector:
         observations: list[torch.Tensor] = [obs]
         actions: list[torch.Tensor] = []
         rewards: list[float] = []
-        done_list: list[bool] = []
         terminated_list: list[bool] = []
         truncated_list: list[bool] = []
 
@@ -91,7 +90,6 @@ class Collector:
             observations.append(obs)
             actions.append(action.detach().cpu().reshape(-1).to(dtype=torch.float32))
             rewards.append(reward)
-            done_list.append(done)
             terminated_list.append(terminated)
             truncated_list.append(truncated)
 
@@ -99,7 +97,6 @@ class Collector:
             obs=torch.stack(observations),
             actions=torch.stack(actions),
             rewards=torch.tensor(rewards, dtype=torch.float32),
-            done=torch.tensor(done_list, dtype=torch.bool),
             terminated=torch.tensor(terminated_list, dtype=torch.bool),
             truncated=torch.tensor(truncated_list, dtype=torch.bool),
         )

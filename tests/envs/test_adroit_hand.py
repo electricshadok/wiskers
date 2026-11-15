@@ -106,7 +106,8 @@ def test_adroit_hand_collector_integration(adroit_env):
     assert collected_steps == 10
     assert buffer.num_episodes == 1
     assert buffer.num_steps == 10
-    assert buffer[0].obs.shape == (11, 64, 64, 3)
+    assert buffer[0].obs.shape == (10, 64, 64, 3)
+    assert buffer[0].all_obs.shape == (11, 64, 64, 3)
     assert buffer[0].obs.dtype == torch.uint8
     assert buffer[0].actions.shape == (10, 28)
     assert buffer[0].actions.dtype == torch.float32

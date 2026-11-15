@@ -137,7 +137,7 @@ class EpisodeToTensor(EpisodeTransform):
                 - ``"truncated"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
         """
         return {
-            "obs": self.transform_obs(episode.obs),
+            "obs": self.transform_obs(episode.all_obs),
             "actions": episode.actions,
             "rewards": episode.rewards,
             "done": episode.done.float(),

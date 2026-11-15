@@ -16,7 +16,6 @@ def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: i
         obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.randn(T, dtype=torch.float32),
-        done=terminated | truncated,
         terminated=terminated,
         truncated=truncated,
     )
@@ -101,7 +100,6 @@ def test_episode_to_tensor_resize_and_grayscale():
         obs=torch.tensor([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=torch.uint8),
         actions=torch.zeros((1, 4), dtype=torch.float32),
         rewards=torch.zeros((1,), dtype=torch.float32),
-        done=terminated | truncated,
         terminated=terminated,
         truncated=truncated,
     )
