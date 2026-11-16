@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Callable
 
 import torch
 import torch.nn as nn
@@ -122,10 +122,10 @@ class GatedConv2d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Union[int, tuple],
-        stride: Union[int, tuple] = 1,
-        padding: Union[int, tuple] = 0,
-        dilation: Union[int, tuple] = 1,
+        kernel_size: int | tuple,
+        stride: int | tuple = 1,
+        padding: int | tuple = 0,
+        dilation: int | tuple = 1,
         activation: Callable = F.relu,
     ):
         super().__init__()
@@ -160,11 +160,11 @@ class GatedConvTranspose2d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Union[int, tuple],
-        stride: Union[int, tuple] = 1,
-        padding: Union[int, tuple] = 0,
-        output_padding: Union[int, tuple] = 0,
-        dilation: Union[int, tuple] = 1,
+        kernel_size: int | tuple,
+        stride: int | tuple = 1,
+        padding: int | tuple = 0,
+        output_padding: int | tuple = 0,
+        dilation: int | tuple = 1,
         activation: Callable = F.relu,
     ):
         super().__init__()
@@ -219,10 +219,10 @@ class GatedConv3d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Union[int, tuple],
-        stride: Union[int, tuple] = 1,
-        padding: Union[int, tuple] = 0,
-        dilation: Union[int, tuple] = 1,
+        kernel_size: int | tuple,
+        stride: int | tuple = 1,
+        padding: int | tuple = 0,
+        dilation: int | tuple = 1,
         activation: Callable = F.relu,
     ):
         super().__init__()
@@ -258,11 +258,11 @@ class GatedConvTranspose3d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Union[int, tuple],
-        stride: Union[int, tuple] = 1,
-        padding: Union[int, tuple] = 0,
-        output_padding: Union[int, tuple] = 0,
-        dilation: Union[int, tuple] = 1,
+        kernel_size: int | tuple,
+        stride: int | tuple = 1,
+        padding: int | tuple = 0,
+        output_padding: int | tuple = 0,
+        dilation: int | tuple = 1,
         activation: Callable = F.relu,
     ):
         super().__init__()

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+from tensordict import TensorDict
 
 from wiskers.data.buffer import Buffer, ReplayBuffer, RolloutBuffer
 from wiskers.data.episode import Episode
@@ -10,7 +11,7 @@ def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: i
     terminated = torch.zeros(T, dtype=torch.bool)
     truncated = torch.zeros(T, dtype=torch.bool)
     return Episode(
-        obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
+        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.ones(T, dtype=torch.float32),
         terminated=terminated,
@@ -78,7 +79,7 @@ def test_replay_buffer_add_and_eviction():
 def test_replay_buffer_empty_episode_ignored():
     buf = ReplayBuffer(capacity_episodes=5)
     empty_ep = Episode(
-        obs=torch.empty((0, 4, 4, 3), dtype=torch.uint8),
+        obs=TensorDict({"render": torch.empty((0, 4, 4, 3), dtype=torch.uint8)}),
         actions=torch.empty((0, 2), dtype=torch.float32),
         rewards=torch.empty(0, dtype=torch.float32),
         terminated=torch.empty(0, dtype=torch.bool),
@@ -91,10 +92,10 @@ def test_replay_buffer_empty_episode_ignored():
 def test_episode_validation_and_slice():
     missing_key_ep = Episode.from_dict(
         {
-            "obs": torch.zeros(5, 4, 4, 3),
+            "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
             "actions": torch.zeros(5, 2),
             "next": {
-                "obs": torch.zeros(5, 4, 4, 3),
+                "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
                 "rewards": torch.zeros(5),
                 "truncated": torch.zeros(5, dtype=torch.bool),
             },
@@ -107,10 +108,10 @@ def test_episode_validation_and_slice():
 
     inconsistent_done_ep = Episode.from_dict(
         {
-            "obs": torch.zeros(5, 4, 4, 3),
+            "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
             "actions": torch.zeros(5, 2),
             "next": {
-                "obs": torch.zeros(5, 4, 4, 3),
+                "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
                 "rewards": torch.zeros(5),
                 "done": torch.zeros(5, dtype=torch.bool),
                 "terminated": torch.ones(5, dtype=torch.bool),
@@ -129,16 +130,34 @@ def test_episode_validation_and_slice():
     assert isinstance(chunk, Episode)
     assert len(chunk) == 5
     assert chunk.is_valid()
-    assert chunk.obs.shape == (5, 4, 4, 3)
-    assert chunk.all_obs.shape == (6, 4, 4, 3)
+    assert chunk.obs["render"].shape == (5, 4, 4, 3)
+    assert chunk.all_obs("render").shape == (6, 4, 4, 3)
+    assert chunk.all_obs().batch_size == torch.Size([6])
     assert chunk.actions.shape == (5, 2)
     assert chunk.rewards.shape == (5,)
     assert chunk.done.shape == (5,)
     assert chunk.terminated.shape == (5,)
     assert chunk.truncated.shape == (5,)
-    assert torch.equal(chunk.obs, ep.obs[3:8])
-    assert torch.equal(chunk.all_obs, ep.all_obs[3:9])
+    assert torch.equal(chunk.obs["render"], ep.obs["render"][3:8])
+    assert torch.equal(chunk.all_obs("render"), ep.all_obs("render")[3:9])
     assert torch.equal(chunk.actions, ep.actions[3:8])
+
+    # Multimodal observation support (e.g. state + render)
+    multi_modal_ep = Episode(
+        obs=TensorDict(
+            {
+                "state": torch.randn(11, 8),
+                "render": torch.randint(0, 256, (11, 4, 4, 3), dtype=torch.uint8),
+            },
+        ),
+        actions=torch.randn(10, 2),
+        rewards=torch.zeros(10),
+        terminated=torch.zeros(10, dtype=torch.bool),
+        truncated=torch.zeros(10, dtype=torch.bool),
+    )
+    assert multi_modal_ep.is_valid()
+    assert multi_modal_ep.all_obs("state").shape == (11, 8)
+    assert multi_modal_ep.all_obs("render").shape == (11, 4, 4, 3)
 
 
 def test_replay_buffer_slicing_and_repr():

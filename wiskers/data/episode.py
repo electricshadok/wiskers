@@ -2,7 +2,7 @@
 Episode rollout container inheriting from TensorDict.
 """
 
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Sequence
 
 import torch
 from tensordict import TensorDict
@@ -14,50 +14,40 @@ class Episode(TensorDict):
     stored as a TensorDict with ``batch_size=[T]``.
 
     Structure:
-        - "obs": Observation at step t [T, ...] (Tensor or TensorDict of modalities)
+        - "obs": TensorDict of observations at step t [T, ...]
         - "actions": Action taken at step t [T, action_dim]
         - "next": Nested TensorDict containing transition outcomes:
-            - "obs": Next observation at step t + 1 [T, ...]
+            - "obs": Next observation TensorDict at step t + 1 [T, ...]
             - "rewards": Scalar reward received at step t [T]
             - "done": Done flag at step t [T] (inferred as terminated | truncated)
             - "terminated": Terminal state reached at step t [T]
             - "truncated": Time-limit cutoff at step t [T]
     """
 
-    REQUIRED_KEYS = (
-        ("obs",),
-        ("actions",),
-        ("next", "obs"),
-        ("next", "rewards"),
-        ("next", "done"),
-        ("next", "terminated"),
-        ("next", "truncated"),
-    )
-
     def __init__(
         self,
-        obs: torch.Tensor | TensorDict,
+        obs: TensorDict,
         actions: torch.Tensor,
         rewards: torch.Tensor,
         terminated: torch.Tensor,
         truncated: torch.Tensor,
-        *args: Any,
-        batch_size: Optional[Union[torch.Size, Sequence[int]]] = None,
-        **kwargs: Any,
     ) -> None:
+        if not isinstance(obs, TensorDict):
+            raise TypeError(f"Episode 'obs' must be a TensorDict, got {type(obs).__name__}.")
+
         T = len(actions)
         source = {
-            "obs": obs[:-1] if T > 0 else obs[:0],
+            "obs": obs.apply(lambda v: v[:-1] if T > 0 else v[:0]),
             "actions": actions,
             "next": {
-                "obs": obs[1:] if T > 0 else obs[:0],
+                "obs": obs.apply(lambda v: v[1:] if T > 0 else v[:0]),
                 "rewards": rewards,
                 "done": terminated | truncated,
                 "terminated": terminated,
                 "truncated": truncated,
             },
         }
-        super().__init__(source, *args, batch_size=[T] if batch_size is None else batch_size, **kwargs)
+        super().__init__(source, batch_size=[T])
         self.validate()
 
     @classmethod
@@ -65,7 +55,7 @@ class Episode(TensorDict):
         cls,
         source: dict[str, Any],
         *,
-        batch_size: Optional[Union[torch.Size, Sequence[int]]] = None,
+        batch_size: torch.Size | Sequence[int] | None = None,
         **kwargs: Any,
     ) -> "Episode":
         """Construct an Episode from an existing raw transition dictionary."""
@@ -77,12 +67,17 @@ class Episode(TensorDict):
         """
         Validate that this Episode conforms to the transition layout:
             - Required keys exist: 'obs', 'actions', 'next' ('obs', 'rewards', 'done', 'terminated', 'truncated')
+            - 'obs' is a TensorDict
             - 'next' is a TensorDict
+            - 'next/obs' is a TensorDict matching 'obs' keys
             - 'next/done' equals 'next/terminated | next/truncated'
         """
         for key in ("obs", "actions", "next"):
             if key not in self.keys():
                 raise KeyError(f"Episode missing top-level key: '{key}'")
+
+        if not isinstance(self["obs"], TensorDict):
+            raise ValueError(f"Episode 'obs' must be a TensorDict, got {type(self['obs'])}")
 
         nxt = self["next"]
         if not isinstance(nxt, TensorDict):
@@ -91,6 +86,12 @@ class Episode(TensorDict):
         for key in ("obs", "rewards", "done", "terminated", "truncated"):
             if key not in nxt.keys():
                 raise KeyError(f"Episode 'next' missing key: '{key}'")
+
+        if not isinstance(nxt["obs"], TensorDict):
+            raise ValueError(f"Episode 'next/obs' must be a TensorDict, got {type(nxt['obs'])}")
+
+        if set(self["obs"].keys()) != set(nxt["obs"].keys()):
+            raise KeyError("Episode 'obs' and 'next/obs' must have matching keys")
 
         if not torch.equal(nxt["done"], nxt["terminated"] | nxt["truncated"]):
             raise ValueError("Episode 'next/done' must equal 'next/terminated | next/truncated'")
@@ -104,8 +105,8 @@ class Episode(TensorDict):
             return False
 
     @property
-    def obs(self) -> torch.Tensor | TensorDict:
-        """Observations at step t [T, ...]."""
+    def obs(self) -> TensorDict:
+        """Observations TensorDict at step t [T, ...]."""
         return self["obs"]
 
     @property
@@ -133,19 +134,25 @@ class Episode(TensorDict):
         """Truncated flags at step t [T]."""
         return self["next", "truncated"]
 
-    @property
-    def all_obs(self) -> torch.Tensor | TensorDict:
+    def all_obs(self, key: str | None = None) -> TensorDict | torch.Tensor:
         """
         Full observation sequence [T + 1, ...], reconstructing the initial
         observation obs[0] concatenated with next.obs[0:T].
+
+        Args:
+            key: Optional modality key (e.g. "render", "state"). If None,
+                returns the full TensorDict across all observation modalities.
         """
         if len(self) == 0:
-            return self["obs"]
-        obs_curr = self["obs"]
-        obs_next = self["next", "obs"]
-        if isinstance(obs_curr, TensorDict):
-            return torch.cat([obs_curr[:1], obs_next], dim=0)
-        return torch.cat([obs_curr[:1], obs_next], dim=0)
+            full = self["obs"]
+        else:
+            obs_curr = self["obs"]
+            obs_next = self["next", "obs"]
+            full = torch.cat([obs_curr[:1], obs_next], dim=0)
+
+        if key is not None:
+            return full[key]
+        return full
 
     def slice(self, start: int, end: int) -> "Episode":
         """Return a contiguous sub-trajectory covering transitions [start, end)."""

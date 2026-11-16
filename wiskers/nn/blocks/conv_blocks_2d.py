@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch  # noqa: F401
 import torch.nn as nn
 
@@ -27,7 +25,7 @@ class DoubleConv2D(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
-        mid_channels: Optional[int] = None,
+        mid_channels: int | None = None,
         out_channels: int = 3,
         activation: nn.Module = nn.ReLU(),
     ):
@@ -207,7 +205,7 @@ class UpBlock2D(nn.Module):
         x = torch.cat((encoder_layer, decoder_layer), dim=1)
         return x
 
-    def forward(self, x, skip_x: Optional[torch.Tensor] = None):
+    def forward(self, x, skip_x: torch.Tensor | None = None):
         # in: [N, in_C, H, W]
         # out: [N, out_C, H*2, W*2]
         out_x = self.up(x)  # [B, out_channels, H*2, W*2]
@@ -250,7 +248,7 @@ class AttnUpBlock2D(UpBlock2D):
         else:
             self.attn = SelfMultiheadAttention2D(out_channels, num_heads)
 
-    def forward(self, x, skip_x: Optional[torch.Tensor] = None):
+    def forward(self, x, skip_x: torch.Tensor | None = None):
         # in: [N, in_C, H, W]
         # out: [N, out_C, H/2, W/2]
         return self.attn(super().forward(x, skip_x))

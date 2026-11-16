@@ -42,13 +42,15 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
             ],
         )
 
+    obs_key = getattr(data_module.transform, "obs_key", "render")
     if view_mode == "Replay Buffer (Raw Episodes)":
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Episodes", f"{len(episodes)} / {replay_buffer.capacity_episodes}")
         m2.metric("Total Steps", f"{replay_buffer.num_steps:,}")
         m3.metric("Avg Length", f"{sum(len(e) for e in episodes) / len(episodes):.1f}")
-        m4.metric("Obs Shape (H, W, C)", f"{tuple(episodes[0].obs.shape[1:])}")
-        m5.metric("Obs Dtype", f"{episodes[0].obs.dtype} [0, 255]")
+        render_obs = episodes[0].obs[obs_key]
+        m4.metric("Obs Shape (H, W, C)", f"{tuple(render_obs.shape[1:])}")
+        m5.metric("Obs Dtype", f"{render_obs.dtype} [0, 255]")
 
         st.markdown("---")
         col_ep, col_step = st.columns([1, 2])
@@ -65,10 +67,10 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
 
         episode = episodes[ep_idx]
         obs_seq, actions_seq, rewards_seq, dones_seq = (
-            episode.obs,
+            episode.all_obs(obs_key),
             episode.actions,
             episode.rewards,
-            episode.dones,
+            episode.done,
         )
     else:
         cache_key = f"dm_batch_{id(data_module)}_{data_module.batch_size}_{data_module.num_steps}"
@@ -99,7 +101,7 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
         obs_seq = batch["obs"][chunk_idx]
         actions_seq = batch["actions"][chunk_idx]
         rewards_seq = batch["rewards"][chunk_idx]
-        dones_seq = batch["dones"][chunk_idx]
+        dones_seq = batch["done"][chunk_idx]
 
         m4.metric("Obs Shape (C, H, W)", f"{tuple(obs_seq.shape[1:])}")
         m5.metric("Obs Dtype / Range", f"{obs_seq.dtype} [{obs_range[0]:g}, {obs_range[1]:g}]")

@@ -2,7 +2,7 @@
 FrankaKitchen-v1 environment factory with visual camera observations.
 """
 
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 import gymnasium as gym
 import gymnasium_robotics
@@ -50,7 +50,7 @@ class FrankaKitchenVisualObservation(gym.ObservationWrapper):
 
 
 def make_franka_kitchen_env(
-    tasks_to_complete: Optional[Sequence[str]] = ("microwave",),
+    tasks_to_complete: Sequence[str] | None = ("microwave",),
 ) -> gym.Env:
     """
     Construct a FrankaKitchen-v1 environment with camera visual observations.

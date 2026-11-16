@@ -1,10 +1,10 @@
-from typing import Any, Dict, Union
+from typing import Any
 
 from hydra.utils import instantiate as hydra_instantiate
 from omegaconf import DictConfig
 
 
-def instantiate(target: Union[str, Dict[str, Any], DictConfig, Any], **kwargs: Any) -> Any:
+def instantiate(target: str | dict[str, Any] | DictConfig | Any, **kwargs: Any) -> Any:
     """
     Instantiate an object using Hydra. Strings are converted into a Hydra dict.
     If target is already an instantiated object (not a string or dict-like config),

@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 import torch.nn as nn
 
@@ -161,7 +159,7 @@ class RSSM(nn.Module):
     @staticmethod
     def _split_mu_logvar(
         raw: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Split a [..., 2*stoch_size] tensor into (mu, logvar) halves."""
         mu, logvar = raw.chunk(2, dim=-1)
         return mu, logvar
@@ -186,7 +184,7 @@ class RSSM(nn.Module):
         self,
         prev_state: RSSMState,
         action: torch.Tensor,
-    ) -> Tuple[RSSMState, torch.Tensor, torch.Tensor]:
+    ) -> tuple[RSSMState, torch.Tensor, torch.Tensor]:
         """
         One RSSM step using the **prior** (no observation).
 
@@ -213,7 +211,7 @@ class RSSM(nn.Module):
         prev_state: RSSMState,
         action: torch.Tensor,
         obs_embed: torch.Tensor,
-    ) -> Tuple[RSSMState, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[RSSMState, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         One RSSM step using the **posterior** (observation is available).
 
@@ -251,9 +249,9 @@ class RSSM(nn.Module):
         self,
         obs_embeds: torch.Tensor,
         actions: torch.Tensor,
-        init_state: Optional[RSSMState] = None,
-    ) -> Tuple[
-        "list[RSSMState]",
+        init_state: RSSMState | None = None,
+    ) -> tuple[
+        list[RSSMState],
         torch.Tensor,
         torch.Tensor,
         torch.Tensor,
@@ -310,7 +308,7 @@ class RSSM(nn.Module):
         self,
         init_state: RSSMState,
         actions: torch.Tensor,
-    ) -> Tuple["list[RSSMState]", torch.Tensor, torch.Tensor]:
+    ) -> tuple[list[RSSMState], torch.Tensor, torch.Tensor]:
         """
         Prior rollout over a future sequence — used for planning / imagination.
 

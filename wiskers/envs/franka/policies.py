@@ -2,7 +2,7 @@
 Policies for FrankaKitchen environment.
 """
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 import gymnasium as gym
 import torch
@@ -20,7 +20,7 @@ class FrankaKitchenPolicy(ContinuousPolicy):
 class FrankaKitchenRandomPolicy(FrankaKitchenPolicy):
     """Uniform random exploration for FrankaKitchen."""
 
-    def __init__(self, action_space: Optional[gym.spaces.Box] = None) -> None:
+    def __init__(self, action_space: gym.spaces.Box | None = None) -> None:
         super().__init__()
         self.action_space = action_space or gym.spaces.Box(
             low=-1.0, high=1.0, shape=(self.action_dim,), dtype=float

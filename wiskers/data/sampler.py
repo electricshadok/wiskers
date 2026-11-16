@@ -12,7 +12,6 @@ Designed to be instantiated directly in Hydra configs via `_target_`:
 import math
 import random
 from abc import ABC, abstractmethod
-from typing import List
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.episode import Episode
@@ -28,7 +27,7 @@ class TrajectorySampler(ABC):
     num_steps: int
 
     @abstractmethod
-    def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
+    def sample(self, buffer: ReplayBuffer, batch_size: int) -> list[Episode]:
         """
         Sample `batch_size` episode chunks from the buffer.
 
@@ -41,7 +40,7 @@ class TrajectorySampler(ABC):
         """
         pass
 
-    def __call__(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
+    def __call__(self, buffer: ReplayBuffer, batch_size: int) -> list[Episode]:
         return self.sample(buffer, batch_size)
 
 
@@ -71,7 +70,7 @@ class UniformChunkSampler(TrajectorySampler):
             raise ValueError(f"num_steps must be >= 1, got {num_steps}")
         self.num_steps = num_steps
 
-    def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
+    def sample(self, buffer: ReplayBuffer, batch_size: int) -> list[Episode]:
         if buffer.is_empty:
             raise RuntimeError("Cannot sample from an empty ReplayBuffer.")
 
@@ -83,7 +82,7 @@ class UniformChunkSampler(TrajectorySampler):
             )
 
         weights = [len(ep) - self.num_steps + 1 for ep in episodes]
-        chunks: List[Episode] = []
+        chunks: list[Episode] = []
         for _ in range(batch_size):
             episode = random.choices(episodes, weights=weights, k=1)[0]
             max_start = len(episode) - self.num_steps
@@ -123,15 +122,15 @@ class RecencyWeightedSampler(TrajectorySampler):
         self.num_steps = num_steps
         self.recency_factor = recency_factor
 
-    def sample(self, buffer: ReplayBuffer, batch_size: int) -> List[Episode]:
+    def sample(self, buffer: ReplayBuffer, batch_size: int) -> list[Episode]:
         if buffer.is_empty:
             raise RuntimeError("Cannot sample from an empty ReplayBuffer.")
 
         all_episodes = list(buffer)
         n = len(all_episodes)
 
-        valid_episodes: List[Episode] = []
-        weights: List[float] = []
+        valid_episodes: list[Episode] = []
+        weights: list[float] = []
 
         for i, ep in enumerate(all_episodes):
             if len(ep) >= self.num_steps:
@@ -146,7 +145,7 @@ class RecencyWeightedSampler(TrajectorySampler):
                 f"no episodes in buffer have length >= {self.num_steps}."
             )
 
-        chunks: List[Episode] = []
+        chunks: list[Episode] = []
         for _ in range(batch_size):
             episode = random.choices(valid_episodes, weights=weights, k=1)[0]
             max_start = len(episode) - self.num_steps

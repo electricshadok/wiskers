@@ -53,7 +53,12 @@ class EpisodeToTensor(EpisodeTransform):
                    range for observations (e.g., ``(0.0, 1.0)`` or ``(-1.0, 1.0)``).
     """
 
-    def __init__(self, image_size: Sequence[int], obs_range: Sequence[float]) -> None:
+    def __init__(
+        self,
+        image_size: Sequence[int],
+        obs_range: Sequence[float],
+        obs_key: str = "render",
+    ) -> None:
         if len(image_size) != 3:
             raise ValueError(
                 f"image_size must be a 3-element sequence (C, H, W), got {image_size}."
@@ -76,6 +81,7 @@ class EpisodeToTensor(EpisodeTransform):
 
         self.image_size: tuple[int, int, int] = (c, h, w)
         self.obs_range: tuple[float, float] = (low, high)
+        self.obs_key = obs_key
 
     def transform_obs(self, obs: torch.Tensor) -> torch.Tensor:
         """
@@ -137,7 +143,7 @@ class EpisodeToTensor(EpisodeTransform):
                 - ``"truncated"``: ``torch.Tensor`` of shape ``(T,)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
         """
         return {
-            "obs": self.transform_obs(episode.all_obs),
+            "obs": self.transform_obs(episode.all_obs(self.obs_key)),
             "actions": episode.actions,
             "rewards": episode.rewards,
             "done": episode.done.float(),

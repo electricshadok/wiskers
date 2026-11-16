@@ -2,7 +2,7 @@
 Policies for AdroitHand dexterous manipulation environments.
 """
 
-from typing import Optional, Sequence
+from typing import Sequence
 
 import gymnasium as gym
 import torch
@@ -24,7 +24,7 @@ class AdroitHandPolicy(ContinuousPolicy):
 class AdroitHandRandomPolicy(AdroitHandPolicy):
     """Uniform random exploration for AdroitHand."""
 
-    def __init__(self, action_dim: int = 28, action_space: Optional[gym.spaces.Box] = None) -> None:
+    def __init__(self, action_dim: int = 28, action_space: gym.spaces.Box | None = None) -> None:
         super().__init__(action_dim=action_dim)
         self.action_space = action_space or gym.spaces.Box(
             low=-1.0, high=1.0, shape=(self.action_dim,), dtype=float

@@ -1,6 +1,5 @@
 import glob
 import os
-from typing import Dict, List, Optional
 
 import omegaconf
 from omegaconf import DictConfig, OmegaConf
@@ -47,7 +46,7 @@ def resolve_group_path(config_path: str, group: str, name: str) -> str:
 def load_config(
     config_name: str,
     config_path: str = "./configs",
-    overrides: Optional[List[str]] = None,
+    overrides: list[str] | None = None,
 ) -> DictConfig:
     """
     Load a configuration file, resolving Hydra config groups and CLI overrides.
@@ -68,8 +67,8 @@ def load_config(
         raise RuntimeError(f"Error reading config file '{config_file}': {e}")
 
     # Parse overrides into group overrides (e.g. dataset=breakout) vs dotlist (e.g. trainer.max_epochs=10)
-    group_overrides: Dict[str, str] = {}
-    dotlist_overrides: List[str] = []
+    group_overrides: dict[str, str] = {}
+    dotlist_overrides: list[str] = []
 
     if overrides:
         for item in overrides:
@@ -92,7 +91,7 @@ def load_config(
     if isinstance(defaults, str):
         defaults = [defaults]
 
-    configs_to_merge: List[DictConfig] = []
+    configs_to_merge: list[DictConfig] = []
     self_merged = False
 
     for item in defaults:

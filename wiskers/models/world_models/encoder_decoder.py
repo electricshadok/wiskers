@@ -1,5 +1,3 @@
-from typing import List, Optional, Tuple
-
 import torch.nn as nn
 
 from wiskers.nn.blocks.conv_blocks_2d import (
@@ -33,10 +31,10 @@ class CNNEncoder(nn.Module):
     def __init__(
         self,
         in_channels: int = 3,
-        stem_channels: Optional[int] = None,
+        stem_channels: int | None = None,
         num_heads: int = 8,
-        block_channels: List[int] = [32, 64, 128],
-        block_attentions: List[bool] = [True, True, True],
+        block_channels: list[int] = [32, 64, 128],
+        block_attentions: list[bool] = [True, True, True],
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()
@@ -73,8 +71,8 @@ class CNNEncoder(nn.Module):
         return self.down_blocks(self.input(x))
 
     def get_latent_shape(
-        self, image_size: Tuple[int, int]
-    ) -> Tuple[int, int, int]:
+        self, image_size: tuple[int, int]
+    ) -> tuple[int, int, int]:
         """Compute latent tensor shape given the input image size."""
         h, w = image_size
         factor = 2**self._num_levels
@@ -107,10 +105,10 @@ class CNNDecoder(nn.Module):
     def __init__(
         self,
         out_channels: int = 3,
-        stem_channels: Optional[int] = None,
+        stem_channels: int | None = None,
         num_heads: int = 8,
-        block_channels: List[int] = [128, 64, 32],
-        block_attentions: List[bool] = [True, True, True],
+        block_channels: list[int] = [128, 64, 32],
+        block_attentions: list[bool] = [True, True, True],
         activation: nn.Module = nn.ReLU(),
     ):
         super().__init__()

@@ -4,7 +4,7 @@ Buffers for trajectory rollouts and replay.
 
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Iterator, Sequence, Union
+from typing import Iterator, Sequence
 
 from wiskers.data.episode import Episode
 
@@ -20,7 +20,7 @@ class Buffer(ABC):
 
     def __init__(
         self,
-        episodes: Union[list[Episode], deque[Episode]],
+        episodes: list[Episode] | deque[Episode],
     ) -> None:
         self._episodes = episodes
 
@@ -63,7 +63,7 @@ class Buffer(ABC):
     def __iter__(self) -> Iterator[Episode]:
         return iter(self._episodes)
 
-    def __getitem__(self, idx: Union[int, slice]) -> Union[Episode, list[Episode]]:
+    def __getitem__(self, idx: int | slice) -> Episode | list[Episode]:
         if isinstance(idx, slice):
             return list(self._episodes)[idx]
         return self._episodes[idx]

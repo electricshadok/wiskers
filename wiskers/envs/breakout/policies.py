@@ -1,5 +1,5 @@
 import random
-from typing import Optional, Sequence
+from typing import Sequence
 
 import torch
 
@@ -38,7 +38,7 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         101 : ball y-coordinate
     """
 
-    def __init__(self, epsilon: float = 0.1, ale_source: Optional[object] = None) -> None:
+    def __init__(self, epsilon: float = 0.1, ale_source: object | None = None) -> None:
         super().__init__()
         self.epsilon = epsilon
         self.ale_source = ale_source

@@ -1,5 +1,5 @@
 import random
-from typing import Optional, Sequence
+from typing import Sequence
 
 import gymnasium as gym
 import torch
@@ -17,7 +17,7 @@ class CarRacingPolicy(ContinuousPolicy):
 class CarRacingRandomPolicy(CarRacingPolicy):
     """Uniform random exploration for CarRacing."""
 
-    def __init__(self, action_space: Optional[gym.spaces.Box] = None) -> None:
+    def __init__(self, action_space: gym.spaces.Box | None = None) -> None:
         super().__init__()
         self.action_space = action_space or gym.spaces.Box(
             low=torch.tensor([-1.0, 0.0, 0.0]).numpy(),

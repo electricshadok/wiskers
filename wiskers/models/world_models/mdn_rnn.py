@@ -1,5 +1,4 @@
 import math
-from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -42,7 +41,7 @@ class MDNHead(nn.Module):
 
     def forward(
         self, h: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Args:
             h (torch.Tensor): LSTM output of shape [N, T, hidden_size].
@@ -139,13 +138,13 @@ class MDNRNN(nn.Module):
         self,
         z: torch.Tensor,
         a: torch.Tensor,
-        hidden: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> Tuple[
+        hidden: tuple[torch.Tensor, torch.Tensor] | None = None,
+    ) -> tuple[
         torch.Tensor,
         torch.Tensor,
         torch.Tensor,
         torch.Tensor,
-        Tuple[torch.Tensor, torch.Tensor],
+        tuple[torch.Tensor, torch.Tensor],
     ]:
         """
         Forward pass over a sequence.
@@ -179,7 +178,7 @@ class MDNRNN(nn.Module):
 
     def get_initial_hidden(
         self, batch_size: int, device: torch.device
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Returns zero-initialised (h_0, c_0) LSTM state.
 

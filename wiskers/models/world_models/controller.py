@@ -1,5 +1,3 @@
-from typing import Union
-
 import torch
 import torch.nn as nn
 
@@ -76,7 +74,7 @@ class Controller(nn.Module):
         """
         return torch.cat([p.data.view(-1) for p in self.parameters()])
 
-    def set_param_vector(self, param_vector: Union[torch.Tensor, list]) -> None:
+    def set_param_vector(self, param_vector: torch.Tensor | list) -> None:
         """
         Load parameters from a flat 1-D vector back into the model.
 

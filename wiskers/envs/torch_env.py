@@ -2,7 +2,7 @@
 PyTorch wrapper around Gymnasium environments.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 import gymnasium as gym
 import numpy as np
@@ -20,14 +20,14 @@ class TorchGymEnv(gym.Wrapper):
 
     Args:
         env (gym.Env): The underlying Gymnasium environment.
-        image_size (Optional[tuple[int, int]]): Target (height, width) to resize image frames to.
-                                                If None, preserves the environment's native resolution.
+        image_size (tuple[int, int] | None): Target (height, width) to resize image frames to.
+                                             If None, preserves the environment's native resolution.
     """
 
     def __init__(
         self,
         env: gym.Env,
-        image_size: Optional[tuple[int, int]] = None,
+        image_size: tuple[int, int] | None = None,
     ) -> None:
         super().__init__(env)
         self.image_size = tuple(image_size) if image_size is not None else None
@@ -59,8 +59,8 @@ class TorchGymEnv(gym.Wrapper):
     def reset(
         self,
         *,
-        seed: Optional[int] = None,
-        options: Optional[dict[str, Any]] = None,
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
     ) -> tuple[torch.Tensor, dict[str, Any]]:
         raw_obs, info = self.env.reset(seed=seed, options=options)
         return self._process_obs(raw_obs), info

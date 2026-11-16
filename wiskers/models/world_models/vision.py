@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import torch
 import torch.nn as nn
 
@@ -49,12 +47,12 @@ class Vision(nn.Module):
 
     def __init__(
         self,
-        image_size: Tuple[int, int] = (64, 64),
+        image_size: tuple[int, int] = (64, 64),
         in_channels: int = 3,
         latent_size: int = 32,
         # Paper uses a plain 4-level CNN without attention
-        block_channels: List[int] = [32, 64, 128, 256],
-        block_attentions: List[bool] = [False, False, False, False],
+        block_channels: list[int] = [32, 64, 128, 256],
+        block_attentions: list[bool] = [False, False, False, False],
         num_heads: int = 8,
         activation: nn.Module = nn.ReLU(),
     ) -> None:
@@ -119,7 +117,7 @@ class Vision(nn.Module):
 
     def encode(
         self, x: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Encode raw observations into the latent distribution.
 
@@ -173,7 +171,7 @@ class Vision(nn.Module):
 
     def forward(
         self, x: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Full VAE forward pass. Used during Stage 1 training.
 

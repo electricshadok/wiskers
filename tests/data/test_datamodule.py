@@ -1,5 +1,6 @@
 import pytest
 import torch
+from tensordict import TensorDict
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.datamodule import TrajectoryDataModule
@@ -13,7 +14,7 @@ def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: i
     terminated = torch.zeros(T, dtype=torch.bool)
     truncated = torch.zeros(T, dtype=torch.bool)
     return Episode(
-        obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
+        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.randn(T, dtype=torch.float32),
         terminated=terminated,
@@ -97,7 +98,9 @@ def test_episode_to_tensor_resize_and_grayscale():
     terminated = torch.zeros((1,), dtype=torch.bool)
     truncated = torch.zeros((1,), dtype=torch.bool)
     ep_extremes = Episode(
-        obs=torch.tensor([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=torch.uint8),
+        obs=TensorDict(
+            {"render": torch.tensor([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=torch.uint8)},
+        ),
         actions=torch.zeros((1, 4), dtype=torch.float32),
         rewards=torch.zeros((1,), dtype=torch.float32),
         terminated=terminated,

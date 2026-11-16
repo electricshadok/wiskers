@@ -2,6 +2,7 @@ import pytest
 import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from tensordict import TensorDict
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.datamodule import TrajectoryDataModule
@@ -18,7 +19,7 @@ def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: i
     terminated = torch.zeros(T, dtype=torch.bool)
     truncated = torch.zeros(T, dtype=torch.bool)
     return Episode(
-        obs=torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8),
+        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}),
         actions=torch.randn(T, action_dim, dtype=torch.float32),
         rewards=torch.randn(T, dtype=torch.float32),
         terminated=terminated,
@@ -39,7 +40,7 @@ def test_uniform_chunk_sampler():
     for chunk in chunks:
         assert len(chunk) == 10
         assert chunk.obs.shape[0] == 10
-        assert chunk.all_obs.shape[0] == 11
+        assert chunk.all_obs().shape[0] == 11
         assert chunk.actions.shape[0] == 10
 
 

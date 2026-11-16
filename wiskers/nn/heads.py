@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -86,7 +84,7 @@ class ContinuousActor(nn.Module):
         # Outputs mu_raw and log_std_raw concatenated → split in forward
         self._mlp = _build_mlp(feat_size, hidden_size, num_layers, 2 * action_size, activation)
 
-    def forward(self, feat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, feat: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute the squashed Gaussian policy parameters.
 
@@ -108,7 +106,7 @@ class ContinuousActor(nn.Module):
 
         return mu, std
 
-    def sample(self, feat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def sample(self, feat: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Sample an action from the squashed Gaussian policy (reparameterization).
 
@@ -182,7 +180,7 @@ class CategoricalActor(nn.Module):
         """Return a Categorical distribution over actions."""
         return Categorical(logits=self(feat))
 
-    def sample(self, feat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def sample(self, feat: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Sample a discrete action and return its log-probability and distribution entropy.
 
@@ -254,7 +252,7 @@ class Critic(nn.Module):
         values: torch.Tensor,
         gamma: float = 0.99,
         lam: float = 0.95,
-        done: Optional[torch.Tensor] = None,
+        done: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Compute lambda-returns over an imagined trajectory.

@@ -26,7 +26,7 @@ Usage:
     #   dm.replay_buffer.add(new_episode)
 """
 
-from typing import Any, Optional
+from typing import Any
 
 import lightning as L
 from torch.utils.data import DataLoader
@@ -84,7 +84,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-        self._dataset: Optional[TrajectoryDataset] = None
+        self._dataset: TrajectoryDataset | None = None
 
     @property
     def num_steps(self) -> int:
@@ -95,7 +95,7 @@ class TrajectoryDataModule(L.LightningDataModule):
     def policy(self) -> Any:
         return self.collector.policy
 
-    def setup(self, stage: Optional[str] = None) -> None:
+    def setup(self, stage: str | None = None) -> None:
         if self.replay_buffer.is_empty:
             self.collector.collect(self.replay_buffer)
 

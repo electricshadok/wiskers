@@ -2,7 +2,6 @@ import argparse
 import os
 import pathlib
 import shutil
-from typing import List, Optional
 
 import lightning as L
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -33,7 +32,7 @@ class TrainCLI:
         self,
         config_name: str,
         config_path: str = "./configs",
-        overrides: Optional[List[str]] = None,
+        overrides: list[str] | None = None,
     ) -> None:
         self.config = load_config(
             config_name, config_path=config_path, overrides=overrides
@@ -82,7 +81,7 @@ class TrainPipelineCLI(TrainCLI):
         self,
         config_name: str,
         config_path: str = "./configs",
-        overrides: Optional[List[str]] = None,
+        overrides: list[str] | None = None,
     ) -> None:
         super().__init__(config_name, config_path=config_path, overrides=overrides)
         self.logger = None

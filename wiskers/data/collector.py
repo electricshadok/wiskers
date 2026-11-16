@@ -4,6 +4,7 @@ Modular rollout collector for trajectory-based RL and world models.
 
 import gymnasium as gym
 import torch
+from tensordict import TensorDict
 
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
@@ -49,7 +50,7 @@ class Collector:
     ) -> None:
         self.env = env
         self.policy = policy
-        self._validate_policy_env_compatibility()
+        self._validate_policy_action_dim()
         self.transform = transform
         self.num_episodes = num_episodes
         self.min_steps = min_steps
@@ -58,7 +59,7 @@ class Collector:
         self.verbose = verbose
         self._episode_idx = 0
 
-    def _validate_policy_env_compatibility(self) -> None:
+    def _validate_policy_action_dim(self) -> None:
         """Verify that policy action_dim is compatible with env action_space."""
         if isinstance(self.env.action_space, gym.spaces.Discrete):
             if self.policy.action_dim != 1:
@@ -110,7 +111,7 @@ class Collector:
             truncated_list.append(truncated)
 
         return Episode(
-            obs=torch.stack(observations),
+            obs=TensorDict({"render": torch.stack(observations)}),
             actions=torch.stack(actions),
             rewards=torch.tensor(rewards, dtype=torch.float32),
             terminated=torch.tensor(terminated_list, dtype=torch.bool),

@@ -1,5 +1,3 @@
-from typing import Tuple, Union
-
 import torch.nn as nn
 
 
@@ -54,9 +52,9 @@ class CausalConv2d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Union[int, Tuple[int, int]],
-        stride: Union[int, Tuple[int, int]] = (1, 1),
-        dilation: Union[int, Tuple[int, int]] = (1, 1),
+        kernel_size: int | tuple[int, int],
+        stride: int | tuple[int, int] = (1, 1),
+        dilation: int | tuple[int, int] = (1, 1),
         bias: bool = False,
     ):
         super().__init__()
@@ -102,9 +100,9 @@ class CausalConv3d(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Union[int, Tuple[int, int, int]],
-        stride: Union[int, Tuple[int, int, int]] = (1, 1, 1),
-        dilation: Union[int, Tuple[int, int, int]] = (1, 1, 1),
+        kernel_size: int | tuple[int, int, int],
+        stride: int | tuple[int, int, int] = (1, 1, 1),
+        dilation: int | tuple[int, int, int] = (1, 1, 1),
         bias: bool = False,
     ):
         super().__init__()
