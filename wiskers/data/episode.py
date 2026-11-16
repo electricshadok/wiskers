@@ -2,96 +2,177 @@
 Episode rollout container inheriting from TensorDict.
 """
 
-from typing import Any, Sequence
+from typing import Any
 
 import torch
 from tensordict import TensorDict
 
 
+def _check_obs_batch_size(obs: Any, T: int) -> None:
+    """Validate that observation TensorDict has explicit batch_size=[T + 1]."""
+    if not isinstance(obs, TensorDict):
+        raise TypeError(f"obs must be a TensorDict, got {type(obs).__name__}")
+    expected_batch_size = torch.Size([T + 1])
+    if obs.batch_size != expected_batch_size and not (
+        T == 0 and obs.batch_size in (torch.Size([0]), torch.Size([1]))
+    ):
+        raise ValueError(
+            f"obs TensorDict must have explicit batch_size=[{T + 1}], got batch_size={list(obs.batch_size)}"
+        )
+
+
+def _check_action_tensor(action: Any, T: int) -> None:
+    """Validate that action tensor is 2D with shape (T, action_dim)."""
+    if not isinstance(action, torch.Tensor) or action.ndim < 2 or len(action) != T:
+        shape_info = getattr(action, "shape", type(action))
+        raise ValueError(f"action must be a torch.Tensor with shape ({T}, action_dim), got {shape_info}")
+
+
+def _check_signal_tensor(name: str, tensor: Any, T: int) -> None:
+    """Validate that transition signal tensor (reward, terminated, truncated) has shape (T, 1)."""
+    if not isinstance(tensor, torch.Tensor) or tensor.shape != (T, 1):
+        shape_info = getattr(tensor, "shape", type(tensor))
+        raise ValueError(f"{name} must be a torch.Tensor with shape ({T}, 1), got {shape_info}")
+
+
 class Episode(TensorDict):
     """
     One complete environment rollout (or sliced sub-trajectory) of ``T`` transitions
-    stored as a TensorDict with ``batch_size=[T]``.
+    stored as a TensorDict with ``batch_size=[T]`` following TorchRL transition conventions.
+
+    Batch Dimension Hierarchy:
+        - Single transition:   batch_size=[]     | action: [action_dim], reward: [1], done: [1]
+        - Trajectory sequence: batch_size=[T]    | action: [T, action_dim], reward: [T, 1], done: [T, 1]
+        - Batched trajectory:  batch_size=[B, T] | action: [B, T, action_dim], reward: [B, T, 1]
 
     Structure:
         - "obs": TensorDict of observations at step t [T, ...]
-        - "actions": Action taken at step t [T, action_dim]
+        - "action": Action taken at step t [T, action_dim]
         - "next": Nested TensorDict containing transition outcomes:
             - "obs": Next observation TensorDict at step t + 1 [T, ...]
-            - "rewards": Scalar reward received at step t [T]
-            - "done": Done flag at step t [T] (inferred as terminated | truncated)
-            - "terminated": Terminal state reached at step t [T]
-            - "truncated": Time-limit cutoff at step t [T]
+            - "reward": Scalar reward received at step t [T, 1] (float32)
+            - "done": Done flag at step t [T, 1] (bool, inferred as terminated | truncated)
+            - "terminated": Terminal state reached at step t [T, 1] (bool)
+            - "truncated": Time-limit cutoff at step t [T, 1] (bool)
     """
 
     def __init__(
         self,
         obs: TensorDict,
-        actions: torch.Tensor,
-        rewards: torch.Tensor,
+        action: torch.Tensor,
+        reward: torch.Tensor,
         terminated: torch.Tensor,
         truncated: torch.Tensor,
     ) -> None:
-        if not isinstance(obs, TensorDict):
-            raise TypeError(f"Episode 'obs' must be a TensorDict, got {type(obs).__name__}.")
+        """
+        Construct an Episode of T transitions from a trajectory rollout.
 
-        T = len(actions)
-        source = {
-            "obs": obs.apply(lambda v: v[:-1] if T > 0 else v[:0]),
-            "actions": actions,
-            "next": {
-                "obs": obs.apply(lambda v: v[1:] if T > 0 else v[:0]),
-                "rewards": rewards,
-                "done": terminated | truncated,
+        An episode of T transitions consists of:
+            - T + 1 observations: o_0, o_1, ..., o_T
+            - T actions: a_0, ..., a_{T-1}
+            - T transition outcomes: r_0, done_0, ...
+
+        The observations are time-sliced into:
+            - obs: current-step observations o_0, ..., o_{T-1}  [T, ...]
+            - next/obs: next-step observations o_1, ..., o_T    [T, ...]
+
+        Args:
+            obs (TensorDict): Full observation sequence of T + 1 steps across arbitrary
+                modalities with explicit batch_size=[T + 1].
+            action (torch.Tensor): Actions taken at each transition [T, action_dim].
+            reward (torch.Tensor): Scalar rewards received at each transition [T, 1].
+            terminated (torch.Tensor): Terminal state flags at each transition [T, 1].
+            truncated (torch.Tensor): Time-limit truncation flags at each transition [T, 1].
+        """
+        T = len(action)
+        _check_obs_batch_size(obs, T)
+        _check_action_tensor(action, T)
+        _check_signal_tensor("reward", reward, T)
+        _check_signal_tensor("terminated", terminated, T)
+        _check_signal_tensor("truncated", truncated, T)
+
+        done = terminated | truncated
+
+        nxt = TensorDict(
+            {
+                "obs": obs[1:],
+                "reward": reward,
+                "done": done,
                 "terminated": terminated,
                 "truncated": truncated,
             },
+            batch_size=[T],
+        )
+
+        source = {
+            "obs": obs[:-1],
+            "action": action,
+            "next": nxt,
         }
         super().__init__(source, batch_size=[T])
         self.validate()
 
-    @classmethod
-    def from_dict(
-        cls,
-        source: dict[str, Any],
-        *,
-        batch_size: torch.Size | Sequence[int] | None = None,
-        **kwargs: Any,
-    ) -> "Episode":
-        """Construct an Episode from an existing raw transition dictionary."""
-        ep = cls.__new__(cls)
-        TensorDict.__init__(ep, source, batch_size=batch_size, **kwargs)
-        return ep
-
     def validate(self) -> None:
         """
-        Validate that this Episode conforms to the transition layout:
-            - Required keys exist: 'obs', 'actions', 'next' ('obs', 'rewards', 'done', 'terminated', 'truncated')
-            - 'obs' is a TensorDict
-            - 'next' is a TensorDict
-            - 'next/obs' is a TensorDict matching 'obs' keys
+        Validate that this Episode conforms to TorchRL transition layout:
+            - Required top-level keys exist: 'obs', 'action', 'next'
+            - 'obs' is a TensorDict matching parent batch_size
+            - 'action' is a torch.Tensor
+            - 'next' is a TensorDict matching parent batch_size
+            - 'next/obs' is a TensorDict matching 'obs' keys and batch_size
+            - 'reward' is a floating-point tensor with trailing singleton dimension (*, 1)
+            - 'done', 'terminated', 'truncated' are boolean tensors with trailing singleton dimension (*, 1)
             - 'next/done' equals 'next/terminated | next/truncated'
         """
-        for key in ("obs", "actions", "next"):
+        for key in ("obs", "action", "next"):
             if key not in self.keys():
                 raise KeyError(f"Episode missing top-level key: '{key}'")
 
-        if not isinstance(self["obs"], TensorDict):
-            raise ValueError(f"Episode 'obs' must be a TensorDict, got {type(self['obs'])}")
+        obs = self["obs"]
+        if not isinstance(obs, TensorDict):
+            raise ValueError(f"Episode 'obs' must be a TensorDict, got {type(obs)}")
+        if obs.batch_size != self.batch_size:
+            raise ValueError(f"Episode 'obs' batch_size {list(obs.batch_size)} must match {list(self.batch_size)}")
+
+        if not isinstance(self["action"], torch.Tensor):
+            raise ValueError(f"Episode 'action' must be a torch.Tensor, got {type(self['action'])}")
 
         nxt = self["next"]
         if not isinstance(nxt, TensorDict):
             raise ValueError(f"Episode 'next' must be a TensorDict, got {type(nxt)}")
+        if nxt.batch_size != self.batch_size:
+            raise ValueError(f"Episode 'next' batch_size {list(nxt.batch_size)} must match {list(self.batch_size)}")
 
-        for key in ("obs", "rewards", "done", "terminated", "truncated"):
+        for key in ("obs", "reward", "done", "terminated", "truncated"):
             if key not in nxt.keys():
                 raise KeyError(f"Episode 'next' missing key: '{key}'")
 
-        if not isinstance(nxt["obs"], TensorDict):
-            raise ValueError(f"Episode 'next/obs' must be a TensorDict, got {type(nxt['obs'])}")
+        nxt_obs = nxt["obs"]
+        if not isinstance(nxt_obs, TensorDict):
+            raise ValueError(f"Episode 'next/obs' must be a TensorDict, got {type(nxt_obs)}")
+        if nxt_obs.batch_size != self.batch_size:
+            raise ValueError(
+                f"Episode 'next/obs' batch_size {list(nxt_obs.batch_size)} must match {list(self.batch_size)}"
+            )
 
-        if set(self["obs"].keys()) != set(nxt["obs"].keys()):
+        if set(obs.keys()) != set(nxt_obs.keys()):
             raise KeyError("Episode 'obs' and 'next/obs' must have matching keys")
+
+        for flag_key in ("reward", "done", "terminated", "truncated"):
+            t = nxt[flag_key]
+            if not isinstance(t, torch.Tensor):
+                raise ValueError(f"Episode 'next/{flag_key}' must be a torch.Tensor, got {type(t)}")
+            if t.ndim < 1 or t.shape[-1] != 1:
+                raise ValueError(
+                    f"Episode 'next/{flag_key}' must have trailing singleton dimension (*, 1), got shape {t.shape}"
+                )
+
+        if not nxt["reward"].is_floating_point():
+            raise TypeError(f"Episode 'next/reward' must be a floating-point tensor, got {nxt['reward'].dtype}")
+
+        for bool_key in ("done", "terminated", "truncated"):
+            if nxt[bool_key].dtype != torch.bool:
+                raise TypeError(f"Episode 'next/{bool_key}' must be a boolean tensor, got {nxt[bool_key].dtype}")
 
         if not torch.equal(nxt["done"], nxt["terminated"] | nxt["truncated"]):
             raise ValueError("Episode 'next/done' must equal 'next/terminated | next/truncated'")
@@ -99,9 +180,9 @@ class Episode(TensorDict):
     def is_valid(self) -> bool:
         """Return True if this Episode satisfies all schema and consistency constraints."""
         try:
-            self.validate()
+            Episode.validate(self)
             return True
-        except (KeyError, ValueError):
+        except (KeyError, ValueError, TypeError):
             return False
 
     @property
@@ -110,28 +191,28 @@ class Episode(TensorDict):
         return self["obs"]
 
     @property
-    def actions(self) -> torch.Tensor:
+    def action(self) -> torch.Tensor:
         """Actions taken at step t [T, action_dim]."""
-        return self["actions"]
+        return self["action"]
 
     @property
-    def rewards(self) -> torch.Tensor:
-        """Scalar rewards received after step t [T]."""
-        return self["next", "rewards"]
+    def reward(self) -> torch.Tensor:
+        """Scalar rewards received after step t [T, 1]."""
+        return self["next", "reward"]
 
     @property
     def done(self) -> torch.Tensor:
-        """Done flags at step t [T] stored in the TensorDict."""
+        """Done flags at step t [T, 1] stored in the TensorDict."""
         return self["next", "done"]
 
     @property
     def terminated(self) -> torch.Tensor:
-        """Terminated flags at step t [T]."""
+        """Terminated flags at step t [T, 1]."""
         return self["next", "terminated"]
 
     @property
     def truncated(self) -> torch.Tensor:
-        """Truncated flags at step t [T]."""
+        """Truncated flags at step t [T, 1]."""
         return self["next", "truncated"]
 
     def all_obs(self, key: str | None = None) -> TensorDict | torch.Tensor:
@@ -143,7 +224,7 @@ class Episode(TensorDict):
             key: Optional modality key (e.g. "render", "state"). If None,
                 returns the full TensorDict across all observation modalities.
         """
-        if len(self) == 0:
+        if self.ndim == 0 or len(self) == 0:
             full = self["obs"]
         else:
             obs_curr = self["obs"]

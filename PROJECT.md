@@ -77,11 +77,15 @@ flowchart TD
 - **Role**: Orchestrates rollouts by stepping a `Policy` inside an `Env` and assembling complete `Episode` records.
 - **Contract**:
   - Runs for a configured number of episodes with constraints (`min_steps`, `max_steps`).
-  - Produces immutable `Episode` objects containing synchronous sequence tensors:
-    - `obs`: $(T + 1, H, W, C)$
-    - `actions`: $(T, A)$
-    - `rewards`: $(T,)$
-    - `dones`: $(T,)$
+  - Produces `Episode` TensorDicts conforming to TorchRL transition conventions:
+    - `obs`: $(T, \dots)$ observation TensorDict (sliced from $(T + 1)$ collected frames)
+    - `action`: $(T, A)$
+    - `next`:
+      - `obs`: $(T, \dots)$
+      - `reward`: $(T, 1)$
+      - `done`: $(T, 1)$
+      - `terminated`: $(T, 1)$
+      - `truncated`: $(T, 1)$
   - Seeds the buffer offline before training, or runs asynchronously online to continuously collect new transitions.
 
 ### 2.4 Buffer (`wiskers.data.buffer`)
@@ -112,10 +116,12 @@ flowchart TD
   - Produces batched PyTorch tensors for Lightning training:
     ```python
     batch = {
-        "obs": torch.Tensor,      # [B, T + 1, C, H, W]
-        "actions": torch.Tensor,  # [B, T, action_dim]
-        "rewards": torch.Tensor,  # [B, T]
-        "dones": torch.Tensor,    # [B, T]
+        "obs": torch.Tensor,        # [B, T + 1, C, H, W]
+        "action": torch.Tensor,     # [B, T, action_dim]
+        "reward": torch.Tensor,     # [B, T, 1]
+        "done": torch.Tensor,       # [B, T, 1]
+        "terminated": torch.Tensor, # [B, T, 1]
+        "truncated": torch.Tensor,  # [B, T, 1]
     }
     ```
 

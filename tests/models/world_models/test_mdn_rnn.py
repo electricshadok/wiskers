@@ -105,7 +105,7 @@ def test_losses():
 
     z_next = torch.randn(4, 10, 16)
     mdn_loss = MDNRNN.mdn_loss(pi, mu, sigma, z_next)
-    done_target = torch.randint(0, 2, (4, 10)).float()
+    done_target = torch.randint(0, 2, (4, 10, 1)).float()
     done_loss = MDNRNN.done_loss(done, done_target)
     loss = mdn_loss + done_loss
 

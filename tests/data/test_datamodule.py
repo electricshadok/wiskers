@@ -11,12 +11,12 @@ from wiskers.data.transforms import EpisodeToTensor
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
     """Build a dummy episode filled with random data."""
-    terminated = torch.zeros(T, dtype=torch.bool)
-    truncated = torch.zeros(T, dtype=torch.bool)
+    terminated = torch.zeros(T, 1, dtype=torch.bool)
+    truncated = torch.zeros(T, 1, dtype=torch.bool)
     return Episode(
-        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}),
-        actions=torch.randn(T, action_dim, dtype=torch.float32),
-        rewards=torch.randn(T, dtype=torch.float32),
+        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}, batch_size=[T + 1]),
+        action=torch.randn(T, action_dim, dtype=torch.float32),
+        reward=torch.randn(T, 1, dtype=torch.float32),
         terminated=terminated,
         truncated=truncated,
     )
@@ -56,20 +56,20 @@ def test_datamodule_train_dataloader():
     batch = next(iter(loader))
 
     # Keys
-    assert set(batch.keys()) == {"obs", "actions", "rewards", "done", "terminated", "truncated"}
+    assert set(batch.keys()) == {"obs", "action", "reward", "done", "terminated", "truncated"}
 
     # Shapes: obs is (B, T + 1, C, H, W), others are (B, T, ...)
     assert batch["obs"].shape == (BATCH_SIZE, NUM_STEPS + 1, 3, 8, 8)
-    assert batch["actions"].shape == (BATCH_SIZE, NUM_STEPS, 4)
-    assert batch["rewards"].shape == (BATCH_SIZE, NUM_STEPS)
-    assert batch["done"].shape == (BATCH_SIZE, NUM_STEPS)
-    assert batch["terminated"].shape == (BATCH_SIZE, NUM_STEPS)
-    assert batch["truncated"].shape == (BATCH_SIZE, NUM_STEPS)
+    assert batch["action"].shape == (BATCH_SIZE, NUM_STEPS, 4)
+    assert batch["reward"].shape == (BATCH_SIZE, NUM_STEPS, 1)
+    assert batch["done"].shape == (BATCH_SIZE, NUM_STEPS, 1)
+    assert batch["terminated"].shape == (BATCH_SIZE, NUM_STEPS, 1)
+    assert batch["truncated"].shape == (BATCH_SIZE, NUM_STEPS, 1)
 
     # dtypes
     assert batch["obs"].dtype == torch.float32
-    assert batch["actions"].dtype == torch.float32
-    assert batch["rewards"].dtype == torch.float32
+    assert batch["action"].dtype == torch.float32
+    assert batch["reward"].dtype == torch.float32
     assert batch["done"].dtype == torch.float32
     assert batch["terminated"].dtype == torch.float32
     assert batch["truncated"].dtype == torch.float32
@@ -95,14 +95,15 @@ def test_episode_to_tensor_resize_and_grayscale():
     assert out_gray["obs"].dtype == torch.float32
 
     # Test obs_range=(-1.0, 1.0)
-    terminated = torch.zeros((1,), dtype=torch.bool)
-    truncated = torch.zeros((1,), dtype=torch.bool)
+    terminated = torch.zeros((1, 1), dtype=torch.bool)
+    truncated = torch.zeros((1, 1), dtype=torch.bool)
     ep_extremes = Episode(
         obs=TensorDict(
             {"render": torch.tensor([[[[0, 128, 255]]], [[[255, 128, 0]]]], dtype=torch.uint8)},
+            batch_size=[2],
         ),
-        actions=torch.zeros((1, 4), dtype=torch.float32),
-        rewards=torch.zeros((1,), dtype=torch.float32),
+        action=torch.zeros((1, 4), dtype=torch.float32),
+        reward=torch.zeros((1, 1), dtype=torch.float32),
         terminated=terminated,
         truncated=truncated,
     )

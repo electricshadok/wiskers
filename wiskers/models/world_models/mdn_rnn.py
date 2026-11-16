@@ -298,10 +298,10 @@ class MDNRNN(nn.Module):
         Binary cross-entropy loss for the done/restart prediction.
 
         Args:
-            done_pred   (torch.Tensor): Predicted episode-end probability [N, T, 1] or [N, T].
-            done_target  (torch.Tensor): Binary ground-truth labels         [N, T].
+            done_pred   (torch.Tensor): Predicted episode-end probability [N, T, 1].
+            done_target  (torch.Tensor): Binary ground-truth labels         [N, T, 1].
 
         Returns:
             torch.Tensor: Scalar BCE loss.
         """
-        return F.binary_cross_entropy(done_pred.squeeze(-1), done_target.float())
+        return F.binary_cross_entropy(done_pred, done_target.float())

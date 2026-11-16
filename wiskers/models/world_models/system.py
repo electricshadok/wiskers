@@ -67,8 +67,8 @@ class WorldModels(L.LightningModule):
 
     def _shared_step(self, batch, stage: str):
         obs = batch["obs"]  # [B, T + 1, C, H, W]
-        actions = batch["actions"]  # [B, T, A]
-        done = batch["done"]  # [B, T]
+        action = batch["action"]  # [B, T, A]
+        done = batch["done"]  # [B, T, 1]
         B, T1 = obs.shape[:2]
 
         # Encode observations with the frozen V model
@@ -76,9 +76,9 @@ class WorldModels(L.LightningModule):
             z = self.encoder(obs.flatten(0, 1)).view(B, T1, -1)  # [B, T + 1, Z]
 
         # Predict z_{t+1} from (z_t, a_t)
-        pi, mu, sigma, done_pred, _ = self.mdn_rnn(z[:, :-1], actions)
+        pi, mu, sigma, done_pred, _ = self.mdn_rnn(z[:, :-1], action)
         mdn_loss = MDNRNN.mdn_loss(pi, mu, sigma, z[:, 1:])
-        done_loss = F.binary_cross_entropy(done_pred.squeeze(-1), done)
+        done_loss = F.binary_cross_entropy(done_pred, done)
         loss = mdn_loss + done_loss
 
         self.log(f"{stage}_loss", loss, prog_bar=True)

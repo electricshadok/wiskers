@@ -118,8 +118,8 @@ def test_franka_kitchen_collector_integration(franka_env):
     assert buffer[0].obs["render"].shape == (10, 64, 64, 3)
     assert buffer[0].all_obs("render").shape == (11, 64, 64, 3)
     assert buffer[0].obs["render"].dtype == torch.uint8
-    assert buffer[0].actions.shape == (10, 9)
-    assert buffer[0].actions.dtype == torch.float32
+    assert buffer[0].action.shape == (10, 9)
+    assert buffer[0].action.dtype == torch.float32
 
 
 

@@ -16,12 +16,12 @@ from wiskers.data.transforms import EpisodeToTensor
 
 def _make_episode(T: int = 20, H: int = 8, W: int = 8, C: int = 3, action_dim: int = 4) -> Episode:
     """Build a dummy episode filled with deterministic or pseudo-random data."""
-    terminated = torch.zeros(T, dtype=torch.bool)
-    truncated = torch.zeros(T, dtype=torch.bool)
+    terminated = torch.zeros(T, 1, dtype=torch.bool)
+    truncated = torch.zeros(T, 1, dtype=torch.bool)
     return Episode(
-        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}),
-        actions=torch.randn(T, action_dim, dtype=torch.float32),
-        rewards=torch.randn(T, dtype=torch.float32),
+        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}, batch_size=[T + 1]),
+        action=torch.randn(T, action_dim, dtype=torch.float32),
+        reward=torch.randn(T, 1, dtype=torch.float32),
         terminated=terminated,
         truncated=truncated,
     )
@@ -41,7 +41,7 @@ def test_uniform_chunk_sampler():
         assert len(chunk) == 10
         assert chunk.obs.shape[0] == 10
         assert chunk.all_obs().shape[0] == 11
-        assert chunk.actions.shape[0] == 10
+        assert chunk.action.shape[0] == 10
 
 
 def test_sampler_empty_buffer_raises():
@@ -107,7 +107,7 @@ def test_datamodule_with_explicit_sampler():
     batch = next(iter(loader))
 
     assert batch["obs"].shape == (2, 9, 3, 8, 8)
-    assert batch["actions"].shape == (2, 8, 4)
+    assert batch["action"].shape == (2, 8, 4)
 
 
 def test_replay_buffer_capacity_episodes():

@@ -12,7 +12,7 @@ class Policy(nn.Module):
     Base class for all rollout policies (random, heuristic, or learned).
 
     Attributes:
-        action_dim (int): Dimensionality of the stored action vector in Episode.actions
+        action_dim (int): Dimensionality of the stored action vector in Episode.action
             (1 for discrete scalar actions, or D for D-dimensional continuous actions).
     """
 

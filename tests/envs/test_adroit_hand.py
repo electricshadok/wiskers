@@ -109,8 +109,8 @@ def test_adroit_hand_collector_integration(adroit_env):
     assert buffer[0].obs["render"].shape == (10, 64, 64, 3)
     assert buffer[0].all_obs("render").shape == (11, 64, 64, 3)
     assert buffer[0].obs["render"].dtype == torch.uint8
-    assert buffer[0].actions.shape == (10, 28)
-    assert buffer[0].actions.dtype == torch.float32
+    assert buffer[0].action.shape == (10, 28)
+    assert buffer[0].action.dtype == torch.float32
 
 
 def test_adroit_neural_policy():

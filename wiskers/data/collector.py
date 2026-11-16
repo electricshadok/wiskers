@@ -111,11 +111,11 @@ class Collector:
             truncated_list.append(truncated)
 
         return Episode(
-            obs=TensorDict({"render": torch.stack(observations)}),
-            actions=torch.stack(actions),
-            rewards=torch.tensor(rewards, dtype=torch.float32),
-            terminated=torch.tensor(terminated_list, dtype=torch.bool),
-            truncated=torch.tensor(truncated_list, dtype=torch.bool),
+            obs=TensorDict({"render": torch.stack(observations)}, batch_size=[len(observations)]),
+            action=torch.stack(actions),
+            reward=torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1),
+            terminated=torch.tensor(terminated_list, dtype=torch.bool).unsqueeze(-1),
+            truncated=torch.tensor(truncated_list, dtype=torch.bool).unsqueeze(-1),
         )
 
     def collect(
@@ -148,7 +148,7 @@ class Collector:
                 print(
                     f"[Collector] episode {collected}/{self.num_episodes} | "
                     f"T={len(episode)} steps | "
-                    f"reward={episode.rewards.sum().item():.1f} | "
+                    f"reward={episode.reward.sum().item():.1f} | "
                     f"buffer={buffer}"
                 )
 

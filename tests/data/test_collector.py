@@ -84,12 +84,12 @@ def test_collector_collect_one_episode_no_args():
     # Initial observation o_0 is zeros, terminal observation o_8 is 8s
     assert torch.all(episode.all_obs("render")[0] == 0)
     assert torch.all(episode.all_obs("render")[8] == 8)
-    assert episode.actions.shape == (8, 1)
-    assert episode.actions.dtype == torch.float32
-    assert episode.rewards.shape == (8,)
-    assert episode.done.shape == (8,)
-    assert episode.terminated.shape == (8,)
-    assert episode.truncated.shape == (8,)
+    assert episode.action.shape == (8, 1)
+    assert episode.action.dtype == torch.float32
+    assert episode.reward.shape == (8, 1)
+    assert episode.done.shape == (8, 1)
+    assert episode.terminated.shape == (8, 1)
+    assert episode.truncated.shape == (8, 1)
     assert episode.terminated[-1].item() is True
     assert episode.terminated[:-1].any().item() is False
     assert episode.truncated.any().item() is False
@@ -184,8 +184,8 @@ def test_collector_continuous_actions():
 
     assert total_steps == 12
     assert buffer.num_episodes == 2
-    assert buffer[0].actions.shape == (6, 2)
-    assert buffer[0].actions.dtype == torch.float32
+    assert buffer[0].action.shape == (6, 2)
+    assert buffer[0].action.dtype == torch.float32
 
 
 def test_collector_hydra_instantiation():

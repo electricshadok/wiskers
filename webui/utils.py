@@ -61,15 +61,15 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
                 range(len(episodes)),
                 format_func=lambda i: (
                     f"Episode {i + 1}  •  {len(episodes[i])} steps  •  "
-                    f"R={episodes[i].rewards.sum().item():.1f}"
+                    f"R={episodes[i].reward.sum().item():.1f}"
                 ),
             )
 
         episode = episodes[ep_idx]
         obs_seq, actions_seq, rewards_seq, dones_seq = (
             episode.all_obs(obs_key),
-            episode.actions,
-            episode.rewards,
+            episode.action,
+            episode.reward,
             episode.done,
         )
     else:
@@ -94,13 +94,13 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
                 range(num_chunks),
                 format_func=lambda i: (
                     f"Chunk {i + 1} / {num_chunks}  •  {data_module.num_steps} steps  •  "
-                    f"R={batch['rewards'][i].sum().item():.1f}"
+                    f"R={batch['reward'][i].sum().item():.1f}"
                 ),
             )
 
         obs_seq = batch["obs"][chunk_idx]
-        actions_seq = batch["actions"][chunk_idx]
-        rewards_seq = batch["rewards"][chunk_idx]
+        actions_seq = batch["action"][chunk_idx]
+        rewards_seq = batch["reward"][chunk_idx]
         dones_seq = batch["done"][chunk_idx]
 
         m4.metric("Obs Shape (C, H, W)", f"{tuple(obs_seq.shape[1:])}")

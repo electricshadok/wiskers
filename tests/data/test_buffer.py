@@ -8,12 +8,12 @@ from wiskers.data.episode import Episode
 
 
 def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: int = 2) -> Episode:
-    terminated = torch.zeros(T, dtype=torch.bool)
-    truncated = torch.zeros(T, dtype=torch.bool)
+    terminated = torch.zeros(T, 1, dtype=torch.bool)
+    truncated = torch.zeros(T, 1, dtype=torch.bool)
     return Episode(
-        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}),
-        actions=torch.randn(T, action_dim, dtype=torch.float32),
-        rewards=torch.ones(T, dtype=torch.float32),
+        obs=TensorDict({"render": torch.randint(0, 256, (T + 1, H, W, C), dtype=torch.uint8)}, batch_size=[T + 1]),
+        action=torch.randn(T, action_dim, dtype=torch.float32),
+        reward=torch.ones(T, 1, dtype=torch.float32),
         terminated=terminated,
         truncated=truncated,
     )
@@ -79,53 +79,134 @@ def test_replay_buffer_add_and_eviction():
 def test_replay_buffer_empty_episode_ignored():
     buf = ReplayBuffer(capacity_episodes=5)
     empty_ep = Episode(
-        obs=TensorDict({"render": torch.empty((0, 4, 4, 3), dtype=torch.uint8)}),
-        actions=torch.empty((0, 2), dtype=torch.float32),
-        rewards=torch.empty(0, dtype=torch.float32),
-        terminated=torch.empty(0, dtype=torch.bool),
-        truncated=torch.empty(0, dtype=torch.bool),
+        obs=TensorDict({"render": torch.empty((0, 4, 4, 3), dtype=torch.uint8)}, batch_size=[0]),
+        action=torch.empty((0, 2), dtype=torch.float32),
+        reward=torch.empty((0, 1), dtype=torch.float32),
+        terminated=torch.empty((0, 1), dtype=torch.bool),
+        truncated=torch.empty((0, 1), dtype=torch.bool),
     )
     buf.add(empty_ep)
     assert buf.is_empty
 
 
 def test_episode_validation_and_slice():
-    missing_key_ep = Episode.from_dict(
+    missing_key_td = TensorDict(
         {
             "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
-            "actions": torch.zeros(5, 2),
-            "next": {
-                "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
-                "rewards": torch.zeros(5),
-                "truncated": torch.zeros(5, dtype=torch.bool),
-            },
+            "action": torch.zeros(5, 2),
+            "next": TensorDict(
+                {
+                    "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+                    "reward": torch.zeros(5, 1),
+                    "truncated": torch.zeros(5, 1, dtype=torch.bool),
+                },
+                batch_size=[5],
+            ),
         },
         batch_size=[5],
     )
-    assert not missing_key_ep.is_valid()
+    assert not Episode.is_valid(missing_key_td)
     with pytest.raises(KeyError, match="Episode 'next' missing key: 'done'"):
-        missing_key_ep.validate()
+        Episode.validate(missing_key_td)
 
-    inconsistent_done_ep = Episode.from_dict(
+    inconsistent_done_td = TensorDict(
         {
             "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
-            "actions": torch.zeros(5, 2),
-            "next": {
-                "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
-                "rewards": torch.zeros(5),
-                "done": torch.zeros(5, dtype=torch.bool),
-                "terminated": torch.ones(5, dtype=torch.bool),
-                "truncated": torch.zeros(5, dtype=torch.bool),
-            },
+            "action": torch.zeros(5, 2),
+            "next": TensorDict(
+                {
+                    "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+                    "reward": torch.zeros(5, 1),
+                    "done": torch.zeros(5, 1, dtype=torch.bool),
+                    "terminated": torch.ones(5, 1, dtype=torch.bool),
+                    "truncated": torch.zeros(5, 1, dtype=torch.bool),
+                },
+                batch_size=[5],
+            ),
         },
         batch_size=[5],
     )
-    assert not inconsistent_done_ep.is_valid()
+    assert not Episode.is_valid(inconsistent_done_td)
     with pytest.raises(ValueError, match="Episode 'next/done' must equal"):
-        inconsistent_done_ep.validate()
+        Episode.validate(inconsistent_done_td)
+
+    missing_singleton_dim_td = TensorDict(
+        {
+            "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+            "action": torch.zeros(5, 2),
+            "next": TensorDict(
+                {
+                    "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+                    "reward": torch.zeros(5),  # shape (5,) missing trailing singleton dim
+                    "done": torch.zeros(5, 1, dtype=torch.bool),
+                    "terminated": torch.zeros(5, 1, dtype=torch.bool),
+                    "truncated": torch.zeros(5, 1, dtype=torch.bool),
+                },
+                batch_size=[5],
+            ),
+        },
+        batch_size=[5],
+    )
+    assert not Episode.is_valid(missing_singleton_dim_td)
+    with pytest.raises(ValueError, match="trailing singleton dimension"):
+        Episode.validate(missing_singleton_dim_td)
+
+    wrong_reward_dtype_td = TensorDict(
+        {
+            "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+            "action": torch.zeros(5, 2),
+            "next": TensorDict(
+                {
+                    "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+                    "reward": torch.zeros(5, 1, dtype=torch.int64),  # int instead of float
+                    "done": torch.zeros(5, 1, dtype=torch.bool),
+                    "terminated": torch.zeros(5, 1, dtype=torch.bool),
+                    "truncated": torch.zeros(5, 1, dtype=torch.bool),
+                },
+                batch_size=[5],
+            ),
+        },
+        batch_size=[5],
+    )
+    assert not Episode.is_valid(wrong_reward_dtype_td)
+    with pytest.raises(TypeError, match="floating-point"):
+        Episode.validate(wrong_reward_dtype_td)
+
+    wrong_flag_dtype_td = TensorDict(
+        {
+            "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+            "action": torch.zeros(5, 2),
+            "next": TensorDict(
+                {
+                    "obs": TensorDict({"render": torch.zeros(5, 4, 4, 3)}, batch_size=[5]),
+                    "reward": torch.zeros(5, 1, dtype=torch.float32),
+                    "done": torch.zeros(5, 1, dtype=torch.float32),  # float instead of bool
+                    "terminated": torch.zeros(5, 1, dtype=torch.bool),
+                    "truncated": torch.zeros(5, 1, dtype=torch.bool),
+                },
+                batch_size=[5],
+            ),
+        },
+        batch_size=[5],
+    )
+    assert not Episode.is_valid(wrong_flag_dtype_td)
+    with pytest.raises(TypeError, match="boolean"):
+        Episode.validate(wrong_flag_dtype_td)
 
     ep = _make_episode(T=10)
     assert ep.is_valid()
+    assert ep.batch_size == torch.Size([10])
+    assert ep.obs.batch_size == torch.Size([10])
+    assert ep["next"].batch_size == torch.Size([10])
+
+    # Single transition indexing has batch_size=[]
+    trans = ep[0]
+    assert trans.batch_size == torch.Size([])
+    assert trans["obs"]["render"].shape == (4, 4, 3)
+    assert trans["action"].shape == (2,)
+    assert trans["next", "reward"].shape == (1,)
+    assert trans["next", "done"].shape == (1,)
+
     chunk = ep.slice(3, 8)
     assert isinstance(chunk, Episode)
     assert len(chunk) == 5
@@ -133,14 +214,14 @@ def test_episode_validation_and_slice():
     assert chunk.obs["render"].shape == (5, 4, 4, 3)
     assert chunk.all_obs("render").shape == (6, 4, 4, 3)
     assert chunk.all_obs().batch_size == torch.Size([6])
-    assert chunk.actions.shape == (5, 2)
-    assert chunk.rewards.shape == (5,)
-    assert chunk.done.shape == (5,)
-    assert chunk.terminated.shape == (5,)
-    assert chunk.truncated.shape == (5,)
+    assert chunk.action.shape == (5, 2)
+    assert chunk.reward.shape == (5, 1)
+    assert chunk.done.shape == (5, 1)
+    assert chunk.terminated.shape == (5, 1)
+    assert chunk.truncated.shape == (5, 1)
     assert torch.equal(chunk.obs["render"], ep.obs["render"][3:8])
     assert torch.equal(chunk.all_obs("render"), ep.all_obs("render")[3:9])
-    assert torch.equal(chunk.actions, ep.actions[3:8])
+    assert torch.equal(chunk.action, ep.action[3:8])
 
     # Multimodal observation support (e.g. state + render)
     multi_modal_ep = Episode(
@@ -149,15 +230,69 @@ def test_episode_validation_and_slice():
                 "state": torch.randn(11, 8),
                 "render": torch.randint(0, 256, (11, 4, 4, 3), dtype=torch.uint8),
             },
+            batch_size=[11],
         ),
-        actions=torch.randn(10, 2),
-        rewards=torch.zeros(10),
-        terminated=torch.zeros(10, dtype=torch.bool),
-        truncated=torch.zeros(10, dtype=torch.bool),
+        action=torch.randn(10, 2),
+        reward=torch.zeros(10, 1),
+        terminated=torch.zeros(10, 1, dtype=torch.bool),
+        truncated=torch.zeros(10, 1, dtype=torch.bool),
     )
     assert multi_modal_ep.is_valid()
+    assert multi_modal_ep.reward.shape == (10, 1)
     assert multi_modal_ep.all_obs("state").shape == (11, 8)
     assert multi_modal_ep.all_obs("render").shape == (11, 4, 4, 3)
+
+    # obs must have T + 1 steps with explicit batch_size; Episode rejects the mismatch
+    with pytest.raises(ValueError, match="obs TensorDict must have explicit batch_size"):
+        Episode(
+            obs=TensorDict({"render": torch.zeros(10, 4, 4, 3)}, batch_size=[10]),  # 10 instead of 11
+            action=torch.randn(10, 2),
+            reward=torch.zeros(10, 1),
+            terminated=torch.zeros(10, 1, dtype=torch.bool),
+            truncated=torch.zeros(10, 1, dtype=torch.bool),
+        )
+
+    # Episode rejects unbatched obs
+    with pytest.raises(ValueError, match="obs TensorDict must have explicit batch_size"):
+        Episode(
+            obs=TensorDict({"render": torch.zeros(11, 4, 4, 3)}),  # no batch_size
+            action=torch.randn(10, 2),
+            reward=torch.zeros(10, 1),
+            terminated=torch.zeros(10, 1, dtype=torch.bool),
+            truncated=torch.zeros(10, 1, dtype=torch.bool),
+        )
+
+    # Episode rejects 1D reward (no backward compatibility auto-unsqueeze)
+    with pytest.raises(ValueError, match="reward must be a torch.Tensor with shape"):
+        Episode(
+            obs=TensorDict({"render": torch.zeros(11, 4, 4, 3)}, batch_size=[11]),
+            action=torch.randn(10, 2),
+            reward=torch.zeros(10),  # 1D instead of (10, 1)
+            terminated=torch.zeros(10, 1, dtype=torch.bool),
+            truncated=torch.zeros(10, 1, dtype=torch.bool),
+        )
+
+
+def test_episode_obs_views_share_storage():
+    """Ensure obs[:-1] and obs[1:] are zero-copy views sharing the exact same underlying memory storage."""
+    raw_frames = torch.randint(0, 256, (11, 16, 16, 3), dtype=torch.uint8)
+    obs = TensorDict({"render": raw_frames}, batch_size=[11])
+    ep = Episode(
+        obs=obs,
+        action=torch.randn(10, 2),
+        reward=torch.zeros(10, 1),
+        terminated=torch.zeros(10, 1, dtype=torch.bool),
+        truncated=torch.zeros(10, 1, dtype=torch.bool),
+    )
+
+    curr_ptr = ep["obs", "render"].untyped_storage().data_ptr()
+    next_ptr = ep["next", "obs", "render"].untyped_storage().data_ptr()
+    raw_ptr = raw_frames.untyped_storage().data_ptr()
+
+    # Zero-copy verification: all views must point to the identical data pointer
+    assert curr_ptr == raw_ptr, f"curr_ptr ({curr_ptr}) != raw_ptr ({raw_ptr})"
+    assert next_ptr == raw_ptr, f"next_ptr ({next_ptr}) != raw_ptr ({raw_ptr})"
+    assert curr_ptr == next_ptr, f"curr_ptr ({curr_ptr}) != next_ptr ({next_ptr})"
 
 
 def test_replay_buffer_slicing_and_repr():
