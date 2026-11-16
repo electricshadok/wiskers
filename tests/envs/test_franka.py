@@ -69,7 +69,7 @@ def test_franka_kitchen_available_tasks():
 
 def test_franka_random_policy(franka_env):
     torch_env = TorchGymEnv(franka_env, image_size=(64, 64))
-    policy = FrankaKitchenRandomPolicy(env=torch_env)
+    policy = FrankaKitchenRandomPolicy()
     assert policy.action_dim == 9
 
     obs, _ = torch_env.reset()
@@ -82,7 +82,7 @@ def test_franka_random_policy(franka_env):
 
 def test_franka_heuristic_policy(franka_env):
     torch_env = TorchGymEnv(franka_env, image_size=(64, 64))
-    policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=torch_env)
+    policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2)
     assert policy.action_dim == 9
 
     obs, _ = torch_env.reset()
@@ -160,7 +160,6 @@ def test_franka_policies_share_action_contract(franka_env):
     ]
 
     for policy in policies:
-        policy.set_env(env)
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

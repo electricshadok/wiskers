@@ -64,7 +64,7 @@ def test_adroit_hand_available_tasks():
 
 def test_adroit_random_policy(adroit_env):
     torch_env = TorchGymEnv(adroit_env, image_size=(64, 64))
-    policy = AdroitHandRandomPolicy(env=torch_env)
+    policy = AdroitHandRandomPolicy(action_dim=28)
     obs, _ = torch_env.reset()
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
@@ -75,7 +75,7 @@ def test_adroit_random_policy(adroit_env):
 
 def test_adroit_heuristic_policy(adroit_env):
     torch_env = TorchGymEnv(adroit_env, image_size=(64, 64))
-    policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, env=torch_env)
+    policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, action_dim=28)
     obs, _ = torch_env.reset()
     act1 = policy(obs, step=0)
     act2 = policy(obs, step=1)
@@ -151,7 +151,6 @@ def test_adroit_policies_share_action_contract(adroit_env):
     ]
 
     for policy in policies:
-        policy.set_env(env)
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

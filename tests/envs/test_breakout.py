@@ -136,7 +136,7 @@ def test_breakout_datamodule_custom_policy():
 
 def test_breakout_random_policy():
     env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
-    policy = BreakoutRandomPolicy(fire_frequency=5, env=env)
+    policy = BreakoutRandomPolicy(fire_frequency=5)
     obs, _ = env.reset()
     assert policy.action_dim == 1
     assert int(policy(obs, step=0).item()) == 1
@@ -204,7 +204,6 @@ def test_breakout_policies_share_action_contract():
     ]
 
     for policy in policies:
-        policy.set_env(env)
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

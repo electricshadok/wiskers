@@ -4,9 +4,9 @@ Policies for FrankaKitchen environment.
 
 from typing import Optional, Sequence
 
+import gymnasium as gym
 import torch
 
-from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.nn.heads import ContinuousActor
 from wiskers.policies import ContinuousPolicy
 
@@ -20,8 +20,14 @@ class FrankaKitchenPolicy(ContinuousPolicy):
 class FrankaKitchenRandomPolicy(FrankaKitchenPolicy):
     """Uniform random exploration for FrankaKitchen."""
 
+    def __init__(self, action_space: Optional[gym.spaces.Box] = None) -> None:
+        super().__init__()
+        self.action_space = action_space or gym.spaces.Box(
+            low=-1.0, high=1.0, shape=(self.action_dim,), dtype=float
+        )
+
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        return self.sample_random()
+        return torch.from_numpy(self.action_space.sample()).float()
 
 
 class FrankaKitchenHeuristicPolicy(FrankaKitchenPolicy):
@@ -33,16 +39,14 @@ class FrankaKitchenHeuristicPolicy(FrankaKitchenPolicy):
     Args:
         momentum: Autoregressive decay factor in [0, 1). Higher values yield smoother trajectories.
         noise_scale: Standard deviation of injected action noise.
-        env: Optional TorchGymEnv environment instance.
     """
 
     def __init__(
         self,
         momentum: float = 0.85,
         noise_scale: float = 0.25,
-        env: Optional[TorchGymEnv] = None,
-    ):
-        super().__init__(env=env)
+    ) -> None:
+        super().__init__()
         self.momentum = momentum
         self.noise_scale = noise_scale
         self.current_action: torch.Tensor = torch.zeros(self.action_dim, dtype=torch.float32)
@@ -67,7 +71,6 @@ class FrankaKitchenNeuralPolicy(FrankaKitchenPolicy):
         image_size: Transformed observation shape ``(C, H, W)``.
         hidden_size: MLP hidden width.
         num_layers: Number of MLP hidden layers.
-        env: Optional TorchGymEnv environment instance.
     """
 
     def __init__(
@@ -75,9 +78,8 @@ class FrankaKitchenNeuralPolicy(FrankaKitchenPolicy):
         image_size: Sequence[int],
         hidden_size: int = 64,
         num_layers: int = 2,
-        env: Optional[TorchGymEnv] = None,
-    ):
-        super().__init__(env=env)
+    ) -> None:
+        super().__init__()
         c, h, w = image_size
         self.actor = ContinuousActor(
             feat_size=c * h * w,

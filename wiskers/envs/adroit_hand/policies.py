@@ -7,7 +7,6 @@ from typing import Optional, Sequence
 import gymnasium as gym
 import torch
 
-from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.nn.heads import ContinuousActor
 from wiskers.policies import ContinuousPolicy
 
@@ -17,20 +16,22 @@ class AdroitHandPolicy(ContinuousPolicy):
 
     action_dim: int = 28
 
-    def _validate_env(self, env: TorchGymEnv) -> None:
-        if not isinstance(env.action_space, gym.spaces.Box) or not env.action_space.shape:
-            raise ValueError(
-                f"{self.__class__.__name__} requires a continuous Box action_space, "
-                f"got {env.action_space}."
-            )
-        self.action_dim = env.action_space.shape[0]
+    def __init__(self, action_dim: int = 28) -> None:
+        super().__init__()
+        self.action_dim = action_dim
 
 
 class AdroitHandRandomPolicy(AdroitHandPolicy):
     """Uniform random exploration for AdroitHand."""
 
+    def __init__(self, action_dim: int = 28, action_space: Optional[gym.spaces.Box] = None) -> None:
+        super().__init__(action_dim=action_dim)
+        self.action_space = action_space or gym.spaces.Box(
+            low=-1.0, high=1.0, shape=(self.action_dim,), dtype=float
+        )
+
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        return self.sample_random()
+        return torch.from_numpy(self.action_space.sample()).float()
 
 
 class AdroitHandHeuristicPolicy(AdroitHandPolicy):
@@ -42,16 +43,16 @@ class AdroitHandHeuristicPolicy(AdroitHandPolicy):
     Args:
         momentum: Autoregressive decay factor in [0, 1). Higher values yield smoother trajectories.
         noise_scale: Standard deviation of injected action noise.
-        env: Optional TorchGymEnv environment instance.
+        action_dim: Action dimensionality.
     """
 
     def __init__(
         self,
         momentum: float = 0.85,
         noise_scale: float = 0.25,
-        env: Optional[TorchGymEnv] = None,
-    ):
-        super().__init__(env=env)
+        action_dim: int = 28,
+    ) -> None:
+        super().__init__(action_dim=action_dim)
         self.momentum = momentum
         self.noise_scale = noise_scale
         self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
@@ -72,16 +73,13 @@ class AdroitHandNeuralPolicy(AdroitHandPolicy):
     """
     Minimal trainable policy for AdroitHand: flattened pixels → MLP → squashed Gaussian in (-1, 1).
 
-    Samples in train mode and uses the mean in eval mode. Unlike the random/heuristic
-    policies, the network size is fixed at construction, so ``action_dim`` must match
-    the task's action space (validated in ``set_env``).
+    Samples in train mode and uses the mean in eval mode.
 
     Args:
         image_size: Transformed observation shape ``(C, H, W)``.
         action_dim: Action dimensionality of the target task (e.g. 28 for ``door``).
         hidden_size: MLP hidden width.
         num_layers: Number of MLP hidden layers.
-        env: Optional TorchGymEnv environment instance.
     """
 
     def __init__(
@@ -90,10 +88,8 @@ class AdroitHandNeuralPolicy(AdroitHandPolicy):
         action_dim: int = 28,
         hidden_size: int = 64,
         num_layers: int = 2,
-        env: Optional[TorchGymEnv] = None,
-    ):
-        self.action_dim = action_dim
-        super().__init__(env=env)
+    ) -> None:
+        super().__init__(action_dim=action_dim)
         c, h, w = image_size
         self.actor = ContinuousActor(
             feat_size=c * h * w,
@@ -101,14 +97,6 @@ class AdroitHandNeuralPolicy(AdroitHandPolicy):
             hidden_size=hidden_size,
             num_layers=num_layers,
         )
-
-    def _validate_env(self, env: TorchGymEnv) -> None:
-        if env.action_space.shape != (self.action_dim,):
-            raise ValueError(
-                f"{self.__class__.__name__} expects action_dim={self.action_dim}, "
-                f"got action_space shape {env.action_space.shape}."
-            )
-        super()._validate_env(env)
 
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         feat = obs.flatten(start_dim=-3)

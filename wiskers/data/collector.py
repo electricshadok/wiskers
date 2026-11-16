@@ -2,6 +2,7 @@
 Modular rollout collector for trajectory-based RL and world models.
 """
 
+import gymnasium as gym
 import torch
 
 from wiskers.data.buffer import Buffer
@@ -48,7 +49,7 @@ class Collector:
     ) -> None:
         self.env = env
         self.policy = policy
-        self.policy.set_env(env)
+        self._validate_policy_env_compatibility()
         self.transform = transform
         self.num_episodes = num_episodes
         self.min_steps = min_steps
@@ -56,6 +57,21 @@ class Collector:
         self.seed = seed
         self.verbose = verbose
         self._episode_idx = 0
+
+    def _validate_policy_env_compatibility(self) -> None:
+        """Verify that policy action_dim is compatible with env action_space."""
+        if isinstance(self.env.action_space, gym.spaces.Discrete):
+            if self.policy.action_dim != 1:
+                raise ValueError(
+                    f"Env has Discrete action space, but policy has action_dim={self.policy.action_dim} (expected 1)."
+                )
+        elif isinstance(self.env.action_space, gym.spaces.Box):
+            expected_dim = self.env.action_space.shape[0] if self.env.action_space.shape else 1
+            if self.policy.action_dim != expected_dim:
+                raise ValueError(
+                    f"Env has Box action space with shape {self.env.action_space.shape}, "
+                    f"but policy has action_dim={self.policy.action_dim} (expected {expected_dim})."
+                )
 
     def collect_one_episode(self) -> Episode:
         """

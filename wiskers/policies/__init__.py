@@ -1,4 +1,9 @@
-from wiskers.policies.base import ContinuousPolicy, DiscretePolicy, Policy
+from wiskers.policies.base import (
+    ContinuousPolicy,
+    DiscretePolicy,
+    Policy,
+    RandomPolicy,
+)
 
 
-__all__ = ["Policy", "DiscretePolicy", "ContinuousPolicy"]
+__all__ = ["Policy", "DiscretePolicy", "ContinuousPolicy", "RandomPolicy"]

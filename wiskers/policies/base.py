@@ -1,14 +1,10 @@
 """
-Common base policy interfaces for discrete and continuous environment rollouts.
+Base policy interfaces for discrete and continuous environment rollouts.
 """
-
-from typing import Optional
 
 import gymnasium as gym
 import torch
 import torch.nn as nn
-
-from wiskers.envs.torch_env import TorchGymEnv
 
 
 class Policy(nn.Module):
@@ -21,29 +17,6 @@ class Policy(nn.Module):
     """
 
     action_dim: int
-
-    def __init__(self, env: Optional[TorchGymEnv] = None) -> None:
-        super().__init__()
-        self.env: Optional[TorchGymEnv] = None
-        if env is not None:
-            self.set_env(env)
-
-    def set_env(self, env: TorchGymEnv) -> None:
-        """Validate and attach the TorchGymEnv environment to this policy."""
-        self._validate_env(env)
-        self.env = env
-
-    def _validate_env(self, env: TorchGymEnv) -> None:
-        """Optional hook to verify that ``env`` is compatible with this policy."""
-        pass
-
-    def sample_random(self) -> torch.Tensor:
-        """Sample a uniform random action tensor from ``self.env``."""
-        if self.env is None:
-            raise RuntimeError(
-                f"{self.__class__.__name__}.env is not set. Pass env to __init__ or call set_env(env)."
-            )
-        return self.env.sample_action()
 
     def reset(self) -> None:
         """Reset any internal recurrent or episodic state at the start of an episode."""
@@ -73,25 +46,28 @@ class DiscretePolicy(Policy):
 
     action_dim: int = 1
 
-    def _validate_env(self, env: TorchGymEnv) -> None:
-        if not isinstance(env.action_space, gym.spaces.Discrete):
-            raise ValueError(
-                f"{self.__class__.__name__} requires a Discrete action_space, "
-                f"got {env.action_space}."
-            )
-
 
 class ContinuousPolicy(Policy):
-    """Policy for continuous action spaces returning a ``float32`` ``torch.Tensor``."""
+    """Policy for continuous action spaces returning a ``float32`` ``torch.Tensor`` of shape ``(action_dim,)``."""
 
-    def _validate_env(self, env: TorchGymEnv) -> None:
-        if not isinstance(env.action_space, gym.spaces.Box):
-            raise ValueError(
-                f"{self.__class__.__name__} requires a continuous Box action_space, "
-                f"got {env.action_space}."
-            )
-        if env.action_space.shape != (self.action_dim,):
-            raise ValueError(
-                f"{self.__class__.__name__} expects action_dim={self.action_dim}, "
-                f"got action_space shape {env.action_space.shape}."
-            )
+    action_dim: int
+
+
+class RandomPolicy(Policy):
+    """Uniform random exploration across a Gymnasium action space (Discrete or Box)."""
+
+    def __init__(self, action_space: gym.Space) -> None:
+        super().__init__()
+        self.action_space = action_space
+        if isinstance(action_space, gym.spaces.Discrete):
+            self.action_dim = 1
+        elif isinstance(action_space, gym.spaces.Box):
+            self.action_dim = int(action_space.shape[0])
+        else:
+            raise ValueError(f"Unsupported action space: {type(action_space)}")
+
+    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        sample = self.action_space.sample()
+        if isinstance(self.action_space, gym.spaces.Discrete):
+            return torch.tensor(sample, dtype=torch.int64)
+        return torch.from_numpy(sample).float()
