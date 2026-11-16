@@ -37,9 +37,7 @@ class TorchGymEnv(gym.Wrapper):
             old_shape = obs_space.shape
             if len(old_shape) >= 2:
                 new_shape = self.image_size + old_shape[2:]
-                self.observation_space = gym.spaces.Box(
-                    low=0, high=255, shape=new_shape, dtype=np.uint8
-                )
+                self.observation_space = gym.spaces.Box(low=0, high=255, shape=new_shape, dtype=np.uint8)
 
     def _process_obs(self, raw_obs: np.ndarray) -> torch.Tensor:
         obs = torch.from_numpy(np.ascontiguousarray(raw_obs))
@@ -77,7 +75,7 @@ class TorchGymEnv(gym.Wrapper):
         """Sample a random action from self.env.action_space as a torch.Tensor."""
         sample = self.env.action_space.sample()
         if isinstance(self.env.action_space, gym.spaces.Discrete):
-            return torch.tensor(int(sample), dtype=torch.long)
+            return torch.tensor([int(sample)], dtype=torch.long)
         return torch.from_numpy(np.asarray(sample, dtype=np.float32))
 
     def _to_env_action(self, action: torch.Tensor) -> int | np.ndarray:

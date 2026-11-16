@@ -33,7 +33,7 @@ class Collector:
         num_episodes (int): Target number of valid episodes to collect.
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
         max_steps (int): Maximum step cutoff per episode (clamped).
-        seed (int): Base RNG seed for environment resets.
+        seed (int): Base RNG seed for environment resets (must be an int for reproducibility).
         verbose (bool): Whether to log collection progress.
     """
 
@@ -50,6 +50,10 @@ class Collector:
     ) -> None:
         self.env = env
         self.policy = policy
+        # Ensure neural policies run in eval mode during rollout to disable Dropout
+        # and freeze BatchNorm statistics, while supporting non-nn.Module heuristic policies.
+        if isinstance(self.policy, torch.nn.Module):
+            self.policy.eval()
         self._validate_policy_action_dim()
         self.transform = transform
         self.num_episodes = num_episodes
@@ -74,17 +78,20 @@ class Collector:
                     f"but policy has action_dim={self.policy.action_dim} (expected {expected_dim})."
                 )
 
-    def collect_one_episode(self) -> Episode:
+    @torch.inference_mode()
+    def collect_one_episode(self, episode_idx: int = 0) -> Episode:
         """
         Run a single environment rollout using self.env and self.policy up to self.max_steps.
+
+        Args:
+            episode_idx (int): Sequence index of the episode to offset the base seed (seed + episode_idx).
 
         Returns:
             Episode containing collected transitions as CPU tensors.
         """
         self.policy.reset()
 
-        obs, _ = self.env.reset(seed=self.seed + self._episode_idx)
-        self._episode_idx += 1
+        obs, _ = self.env.reset(seed=self.seed + episode_idx)
 
         observations: list[torch.Tensor] = [obs]
         actions: list[torch.Tensor] = []
@@ -105,14 +112,14 @@ class Collector:
 
             obs = next_obs
             observations.append(obs)
-            actions.append(action.detach().cpu().reshape(-1).to(dtype=torch.float32))
+            actions.append(action)
             rewards.append(reward)
             terminated_list.append(terminated)
             truncated_list.append(truncated)
 
         return Episode(
             obs=TensorDict({"render": torch.stack(observations)}, batch_size=[len(observations)]),
-            action=torch.stack(actions),
+            action=torch.stack(actions).to(device="cpu"),
             reward=torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1),
             terminated=torch.tensor(terminated_list, dtype=torch.bool).unsqueeze(-1),
             truncated=torch.tensor(truncated_list, dtype=torch.bool).unsqueeze(-1),
@@ -136,7 +143,8 @@ class Collector:
         total_steps = 0
 
         while collected < self.num_episodes:
-            episode = self.collect_one_episode()
+            episode = self.collect_one_episode(episode_idx=self._episode_idx)
+            self._episode_idx += 1
             if len(episode) < self.min_steps:
                 continue
 

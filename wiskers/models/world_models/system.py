@@ -76,7 +76,7 @@ class WorldModels(L.LightningModule):
             z = self.encoder(obs.flatten(0, 1)).view(B, T1, -1)  # [B, T + 1, Z]
 
         # Predict z_{t+1} from (z_t, a_t)
-        pi, mu, sigma, done_pred, _ = self.mdn_rnn(z[:, :-1], action)
+        pi, mu, sigma, done_pred, _ = self.mdn_rnn(z[:, :-1], action.float())
         mdn_loss = MDNRNN.mdn_loss(pi, mu, sigma, z[:, 1:])
         done_loss = F.binary_cross_entropy(done_pred, done)
         loss = mdn_loss + done_loss

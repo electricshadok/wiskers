@@ -24,8 +24,8 @@ class BreakoutRandomPolicy(BreakoutPolicy):
 
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         if step % self.fire_frequency == 0:
-            return torch.tensor(1, dtype=torch.long)  # FIRE
-        return torch.tensor(random.randint(0, self.num_actions - 1), dtype=torch.long)
+            return torch.tensor([1], dtype=torch.long)  # FIRE
+        return torch.tensor([random.randint(0, self.num_actions - 1)], dtype=torch.long)
 
 
 class BreakoutHeuristicPolicy(BreakoutPolicy):
@@ -44,11 +44,11 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         self.ale_source = ale_source
 
     def _sample_random(self) -> torch.Tensor:
-        return torch.tensor(random.randint(0, self.num_actions - 1), dtype=torch.long)
+        return torch.tensor([random.randint(0, self.num_actions - 1)], dtype=torch.long)
 
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         if random.random() < self.epsilon or self.ale_source is None:
-            return torch.tensor(1, dtype=torch.long) if step == 0 else self._sample_random()
+            return torch.tensor([1], dtype=torch.long) if step == 0 else self._sample_random()
 
         try:
             unwrapped = getattr(self.ale_source, "unwrapped", self.ale_source)
@@ -63,15 +63,15 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
 
             # If ball is waiting to be served or just reset, press FIRE
             if ball_y == 0 or step == 0:
-                return torch.tensor(1, dtype=torch.long)  # FIRE
+                return torch.tensor([1], dtype=torch.long)  # FIRE
 
             # Track the ball with the paddle
             if paddle_x < ball_x - 2:
-                return torch.tensor(2, dtype=torch.long)  # RIGHT
+                return torch.tensor([2], dtype=torch.long)  # RIGHT
             elif paddle_x > ball_x + 2:
-                return torch.tensor(3, dtype=torch.long)  # LEFT
+                return torch.tensor([3], dtype=torch.long)  # LEFT
             else:
-                return torch.tensor(random.choice([0, 2, 3]), dtype=torch.long)
+                return torch.tensor([random.choice([0, 2, 3])], dtype=torch.long)
         except Exception:
             return self._sample_random()
 
@@ -106,5 +106,7 @@ class BreakoutNeuralPolicy(BreakoutPolicy):
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         feat = obs.flatten(start_dim=-3)
         if self.training:
-            return self.actor.dist(feat).sample()
-        return self.actor(feat).argmax(dim=-1)
+            action = self.actor.dist(feat).sample()
+        else:
+            action = self.actor(feat).argmax(dim=-1)
+        return action.view(-1)

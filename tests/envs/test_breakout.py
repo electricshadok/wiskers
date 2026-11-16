@@ -113,7 +113,7 @@ def test_breakout_datamodule_setup_and_dataloader():
 def test_breakout_datamodule_custom_policy():
     class ConstantFirePolicy(BreakoutPolicy):
         def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-            return torch.tensor(1, dtype=torch.long)
+            return torch.tensor([1], dtype=torch.long)
 
     policy = ConstantFirePolicy()
     env = TorchGymEnv(make_breakout_env(), image_size=(64, 64))
@@ -177,7 +177,7 @@ def test_breakout_neural_policy():
     obs = torch.rand(image_size)
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
-    assert action.shape == ()
+    assert action.shape == (1,)
     assert action.dtype == torch.long
     assert int(action.item()) in {0, 1, 2, 3}
 

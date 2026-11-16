@@ -51,7 +51,7 @@ def test_random_policy_discrete():
     assert pol.action_dim == 1
     act = pol(torch.zeros(3, 64, 64))
     assert isinstance(act, torch.Tensor)
-    assert act.ndim == 0 and act.dtype == torch.int64
+    assert act.shape == (1,) and act.dtype == torch.int64
     assert 0 <= act.item() < 4
 
 
@@ -86,7 +86,7 @@ def test_env_policies_inherit_from_policy():
     dummy_obs = torch.zeros((3, 64, 64), dtype=torch.float32)
     b_act = breakout_pol(dummy_obs, step=0)
     assert isinstance(b_act, torch.Tensor)
-    assert b_act.ndim == 0 and b_act.dtype == torch.long
+    assert b_act.shape == (1,) and b_act.dtype == torch.long
     assert car_pol(dummy_obs, step=0).shape == (3,)
     assert adroit_pol(dummy_obs, step=0).shape == (28,)
     assert franka_pol(dummy_obs, step=0).shape == (9,)

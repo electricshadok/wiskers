@@ -23,6 +23,7 @@ def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: i
 # Base Buffer Tests
 # ---------------------------------------------------------------------------
 
+
 def test_buffer_base_class():
     # Buffer cannot be instantiated directly
     with pytest.raises(TypeError):
@@ -40,6 +41,7 @@ def test_buffer_base_class():
 # ---------------------------------------------------------------------------
 # ReplayBuffer Tests
 # ---------------------------------------------------------------------------
+
 
 def test_replay_buffer_reset():
     buf = ReplayBuffer(capacity_episodes=5)
@@ -309,6 +311,7 @@ def test_replay_buffer_slicing_and_repr():
 # RolloutBuffer Tests
 # ---------------------------------------------------------------------------
 
+
 def test_rollout_buffer_add_and_metrics():
     buf = RolloutBuffer()
     assert buf.is_empty
@@ -350,7 +353,7 @@ def test_collector_with_rollout_buffer():
 
     class DummyPolicy(DiscretePolicy):
         def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-            return torch.tensor(0, dtype=torch.long)
+            return torch.tensor([0], dtype=torch.long)
 
     class DummyEnv(gym.Env):
         def __init__(self):
@@ -382,4 +385,3 @@ def test_collector_with_rollout_buffer():
     assert total_steps == 10
     assert len(rollout_buf) == 2
     assert rollout_buf.num_episodes == 2
-

@@ -14,7 +14,7 @@ from wiskers.policies import ContinuousPolicy, DiscretePolicy
 class DummyPolicy(DiscretePolicy):
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
         assert isinstance(obs, torch.Tensor)
-        return torch.tensor(0, dtype=torch.long)
+        return torch.tensor([0], dtype=torch.long)
 
 
 class DummyContinuousPolicy(ContinuousPolicy):
@@ -85,7 +85,7 @@ def test_collector_collect_one_episode_no_args():
     assert torch.all(episode.all_obs("render")[0] == 0)
     assert torch.all(episode.all_obs("render")[8] == 8)
     assert episode.action.shape == (8, 1)
-    assert episode.action.dtype == torch.float32
+    assert episode.action.dtype == torch.int64
     assert episode.reward.shape == (8, 1)
     assert episode.done.shape == (8, 1)
     assert episode.terminated.shape == (8, 1)
@@ -98,6 +98,7 @@ def test_collector_collect_one_episode_no_args():
 
 def test_collector_terminated_and_truncated_distinction():
     """Verify that Gymnasium terminated and truncated flags flow accurately into Episode."""
+
     class TruncatedEnv(gym.Env):
         metadata = {}
 
@@ -143,6 +144,7 @@ def test_collector_max_steps_clamping():
 
 def test_collector_min_steps_filtering():
     """Episodes shorter than min_steps are discarded until num_episodes valid ones are collected."""
+
     class FlakyEnv(DummyDiscreteEnv):
         def __init__(self):
             super().__init__()
@@ -188,29 +190,42 @@ def test_collector_continuous_actions():
     assert buffer[0].action.dtype == torch.float32
 
 
+def test_collector_collect_one_episode_with_idx():
+    """collect_one_episode accepts an explicit episode_idx parameter."""
+    env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
+    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, seed=10, max_steps=20, verbose=False)
+    ep0 = collector.collect_one_episode(episode_idx=0)
+    ep5 = collector.collect_one_episode(episode_idx=5)
+    assert len(ep0) == 4
+    assert len(ep5) == 4
+
+
 def test_collector_hydra_instantiation():
     """Collector can be instantiated via Hydra configuration with _target_."""
-    cfg = OmegaConf.create({
-        "_target_": "wiskers.data.collector.Collector",
-        "env": {
-            "_target_": "wiskers.envs.TorchGymEnv",
+    cfg = OmegaConf.create(
+        {
+            "_target_": "wiskers.data.collector.Collector",
             "env": {
-                "_target_": "tests.data.test_collector.DummyDiscreteEnv",
-                "step_limit": 20,
+                "_target_": "wiskers.envs.TorchGymEnv",
+                "env": {
+                    "_target_": "tests.data.test_collector.DummyDiscreteEnv",
+                    "step_limit": 20,
+                },
             },
-        },
-        "policy": {
-            "_target_": "tests.data.test_collector.DummyPolicy",
-        },
-        "transform": {
-            "_target_": "wiskers.data.transforms.EpisodeToTensor",
-            "image_size": [3, 16, 16],
-            "obs_range": [0.0, 1.0],
-        },
-        "num_episodes": 25,
-        "min_steps": 50,
-        "max_steps": 500,
-    })
+            "policy": {
+                "_target_": "tests.data.test_collector.DummyPolicy",
+            },
+            "transform": {
+                "_target_": "wiskers.data.transforms.EpisodeToTensor",
+                "image_size": [3, 16, 16],
+                "obs_range": [0.0, 1.0],
+            },
+            "num_episodes": 25,
+            "min_steps": 50,
+            "max_steps": 500,
+        }
+    )
     collector = instantiate(cfg)
     assert isinstance(collector, Collector)
     assert isinstance(collector.env, TorchGymEnv)
@@ -226,7 +241,7 @@ def test_collector_with_transform():
     class InspectingPolicy(DiscretePolicy):
         def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
             seen_obs.append(obs)
-            return torch.tensor(0, dtype=torch.long)
+            return torch.tensor([0], dtype=torch.long)
 
     env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
@@ -265,4 +280,3 @@ def test_torch_gym_env_handles_negative_stride_observations():
     assert isinstance(next_obs, torch.Tensor)
     assert next_obs.dtype == torch.uint8
     assert next_obs.shape == (16, 16, 3)
-

@@ -18,9 +18,13 @@ class Policy(nn.Module):
 
     action_dim: int
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.eval()
+
     def reset(self) -> None:
         """Reset any internal recurrent or episodic state at the start of an episode."""
-        pass
+        self.eval()
 
     def forward(
         self,
@@ -28,21 +32,23 @@ class Policy(nn.Module):
         step: int = 0,
     ) -> torch.Tensor:
         """
-        Compute the environment action tensor for the current step.
+        Compute the action tensor for a single environment step.
 
         Args:
-            obs (torch.Tensor): Transformed observation tensor for the current step.
+            obs (torch.Tensor): Observation tensor for the current step
+                (e.g., shape ``(C, H, W)`` for images or ``(obs_dim,)`` for vectors).
             step (int): Current step index within the episode.
 
         Returns:
-            torch.Tensor: Action tensor (scalar ``int64`` tensor for discrete actions,
-            or ``float32`` tensor of shape ``(action_dim,)`` for continuous actions).
+            torch.Tensor: 1D action tensor of shape ``(action_dim,)``.
+                - Discrete: shape ``(1,)`` with dtype ``torch.int64`` (e.g., ``torch.tensor([2])``).
+                - Continuous: shape ``(action_dim,)`` with dtype ``torch.float32``.
         """
         raise NotImplementedError
 
 
 class DiscretePolicy(Policy):
-    """Policy for discrete action spaces returning a scalar ``int64`` ``torch.Tensor``."""
+    """Policy for discrete action spaces returning a 1D ``int64`` ``torch.Tensor`` of shape ``(1,)``."""
 
     action_dim: int = 1
 
@@ -67,7 +73,13 @@ class RandomPolicy(Policy):
             raise ValueError(f"Unsupported action space: {type(action_space)}")
 
     def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        """
+        Sample an action uniformly at random.
+
+        Returns:
+            torch.Tensor: Shape ``(action_dim,)`` (``(1,)`` for discrete, ``(D,)`` for continuous).
+        """
         sample = self.action_space.sample()
         if isinstance(self.action_space, gym.spaces.Discrete):
-            return torch.tensor(sample, dtype=torch.int64)
+            return torch.tensor([sample], dtype=torch.int64)
         return torch.from_numpy(sample).float()
