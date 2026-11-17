@@ -39,5 +39,6 @@ data_module:
     seed: ${seed}
     verbose: true
 
-  # DataLoader batch size
+  # DataLoader settings
   batch_size: 16
+  num_workers: 2

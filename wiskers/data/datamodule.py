@@ -111,6 +111,7 @@ class TrajectoryDataModule(L.LightningDataModule):
             self._dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=self.num_workers > 0,
         )
 
     # NOTE: no held-out split yet — validation/test reuse the replay buffer.

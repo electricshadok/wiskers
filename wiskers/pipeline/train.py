@@ -34,9 +34,7 @@ class TrainCLI:
         config_path: str = "./configs",
         overrides: list[str] | None = None,
     ) -> None:
-        self.config = load_config(
-            config_name, config_path=config_path, overrides=overrides
-        )
+        self.config = load_config(config_name, config_path=config_path, overrides=overrides)
         L.seed_everything(seed=self.config.seed, workers=True)
 
         self.model = instantiate(self.config.module, _convert_="all")
@@ -55,6 +53,7 @@ class TrainCLI:
         trainer_args = dict(self.config.trainer)
         trainer = L.Trainer(
             logger=False,
+            enable_checkpointing=False,
             callbacks=[],
             profiler=None,
             fast_dev_run=fast_dev_run,
@@ -115,9 +114,7 @@ class TrainPipelineCLI(TrainCLI):
 
         self.callbacks = [self.checkpoint_callback]
         if self.config.earlystopping:
-            self.callbacks.append(
-                EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5)
-            )
+            self.callbacks.append(EarlyStopping(monitor="val_loss", min_delta=0.0, patience=5))
 
     def _export_models(self) -> None:
         """Exports best model checkpoints to ONNX and safetensors if configured."""
@@ -172,9 +169,7 @@ class TrainPipelineCLI(TrainCLI):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Run training with Hydra configuration."
-    )
+    parser = argparse.ArgumentParser(description="Run training with Hydra configuration.")
     parser.add_argument(
         "--config-path",
         "-cp",
@@ -203,12 +198,8 @@ if __name__ == "__main__":
     args, extra_args = parser.parse_known_args()
 
     if args.fast_dev_run:
-        cmd = TrainCLI(
-            args.config_name, config_path=args.config_path, overrides=extra_args
-        )
+        cmd = TrainCLI(args.config_name, config_path=args.config_path, overrides=extra_args)
         cmd.run(fast_dev_run=True)
     else:
-        cmd = TrainPipelineCLI(
-            args.config_name, config_path=args.config_path, overrides=extra_args
-        )
+        cmd = TrainPipelineCLI(args.config_name, config_path=args.config_path, overrides=extra_args)
         cmd.run(quick_run=args.quick_run)
