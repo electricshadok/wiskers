@@ -48,8 +48,9 @@ class TorchGymEnv:
     def close(self) -> None:
         self.env.close()
 
-    def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        obs = torch.from_numpy(np.ascontiguousarray(raw_obs))
+    def _render_to_tensor(self, frame: np.ndarray) -> torch.Tensor:
+        """Convert a raw NumPy image frame to a uint8 tensor, resizing to image_size if set."""
+        obs = torch.from_numpy(np.ascontiguousarray(frame))
         if self.image_size is not None and obs.ndim >= 2 and obs.shape[:2] != self.image_size:
             if obs.ndim == 3:
                 t = obs.permute(2, 0, 1).unsqueeze(0).float()
@@ -59,7 +60,11 @@ class TorchGymEnv:
                 t = obs.unsqueeze(0).unsqueeze(0).float()
                 resized = F.interpolate(t, size=self.image_size, mode="area")
                 obs = resized.squeeze(0).squeeze(0).to(torch.uint8)
-        return TensorDict({"render": obs}, batch_size=[])
+        return obs
+
+    def _process_obs(self, raw_obs: Any) -> TensorDict:
+        """Convert a raw Gymnasium observation into a TensorDict with batch_size=[]."""
+        return TensorDict({"render": self._render_to_tensor(raw_obs)}, batch_size=[])
 
     def reset(
         self,

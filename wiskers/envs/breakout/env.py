@@ -36,7 +36,11 @@ class BreakoutEnv(TorchGymEnv):
         super().__init__(env, image_size=image_size)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        obs_td = super()._process_obs(raw_obs)
         ram = self.env.unwrapped.ale.getRAM()
-        obs_td["ram"] = torch.from_numpy(np.ascontiguousarray(ram, dtype=np.uint8))
-        return obs_td
+        return TensorDict(
+            {
+                "render": self._render_to_tensor(raw_obs),
+                "ram": torch.from_numpy(np.ascontiguousarray(ram, dtype=np.uint8)),
+            },
+            batch_size=[],
+        )

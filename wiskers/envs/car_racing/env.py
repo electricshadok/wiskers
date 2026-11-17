@@ -78,28 +78,32 @@ class CarRacingEnv(TorchGymEnv):
         super().__init__(env, image_size=image_size)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        obs_td = super()._process_obs(raw_obs)
         car = self.env.car
         assert car is not None
         hull = car.hull
-        obs_td["state"] = TensorDict(
+        return TensorDict(
             {
-                "car": torch.tensor(
-                    [
-                        hull.position[0],
-                        hull.position[1],
-                        hull.angle,
-                        hull.linearVelocity[0],
-                        hull.linearVelocity[1],
-                        hull.angularVelocity,
-                    ],
-                    dtype=torch.float32,
-                ),
-                "wheels": torch.tensor(
-                    [*(w.omega for w in car.wheels), car.wheels[0].joint.angle],
-                    dtype=torch.float32,
+                "render": self._render_to_tensor(raw_obs),
+                "state": TensorDict(
+                    {
+                        "car": torch.tensor(
+                            [
+                                hull.position[0],
+                                hull.position[1],
+                                hull.angle,
+                                hull.linearVelocity[0],
+                                hull.linearVelocity[1],
+                                hull.angularVelocity,
+                            ],
+                            dtype=torch.float32,
+                        ),
+                        "wheels": torch.tensor(
+                            [*(w.omega for w in car.wheels), car.wheels[0].joint.angle],
+                            dtype=torch.float32,
+                        ),
+                    },
+                    batch_size=[],
                 ),
             },
             batch_size=[],
         )
-        return obs_td

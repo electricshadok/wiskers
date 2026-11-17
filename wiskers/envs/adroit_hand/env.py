@@ -76,14 +76,18 @@ class AdroitHandEnv(TorchGymEnv):
         frame = self.env.render()
         if frame is None:
             raise RuntimeError("AdroitHand render() returned None. Ensure render_mode='rgb_array'.")
-        obs_td = super()._process_obs(np.asarray(frame, dtype=np.uint8))
         state = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
         n = self._hand_dim
-        obs_td["state"] = TensorDict(
+        return TensorDict(
             {
-                "hand": state[:n],
-                "obj": state[n:],
+                "render": self._render_to_tensor(np.asarray(frame, dtype=np.uint8)),
+                "state": TensorDict(
+                    {
+                        "hand": state[:n],
+                        "obj": state[n:],
+                    },
+                    batch_size=[],
+                ),
             },
             batch_size=[],
         )
-        return obs_td

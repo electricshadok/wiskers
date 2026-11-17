@@ -81,15 +81,19 @@ class FrankaKitchenEnv(TorchGymEnv):
         frame = self.env.render()
         if frame is None:
             raise RuntimeError("FrankaKitchen render() returned None. Ensure render_mode='rgb_array'.")
-        obs_td = super()._process_obs(np.asarray(frame, dtype=np.uint8))
         state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
-        obs_td["state"] = TensorDict(
+        return TensorDict(
             {
-                "robot_qpos": state[0:9],
-                "robot_qvel": state[9:18],
-                "obj_qpos": state[18:39],
-                "obj_qvel": state[39:59],
+                "render": self._render_to_tensor(np.asarray(frame, dtype=np.uint8)),
+                "state": TensorDict(
+                    {
+                        "robot_qpos": state[0:9],
+                        "robot_qvel": state[9:18],
+                        "obj_qpos": state[18:39],
+                        "obj_qvel": state[39:59],
+                    },
+                    batch_size=[],
+                ),
             },
             batch_size=[],
         )
-        return obs_td
