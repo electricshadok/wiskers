@@ -63,6 +63,8 @@ def test_replay_buffer_add_and_eviction():
 
     buf.add(ep1)
     assert not buf.is_empty
+    assert buf.device == torch.device("cpu")
+    assert buf[0].device == torch.device("cpu")
     assert buf.num_episodes == 1
     assert buf.num_steps == 10
 
@@ -72,10 +74,12 @@ def test_replay_buffer_add_and_eviction():
 
     # Eviction: adding ep3 should evict ep1
     buf.add(ep3)
+    assert buf.device == torch.device("cpu")
     assert buf.num_episodes == 2
     assert buf.num_steps == 50
-    assert buf[0] is ep2
-    assert buf[1] is ep3
+    assert buf[0].device == torch.device("cpu")
+    assert torch.equal(buf[0].action, ep2.action)
+    assert torch.equal(buf[1].action, ep3.action)
 
 
 def test_replay_buffer_empty_episode_ignored():
@@ -322,6 +326,8 @@ def test_rollout_buffer_add_and_metrics():
 
     buf.add(ep1)
     assert not buf.is_empty
+    assert buf.device == torch.device("cpu")
+    assert buf[0].device == torch.device("cpu")
     assert buf.num_episodes == 1
     assert buf.num_steps == 5
 

@@ -13,6 +13,7 @@ data_module:
   replay_buffer:
     _target_: wiskers.data.buffer.ReplayBuffer
     capacity_episodes: 1000  # Maximum number of complete episodes to keep in memory
+    device: cpu
 
   # Sampler that extracts sequence chunks from episodes for training batches
   sampler:
@@ -36,7 +37,6 @@ data_module:
     min_steps: 50
     max_steps: 500
     seed: ${seed}
-    device: cpu
     verbose: true
 
   # DataLoader batch size

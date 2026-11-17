@@ -34,7 +34,6 @@ class Collector:
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
         max_steps (int): Maximum step cutoff per episode (clamped).
         seed (int): Base RNG seed for environment resets (must be an int for reproducibility).
-        device (torch.device | str): Target device for collected Episode tensors. Defaults to ``"cpu"``.
         verbose (bool): Whether to log collection progress.
     """
 
@@ -47,7 +46,6 @@ class Collector:
         min_steps: int = 0,
         max_steps: int = 500,
         seed: int = 0,
-        device: torch.device | str = "cpu",
         verbose: bool = True,
     ) -> None:
         self.env = env
@@ -62,7 +60,6 @@ class Collector:
         self.min_steps = min_steps
         self.max_steps = max_steps
         self.seed = seed
-        self.device = torch.device(device)
         self.verbose = verbose
         self._episode_idx = 0
 
@@ -126,7 +123,7 @@ class Collector:
             reward=torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1),
             terminated=torch.tensor(terminated_list, dtype=torch.bool).unsqueeze(-1),
             truncated=torch.tensor(truncated_list, dtype=torch.bool).unsqueeze(-1),
-        ).to(self.device)
+        )
 
     def collect(
         self,

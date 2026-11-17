@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from collections import deque
 from typing import Iterator, Sequence
 
+import torch
+
 from wiskers.data.episode import Episode
 
 
@@ -16,22 +18,27 @@ class Buffer(ABC):
     Subclasses manage storage (e.g. deque with fixed capacity for ReplayBuffer,
     or a list for RolloutBuffer). Episode indexing, iteration, and metrics
     are provided by the base class.
+
+    Args:
+        episodes (list[Episode] | deque[Episode]): Underlying episode container.
+        device (torch.device | str): Device on which stored episodes are kept. Defaults to ``"cpu"``.
     """
 
     def __init__(
         self,
         episodes: list[Episode] | deque[Episode],
+        device: torch.device | str = "cpu",
     ) -> None:
         self._episodes = episodes
+        self.device = torch.device(device)
 
     def add(self, episode: Episode) -> None:
-        """Store an episode in the buffer. Empty episodes are ignored."""
+        """Store an episode in the buffer on self.device. Empty episodes are ignored."""
         if len(episode) > 0:
-            self._episodes.append(episode)
+            self._episodes.append(episode.to(self.device))
 
     @abstractmethod
-    def __repr__(self) -> str:
-        ...
+    def __repr__(self) -> str: ...
 
     def reset(self) -> None:
         """Clear all stored episodes in the buffer."""
@@ -78,10 +85,15 @@ class ReplayBuffer(Buffer):
 
     Args:
         capacity_episodes (int): Max number of complete episodes to store before evicting.
+        device (torch.device | str): Device on which stored episodes are kept. Defaults to ``"cpu"``.
     """
 
-    def __init__(self, capacity_episodes: int) -> None:
-        super().__init__(deque(maxlen=capacity_episodes))
+    def __init__(
+        self,
+        capacity_episodes: int,
+        device: torch.device | str = "cpu",
+    ) -> None:
+        super().__init__(deque(maxlen=capacity_episodes), device=device)
         self.capacity_episodes = capacity_episodes
 
     def __repr__(self) -> str:
@@ -94,10 +106,16 @@ class RolloutBuffer(Buffer):
 
     Stores episodes in a list. Typically cleared via reset() after processing
     each rollout batch or epoch.
+
+    Args:
+        device (torch.device | str): Device on which stored episodes are kept. Defaults to ``"cpu"``.
     """
 
-    def __init__(self) -> None:
-        super().__init__([])
+    def __init__(
+        self,
+        device: torch.device | str = "cpu",
+    ) -> None:
+        super().__init__([], device=device)
 
     def __repr__(self) -> str:
         return f"RolloutBuffer(episodes={self.num_episodes}, total_steps={self.num_steps})"
