@@ -1,5 +1,6 @@
 import pytest
 import torch
+from tensordict import TensorDict
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
@@ -13,6 +14,40 @@ from wiskers.envs.car_racing import (
     CarRacingPolicy,
     CarRacingRandomPolicy,
 )
+
+
+def test_car_racing_env_observation_shape_and_state():
+    env = CarRacingEnv()
+    try:
+        obs, _ = env.reset(seed=42)
+        assert isinstance(obs, TensorDict)
+        assert obs.batch_size == torch.Size([])
+        assert obs["render"].shape == (96, 96, 3)
+        assert obs["render"].dtype == torch.uint8
+        assert isinstance(obs["state"], TensorDict)
+        assert obs["state"].batch_size == torch.Size([])
+        assert obs["state", "car"].shape == (6,)
+        assert obs["state", "car"].dtype == torch.float32
+        assert obs["state", "wheels"].shape == (5,)
+        assert obs["state", "wheels"].dtype == torch.float32
+
+        action = env.sample_action()
+        assert action.shape == (3,)
+        assert action.dtype == torch.float32
+        next_obs, reward, terminated, truncated, _ = env.step(action)
+        assert isinstance(next_obs, TensorDict)
+        assert next_obs.batch_size == torch.Size([])
+        assert next_obs["render"].shape == (96, 96, 3)
+        assert next_obs["render"].dtype == torch.uint8
+        assert next_obs["state", "car"].shape == (6,)
+        assert next_obs["state", "car"].dtype == torch.float32
+        assert next_obs["state", "wheels"].shape == (5,)
+        assert next_obs["state", "wheels"].dtype == torch.float32
+        assert isinstance(reward, float)
+        assert isinstance(terminated, bool)
+        assert isinstance(truncated, bool)
+    finally:
+        env.close()
 
 
 def test_car_racing_datamodule_init():
@@ -93,6 +128,10 @@ def test_car_racing_datamodule_setup_and_dataloader():
     dm.setup()
     assert not dm.replay_buffer.is_empty
     assert dm.replay_buffer.num_episodes == 1
+    assert dm.replay_buffer[0].obs["state", "car"].shape[1:] == (6,)
+    assert dm.replay_buffer[0].obs["state", "car"].dtype == torch.float32
+    assert dm.replay_buffer[0].obs["state", "wheels"].shape[1:] == (5,)
+    assert dm.replay_buffer[0].obs["state", "wheels"].dtype == torch.float32
 
     loader = dm.train_dataloader()
     batch = next(iter(loader))

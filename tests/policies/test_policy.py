@@ -8,7 +8,7 @@ from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
 from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPolicy
-from wiskers.envs.franka.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
+from wiskers.envs.franka_kitchen.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
 from wiskers.policies import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
 
 

@@ -1,5 +1,5 @@
-from wiskers.envs.franka.env import AVAILABLE_TASKS, FrankaKitchenEnv
-from wiskers.envs.franka.policies import (
+from wiskers.envs.franka_kitchen.env import AVAILABLE_TASKS, FrankaKitchenEnv
+from wiskers.envs.franka_kitchen.policies import (
     FrankaKitchenHeuristicPolicy,
     FrankaKitchenNeuralPolicy,
     FrankaKitchenPolicy,

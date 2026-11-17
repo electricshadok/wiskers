@@ -2,7 +2,10 @@
 CarRacing-v3 environment.
 """
 
+import numpy as np
+import torch
 from gymnasium.envs.box2d.car_racing import CarRacing
+from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
 
@@ -47,7 +50,18 @@ class NoZoomCarRacing(CarRacing):
 
 class CarRacingEnv(TorchGymEnv):
     """
-    CarRacing-v3 environment (with locked gameplay zoom) emitting PyTorch uint8 RGB observations.
+    CarRacing-v3 environment (with locked gameplay zoom) emitting multi-modal TensorDict observations.
+
+    Observation keys (batch_size=[]):
+        - ``"render"`` (uint8[H, W, 3]): RGB camera frame.
+        - ``"state"`` (TensorDict, batch_size=[]):
+            - ``"car"`` (float32[6]): ``[x, y, angle, vx, vy, angular_velocity]``
+              from the Box2D chassis body.
+            - ``"wheels"`` (float32[5]): ``[w0_omega, w1_omega, w2_omega, w3_omega, steering_angle]``
+              (4 wheel ABS angular speeds + front wheel steering joint angle).
+
+    Reference:
+        https://gymnasium.farama.org/environments/box2d/car_racing/
 
     Args:
         image_size: Target ``(height, width)`` to resize frames to. If ``None``,
@@ -62,3 +76,30 @@ class CarRacingEnv(TorchGymEnv):
     ) -> None:
         env = NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)
         super().__init__(env, image_size=image_size)
+
+    def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
+        obs_td = super()._process_obs(raw_obs)
+        car = self.env.car
+        assert car is not None
+        hull = car.hull
+        obs_td["state"] = TensorDict(
+            {
+                "car": torch.tensor(
+                    [
+                        hull.position[0],
+                        hull.position[1],
+                        hull.angle,
+                        hull.linearVelocity[0],
+                        hull.linearVelocity[1],
+                        hull.angularVelocity,
+                    ],
+                    dtype=torch.float32,
+                ),
+                "wheels": torch.tensor(
+                    [*(w.omega for w in car.wheels), car.wheels[0].joint.angle],
+                    dtype=torch.float32,
+                ),
+            },
+            batch_size=[],
+        )
+        return obs_td

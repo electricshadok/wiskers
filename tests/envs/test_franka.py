@@ -7,7 +7,7 @@ from tensordict import TensorDict
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs.franka import (
+from wiskers.envs.franka_kitchen import (
     AVAILABLE_TASKS,
     FrankaKitchenEnv,
     FrankaKitchenHeuristicPolicy,
