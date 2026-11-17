@@ -81,10 +81,10 @@ def test_collector_collect_one_episode_no_args():
     assert episode.is_valid()
     assert episode.obs["render"].dtype == torch.uint8
     assert episode.obs["render"].shape == (8, 16, 16, 3)
-    assert episode.all_obs("render").shape == (9, 16, 16, 3)
+    assert episode["next", "obs", "render"].shape == (8, 16, 16, 3)
     # Initial observation o_0 is zeros, terminal observation o_8 is 8s
-    assert torch.all(episode.all_obs("render")[0] == 0)
-    assert torch.all(episode.all_obs("render")[8] == 8)
+    assert torch.all(episode.obs["render"][0] == 0)
+    assert torch.all(episode["next", "obs", "render"][-1] == 8)
     assert episode.action.shape == (8, 1)
     assert episode.action.dtype == torch.int64
     assert episode.reward.shape == (8, 1)
@@ -253,10 +253,10 @@ def test_collector_with_transform():
     assert seen_obs[0].shape == (3, 8, 8)
     assert seen_obs[0].dtype == torch.float32
     assert torch.allclose(seen_obs[0], torch.full((3, 8, 8), -1.0))
-    # Episode stores raw uint8: transitions [T, H, W, C], all_obs [T+1, H, W, C]
+    # Episode stores raw uint8 transitions [T, H, W, C]
     assert ep.obs["render"].dtype == torch.uint8
     assert ep.obs["render"].shape == (4, 16, 16, 3)
-    assert ep.all_obs("render").shape == (5, 16, 16, 3)
+    assert ep["next", "obs", "render"].shape == (4, 16, 16, 3)
 
 
 def test_torch_gym_env_handles_negative_stride_observations():

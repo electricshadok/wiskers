@@ -40,6 +40,16 @@ def test_franka_kitchen_env_observation_shape():
     assert obs.batch_size == torch.Size([])
     assert obs["render"].shape == (480, 480, 3)
     assert obs["render"].dtype == torch.uint8
+    assert isinstance(obs["state"], TensorDict)
+    assert obs["state"].batch_size == torch.Size([])
+    assert obs["state", "robot_qpos"].shape == (9,)
+    assert obs["state", "robot_qpos"].dtype == torch.float32
+    assert obs["state", "robot_qvel"].shape == (9,)
+    assert obs["state", "robot_qvel"].dtype == torch.float32
+    assert obs["state", "obj_qpos"].shape == (21,)
+    assert obs["state", "obj_qpos"].dtype == torch.float32
+    assert obs["state", "obj_qvel"].shape == (20,)
+    assert obs["state", "obj_qvel"].dtype == torch.float32
 
     action = env.sample_action()
     assert action.shape == (9,)
@@ -48,10 +58,44 @@ def test_franka_kitchen_env_observation_shape():
     assert next_obs.batch_size == torch.Size([])
     assert next_obs["render"].shape == (480, 480, 3)
     assert next_obs["render"].dtype == torch.uint8
+    assert isinstance(next_obs["state"], TensorDict)
+    assert next_obs["state"].batch_size == torch.Size([])
+    assert next_obs["state", "robot_qpos"].shape == (9,)
+    assert next_obs["state", "robot_qpos"].dtype == torch.float32
+    assert next_obs["state", "robot_qvel"].shape == (9,)
+    assert next_obs["state", "robot_qvel"].dtype == torch.float32
+    assert next_obs["state", "obj_qpos"].shape == (21,)
+    assert next_obs["state", "obj_qpos"].dtype == torch.float32
+    assert next_obs["state", "obj_qvel"].shape == (20,)
+    assert next_obs["state", "obj_qvel"].dtype == torch.float32
     assert isinstance(reward, float)
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)
     env.close()
+
+
+def test_franka_kitchen_state_dimensions_match_farama_spec(franka_env):
+    assert franka_env.env.observation_space["observation"].shape == (59,)
+
+    raw_obs, _ = franka_env.env.reset(seed=42)
+    expected_raw = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
+
+    obs, _ = franka_env.reset(seed=42)
+    expected_dims = {
+        "robot_qpos": 9,
+        "robot_qvel": 9,
+        "obj_qpos": 21,
+        "obj_qvel": 20,
+    }
+    state_td = obs["state"]
+    assert list(state_td.keys()) == list(expected_dims.keys())
+    for key, dim in expected_dims.items():
+        assert state_td[key].shape == (dim,)
+        assert state_td[key].dtype == torch.float32
+
+    assert sum(state_td[key].shape[-1] for key in expected_dims) == 59
+    reconstructed = torch.cat([state_td[key] for key in expected_dims], dim=-1)
+    assert torch.equal(reconstructed, expected_raw)
 
 
 def test_franka_kitchen_env_multiple_tasks():
@@ -120,8 +164,15 @@ def test_franka_kitchen_collector_integration(franka_env):
     assert buffer.num_episodes == 1
     assert buffer.num_steps == 10
     assert buffer[0].obs["render"].shape == (10, 64, 64, 3)
-    assert buffer[0].all_obs("render").shape == (11, 64, 64, 3)
     assert buffer[0].obs["render"].dtype == torch.uint8
+    assert buffer[0].obs["state", "robot_qpos"].shape == (10, 9)
+    assert buffer[0].obs["state", "robot_qpos"].dtype == torch.float32
+    assert buffer[0].obs["state", "robot_qvel"].shape == (10, 9)
+    assert buffer[0].obs["state", "robot_qvel"].dtype == torch.float32
+    assert buffer[0].obs["state", "obj_qpos"].shape == (10, 21)
+    assert buffer[0].obs["state", "obj_qpos"].dtype == torch.float32
+    assert buffer[0].obs["state", "obj_qvel"].shape == (10, 20)
+    assert buffer[0].obs["state", "obj_qvel"].dtype == torch.float32
     assert buffer[0].action.shape == (10, 9)
     assert buffer[0].action.dtype == torch.float32
 

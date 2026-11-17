@@ -36,7 +36,7 @@ class TorchGymEnv(gym.Wrapper):
         obs_space = getattr(self.env, "observation_space", None)
         if self.image_size is not None and obs_space is not None and hasattr(obs_space, "shape"):
             old_shape = obs_space.shape
-            if len(old_shape) >= 2:
+            if old_shape is not None and len(old_shape) >= 2:
                 new_shape = self.image_size + old_shape[2:]
                 self.observation_space = gym.spaces.Box(low=0, high=255, shape=new_shape, dtype=np.uint8)
 

@@ -141,8 +141,11 @@ class EpisodeToTensor(EpisodeTransform):
                 - ``"terminated"``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
                 - ``"truncated"``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
         """
+        obs_curr = episode.obs[self.obs_key]
+        obs_next = episode["next", "obs", self.obs_key]
+        obs_seq = obs_curr if len(episode) == 0 else torch.cat([obs_curr[:1], obs_next], dim=0)
         return {
-            "obs": self.transform_obs(episode.all_obs(self.obs_key)),
+            "obs": self.transform_obs(obs_seq),
             "action": episode.action,
             "reward": episode.reward,
             "done": episode.done.float(),

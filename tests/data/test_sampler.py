@@ -40,7 +40,7 @@ def test_uniform_chunk_sampler():
     for chunk in chunks:
         assert len(chunk) == 10
         assert chunk.obs.shape[0] == 10
-        assert chunk.all_obs().shape[0] == 11
+        assert chunk["next", "obs"].shape[0] == 10
         assert chunk.action.shape[0] == 10
 
 

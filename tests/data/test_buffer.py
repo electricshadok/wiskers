@@ -218,15 +218,14 @@ def test_episode_validation_and_slice():
     assert len(chunk) == 5
     assert chunk.is_valid()
     assert chunk.obs["render"].shape == (5, 4, 4, 3)
-    assert chunk.all_obs("render").shape == (6, 4, 4, 3)
-    assert chunk.all_obs().batch_size == torch.Size([6])
+    assert chunk["next", "obs", "render"].shape == (5, 4, 4, 3)
     assert chunk.action.shape == (5, 2)
     assert chunk.reward.shape == (5, 1)
     assert chunk.done.shape == (5, 1)
     assert chunk.terminated.shape == (5, 1)
     assert chunk.truncated.shape == (5, 1)
     assert torch.equal(chunk.obs["render"], ep.obs["render"][3:8])
-    assert torch.equal(chunk.all_obs("render"), ep.all_obs("render")[3:9])
+    assert torch.equal(chunk["next", "obs", "render"], ep["next", "obs", "render"][3:8])
     assert torch.equal(chunk.action, ep.action[3:8])
 
     # Multimodal observation support (e.g. state + render)
@@ -245,8 +244,8 @@ def test_episode_validation_and_slice():
     )
     assert multi_modal_ep.is_valid()
     assert multi_modal_ep.reward.shape == (10, 1)
-    assert multi_modal_ep.all_obs("state").shape == (11, 8)
-    assert multi_modal_ep.all_obs("render").shape == (11, 4, 4, 3)
+    assert multi_modal_ep.obs["state"].shape == (10, 8)
+    assert multi_modal_ep.obs["render"].shape == (10, 4, 4, 3)
 
     # obs must have T + 1 steps with explicit batch_size; Episode rejects the mismatch
     with pytest.raises(ValueError, match="obs TensorDict must have explicit batch_size"):

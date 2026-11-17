@@ -8,6 +8,7 @@ import gymnasium as gym
 import gymnasium_robotics
 import mujoco
 import numpy as np
+import torch
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
@@ -30,7 +31,26 @@ AVAILABLE_TASKS: tuple[str, ...] = (
 
 class FrankaKitchenEnv(TorchGymEnv):
     """
-    FrankaKitchen-v1 environment emitting PyTorch uint8 RGB camera observations.
+    FrankaKitchen-v1 environment emitting multi-modal TensorDict observations.
+
+    Observation keys (batch_size=[]):
+        - ``"render"`` (uint8[H, W, 3]): RGB camera frame.
+        - ``"state"`` (TensorDict, batch_size=[]):
+            - ``"robot_qpos"`` (float32[9]): ``observation[0:9]`` — 7 Panda arm joint
+              angles (rad) + 2 gripper finger translations (m).
+            - ``"robot_qvel"`` (float32[9]): ``observation[9:18]`` — 7 Panda arm joint
+              angular velocities (rad/s) + 2 gripper finger linear velocities (m/s).
+            - ``"obj_qpos"`` (float32[21]): ``observation[18:39]`` — kitchen object
+              positions/orientations (4 burners [8], light switch [2], slide cabinet [1],
+              2 hinge cabinets [2], microwave door [1], kettle (x, y, z) [3] +
+              quaternion (qx, qy, qz, qw) [4]).
+            - ``"obj_qvel"`` (float32[20]): ``observation[39:59]`` — kitchen object
+              velocities (4 burners [8], light switch [2], slide cabinet [1],
+              2 hinge cabinets [2], microwave door [1], kettle linear [3] + angular [3]
+              velocity).
+
+    Reference:
+        https://robotics.farama.org/envs/franka_kitchen/franka_kitchen/
 
     Args:
         image_size: Target ``(height, width)`` to resize frames to. If ``None``,
@@ -63,8 +83,19 @@ class FrankaKitchenEnv(TorchGymEnv):
         )
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(h, w, 3), dtype=np.uint8)
 
-    def _process_obs(self, raw_obs: Any) -> TensorDict:
+    def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
         frame = self.env.render()
         if frame is None:
             raise RuntimeError("FrankaKitchen render() returned None. Ensure render_mode='rgb_array'.")
-        return super()._process_obs(np.asarray(frame, dtype=np.uint8))
+        obs_td = super()._process_obs(np.asarray(frame, dtype=np.uint8))
+        state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
+        obs_td["state"] = TensorDict(
+            {
+                "robot_qpos": state[0:9],
+                "robot_qvel": state[9:18],
+                "obj_qpos": state[18:39],
+                "obj_qvel": state[39:59],
+            },
+            batch_size=[],
+        )
+        return obs_td

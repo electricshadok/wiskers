@@ -66,7 +66,7 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
 
         episode = episodes[ep_idx]
         obs_seq, actions_seq, rewards_seq, dones_seq = (
-            episode.all_obs(obs_key),
+            torch.cat([episode.obs[obs_key][:1], episode["next", "obs", obs_key]], dim=0),
             episode.action,
             episode.reward,
             episode.done,
