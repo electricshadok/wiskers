@@ -2,12 +2,11 @@
 AdroitHand-v1 environment with visual camera observations.
 """
 
-from typing import Any
-
 import gymnasium as gym
 import gymnasium_robotics
 import mujoco
 import numpy as np
+import torch
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
@@ -24,10 +23,28 @@ AVAILABLE_TASKS: dict[str, str] = {
     "relocate": "AdroitHandRelocate-v1",
 }
 
+HAND_DIM: dict[str, int] = {
+    "door": 27,
+    "hammer": 26,
+    "pen": 24,
+    "relocate": 30,
+}
+
 
 class AdroitHandEnv(TorchGymEnv):
     """
-    AdroitHand-v1 environment emitting PyTorch uint8 RGB camera observations.
+    AdroitHand-v1 environment emitting multi-modal TensorDict observations.
+
+    Observation keys (batch_size=[]):
+        - ``"render"`` (uint8[H, W, 3]): RGB camera frame.
+        - ``"state"`` (TensorDict, batch_size=[]):
+            - ``"hand"`` (float32[N]): Arm, wrist, and finger joint angles
+              (``N=27`` door, ``26`` hammer, ``24`` pen, ``30`` relocate).
+            - ``"obj"`` (float32[M]): Object/target state and velocities
+              (``M=12`` door, ``20`` hammer, ``21`` pen, ``9`` relocate).
+
+    Reference:
+        https://robotics.farama.org/envs/adroit_hand/
 
     Args:
         task: Manipulation task ('door', 'hammer', 'pen', 'relocate'). Defaults to 'door'.
@@ -46,6 +63,9 @@ class AdroitHandEnv(TorchGymEnv):
         if task_key not in AVAILABLE_TASKS:
             raise ValueError(f"Unknown task '{task}'. Available tasks: {list(AVAILABLE_TASKS.keys())}")
 
+        self.task = task_key
+        self._hand_dim = HAND_DIM[task_key]
+
         env = gym.make(
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
@@ -58,8 +78,18 @@ class AdroitHandEnv(TorchGymEnv):
         )
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(h, w, 3), dtype=np.uint8)
 
-    def _process_obs(self, raw_obs: Any) -> TensorDict:
+    def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         frame = self.env.render()
         if frame is None:
             raise RuntimeError("AdroitHand render() returned None. Ensure render_mode='rgb_array'.")
-        return super()._process_obs(np.asarray(frame, dtype=np.uint8))
+        obs_td = super()._process_obs(np.asarray(frame, dtype=np.uint8))
+        state = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
+        n = self._hand_dim
+        obs_td["state"] = TensorDict(
+            {
+                "hand": state[:n],
+                "obj": state[n:],
+            },
+            batch_size=[],
+        )
+        return obs_td

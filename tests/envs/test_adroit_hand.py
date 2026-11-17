@@ -41,6 +41,12 @@ def test_adroit_hand_env_observation_shape():
     assert obs.batch_size == torch.Size([])
     assert obs["render"].shape == (480, 480, 3)
     assert obs["render"].dtype == torch.uint8
+    assert isinstance(obs["state"], TensorDict)
+    assert obs["state"].batch_size == torch.Size([])
+    assert obs["state", "hand"].shape == (27,)
+    assert obs["state", "hand"].dtype == torch.float32
+    assert obs["state", "obj"].shape == (12,)
+    assert obs["state", "obj"].dtype == torch.float32
 
     action = env.sample_action()
     assert action.shape == (28,)
@@ -49,10 +55,53 @@ def test_adroit_hand_env_observation_shape():
     assert next_obs.batch_size == torch.Size([])
     assert next_obs["render"].shape == (480, 480, 3)
     assert next_obs["render"].dtype == torch.uint8
+    assert isinstance(next_obs["state"], TensorDict)
+    assert next_obs["state"].batch_size == torch.Size([])
+    assert next_obs["state", "hand"].shape == (27,)
+    assert next_obs["state", "hand"].dtype == torch.float32
+    assert next_obs["state", "obj"].shape == (12,)
+    assert next_obs["state", "obj"].dtype == torch.float32
     assert isinstance(reward, float)
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)
     env.close()
+
+
+@pytest.mark.parametrize(
+    "task,raw_dim,hand_dim,obj_dim,action_dim",
+    [
+        ("door", 39, 27, 12, 28),
+        ("hammer", 46, 26, 20, 26),
+        ("pen", 45, 24, 21, 24),
+        ("relocate", 39, 30, 9, 30),
+    ],
+)
+def test_adroit_hand_state_dimensions_match_farama_spec(
+    task: str,
+    raw_dim: int,
+    hand_dim: int,
+    obj_dim: int,
+    action_dim: int,
+):
+    env = AdroitHandEnv(task=task, image_size=(64, 64))
+    try:
+        assert env.env.observation_space.shape == (raw_dim,)
+
+        raw_obs, _ = env.env.reset(seed=42)
+        expected_raw = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
+
+        obs, _ = env.reset(seed=42)
+        state_td = obs["state"]
+        assert list(state_td.keys()) == ["hand", "obj"]
+        assert state_td["hand"].shape == (hand_dim,)
+        assert state_td["hand"].dtype == torch.float32
+        assert state_td["obj"].shape == (obj_dim,)
+        assert state_td["obj"].dtype == torch.float32
+        assert hand_dim + obj_dim == raw_dim
+        assert torch.equal(torch.cat([state_td["hand"], state_td["obj"]], dim=-1), expected_raw)
+        assert env.sample_action().shape == (action_dim,)
+    finally:
+        env.close()
 
 
 def test_adroit_hand_env_invalid_task():
@@ -111,6 +160,10 @@ def test_adroit_hand_collector_integration(adroit_env):
     assert buffer.num_steps == 10
     assert buffer[0].obs["render"].shape == (10, 64, 64, 3)
     assert buffer[0].obs["render"].dtype == torch.uint8
+    assert buffer[0].obs["state", "hand"].shape == (10, 27)
+    assert buffer[0].obs["state", "hand"].dtype == torch.float32
+    assert buffer[0].obs["state", "obj"].shape == (10, 12)
+    assert buffer[0].obs["state", "obj"].dtype == torch.float32
     assert buffer[0].action.shape == (10, 28)
     assert buffer[0].action.dtype == torch.float32
 

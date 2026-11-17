@@ -54,6 +54,7 @@ def apply_ui_overrides(config: Any) -> Any:
     config.data_module.collector.min_steps = MIN_STEPS
     config.data_module.collector.env.image_size = IMAGE_SIZE
     config.data_module.sampler.num_steps = SAMPLER_NUM_STEPS
+    config.data_module.num_workers = 0
     return config
 
 
