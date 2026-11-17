@@ -1,5 +1,6 @@
 import pytest
 import torch
+from tensordict import TensorDict
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
@@ -13,6 +14,38 @@ from wiskers.envs.breakout import (
     BreakoutPolicy,
     BreakoutRandomPolicy,
 )
+
+
+def test_breakout_env_observation_shape_and_ram():
+    env = BreakoutEnv()
+    try:
+        assert env.env.unwrapped.ale.getRAMSize() == 128
+
+        obs, _ = env.reset(seed=42)
+        assert isinstance(obs, TensorDict)
+        assert obs.batch_size == torch.Size([])
+        assert obs["render"].shape == (210, 160, 3)
+        assert obs["render"].dtype == torch.uint8
+        assert obs["ram"].shape == (128,)
+        assert obs["ram"].dtype == torch.uint8
+        assert torch.equal(obs["ram"], torch.from_numpy(env.env.unwrapped.ale.getRAM()))
+
+        action = env.sample_action()
+        assert action.shape == (1,)
+        assert action.dtype == torch.int64
+        next_obs, reward, terminated, truncated, _ = env.step(action)
+        assert isinstance(next_obs, TensorDict)
+        assert next_obs.batch_size == torch.Size([])
+        assert next_obs["render"].shape == (210, 160, 3)
+        assert next_obs["render"].dtype == torch.uint8
+        assert next_obs["ram"].shape == (128,)
+        assert next_obs["ram"].dtype == torch.uint8
+        assert torch.equal(next_obs["ram"], torch.from_numpy(env.env.unwrapped.ale.getRAM()))
+        assert isinstance(reward, float)
+        assert isinstance(terminated, bool)
+        assert isinstance(truncated, bool)
+    finally:
+        env.close()
 
 
 def test_breakout_datamodule_init():
@@ -93,6 +126,8 @@ def test_breakout_datamodule_setup_and_dataloader():
     dm.setup()
     assert not dm.replay_buffer.is_empty
     assert dm.replay_buffer.num_episodes == 1
+    assert dm.replay_buffer[0].obs["ram"].shape[1:] == (128,)
+    assert dm.replay_buffer[0].obs["ram"].dtype == torch.uint8
 
     loader = dm.train_dataloader()
     batch = next(iter(loader))
