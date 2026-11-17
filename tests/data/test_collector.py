@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
+from tensordict import TensorDict
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
@@ -272,11 +273,11 @@ def test_torch_gym_env_handles_negative_stride_observations():
 
     env = TorchGymEnv(FlippedObsEnv(step_limit=3))
     obs, _ = env.reset(seed=0)
-    assert isinstance(obs, torch.Tensor)
-    assert obs.dtype == torch.uint8
-    assert obs.shape == (16, 16, 3)
+    assert isinstance(obs, TensorDict)
+    assert obs["render"].dtype == torch.uint8
+    assert obs["render"].shape == (16, 16, 3)
 
     next_obs, _, _, _, _ = env.step(torch.tensor(0))
-    assert isinstance(next_obs, torch.Tensor)
-    assert next_obs.dtype == torch.uint8
-    assert next_obs.shape == (16, 16, 3)
+    assert isinstance(next_obs, TensorDict)
+    assert next_obs["render"].dtype == torch.uint8
+    assert next_obs["render"].shape == (16, 16, 3)

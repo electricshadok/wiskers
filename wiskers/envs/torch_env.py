@@ -8,6 +8,7 @@ import gymnasium as gym
 import numpy as np
 import torch
 import torch.nn.functional as F
+from tensordict import TensorDict
 
 
 class TorchGymEnv(gym.Wrapper):
@@ -39,34 +40,32 @@ class TorchGymEnv(gym.Wrapper):
                 new_shape = self.image_size + old_shape[2:]
                 self.observation_space = gym.spaces.Box(low=0, high=255, shape=new_shape, dtype=np.uint8)
 
-    def _process_obs(self, raw_obs: np.ndarray) -> torch.Tensor:
+    def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         obs = torch.from_numpy(np.ascontiguousarray(raw_obs))
-        if self.image_size is not None and obs.ndim >= 2:
-            if obs.shape[:2] == self.image_size:
-                return obs
+        if self.image_size is not None and obs.ndim >= 2 and obs.shape[:2] != self.image_size:
             if obs.ndim == 3:
                 t = obs.permute(2, 0, 1).unsqueeze(0).float()
                 resized = F.interpolate(t, size=self.image_size, mode="area")
-                return resized.squeeze(0).permute(1, 2, 0).to(torch.uint8)
+                obs = resized.squeeze(0).permute(1, 2, 0).to(torch.uint8)
             elif obs.ndim == 2:
                 t = obs.unsqueeze(0).unsqueeze(0).float()
                 resized = F.interpolate(t, size=self.image_size, mode="area")
-                return resized.squeeze(0).squeeze(0).to(torch.uint8)
-        return obs
+                obs = resized.squeeze(0).squeeze(0).to(torch.uint8)
+        return TensorDict({"render": obs}, batch_size=[])
 
     def reset(
         self,
         *,
         seed: int | None = None,
         options: dict[str, Any] | None = None,
-    ) -> tuple[torch.Tensor, dict[str, Any]]:
+    ) -> tuple[TensorDict, dict[str, Any]]:
         raw_obs, info = self.env.reset(seed=seed, options=options)
         return self._process_obs(raw_obs), info
 
     def step(
         self,
         action: torch.Tensor,
-    ) -> tuple[torch.Tensor, float, bool, bool, dict[str, Any]]:
+    ) -> tuple[TensorDict, float, bool, bool, dict[str, Any]]:
         env_action = self._to_env_action(action)
         raw_obs, reward, terminated, truncated, info = self.env.step(env_action)
         return self._process_obs(raw_obs), float(reward), terminated, truncated, info

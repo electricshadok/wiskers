@@ -93,7 +93,7 @@ class Collector:
 
         obs, _ = self.env.reset(seed=self.seed + episode_idx)
 
-        observations: list[torch.Tensor] = [obs]
+        observations: list[TensorDict] = [obs]
         actions: list[torch.Tensor] = []
         rewards: list[float] = []
         terminated_list: list[bool] = []
@@ -118,7 +118,7 @@ class Collector:
             truncated_list.append(truncated)
 
         return Episode(
-            obs=TensorDict({"render": torch.stack(observations)}, batch_size=[len(observations)]),
+            obs=torch.stack(observations),
             action=torch.stack(actions).to(device="cpu"),
             reward=torch.tensor(rewards, dtype=torch.float32).unsqueeze(-1),
             terminated=torch.tensor(terminated_list, dtype=torch.bool).unsqueeze(-1),

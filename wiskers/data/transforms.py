@@ -8,6 +8,7 @@ from typing import Sequence
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
+from tensordict import TensorDict
 
 from wiskers.data.episode import Episode
 
@@ -18,10 +19,11 @@ class EpisodeTransform(ABC):
     """
 
     @abstractmethod
-    def transform_obs(self, obs: torch.Tensor) -> torch.Tensor:
+    def transform_obs(self, obs: TensorDict | torch.Tensor) -> torch.Tensor:
         """
-        Convert a raw uint8 observation tensor (single frame ``(H, W, C)`` or sequence ``(T, H, W, C)``)
-        into a normalized float32 PyTorch tensor (``(C, H, W)`` or ``(T, C, H, W)``).
+        Convert a raw uint8 observation (single frame ``(H, W, C)``, sequence ``(T, H, W, C)``,
+        or ``TensorDict`` containing ``obs_key``) into a normalized float32 PyTorch tensor
+        (``(C, H, W)`` or ``(T, C, H, W)``).
         """
         ...
 
@@ -60,9 +62,7 @@ class EpisodeToTensor(EpisodeTransform):
         obs_key: str = "render",
     ) -> None:
         if len(image_size) != 3:
-            raise ValueError(
-                f"image_size must be a 3-element sequence (C, H, W), got {image_size}."
-            )
+            raise ValueError(f"image_size must be a 3-element sequence (C, H, W), got {image_size}.")
         c, h, w = image_size[0], image_size[1], image_size[2]
         if c not in (1, 3):
             raise ValueError(f"image_size channel count C must be 1 or 3, got {c}.")
@@ -70,26 +70,25 @@ class EpisodeToTensor(EpisodeTransform):
             raise ValueError(f"image_size spatial dimensions (H, W) must be positive, got ({h}, {w}).")
 
         if len(obs_range) != 2:
-            raise ValueError(
-                f"obs_range must be a 2-element sequence (low, high), got {obs_range}."
-            )
+            raise ValueError(f"obs_range must be a 2-element sequence (low, high), got {obs_range}.")
         low, high = obs_range[0], obs_range[1]
         if low >= high:
-            raise ValueError(
-                f"obs_range must satisfy low < high, got ({low}, {high})."
-            )
+            raise ValueError(f"obs_range must satisfy low < high, got ({low}, {high}).")
 
         self.image_size: tuple[int, int, int] = (c, h, w)
         self.obs_range: tuple[float, float] = (low, high)
         self.obs_key = obs_key
 
-    def transform_obs(self, obs: torch.Tensor) -> torch.Tensor:
+    def transform_obs(self, obs: TensorDict | torch.Tensor) -> torch.Tensor:
         """
-        Convert a raw uint8 observation tensor into a normalized ``float32`` tensor in ``obs_range``.
+        Convert a raw uint8 observation into a normalized ``float32`` tensor in ``obs_range``.
 
+        Accepts either a ``TensorDict`` (extracting ``obs[self.obs_key]``) or a raw tensor.
         Supports both a single frame ``(H, W, C)`` -> ``(C, H, W)`` and a
         sequence of frames ``(T, H, W, C)`` -> ``(T, C, H, W)``.
         """
+        if isinstance(obs, TensorDict):
+            obs = obs[self.obs_key]
         single_frame = obs.ndim == 3
         obs_tensor = obs.unsqueeze(0) if single_frame else obs
 

@@ -138,8 +138,8 @@ def test_breakout_random_policy():
     policy = BreakoutRandomPolicy(fire_frequency=5)
     obs, _ = env.reset()
     assert policy.action_dim == 1
-    assert int(policy(obs, step=0).item()) == 1
-    assert int(policy(obs, step=1).item()) in {0, 1, 2, 3}
+    assert int(policy(obs["render"], step=0).item()) == 1
+    assert int(policy(obs["render"], step=1).item()) in {0, 1, 2, 3}
     env.close()
 
 

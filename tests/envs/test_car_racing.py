@@ -141,7 +141,7 @@ def test_car_racing_heuristic_policy():
     policy.steering = 0.5
     policy.reset()
     assert policy.steering == 0.0
-    action = policy(obs, step=0)
+    action = policy(obs["render"], step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (3,)
     env.close()
@@ -151,7 +151,7 @@ def test_car_racing_random_policy():
     env = CarRacingEnv(image_size=(64, 64))
     policy = CarRacingRandomPolicy()
     obs, _ = env.reset()
-    action = policy(obs, step=0)
+    action = policy(obs["render"], step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (3,)
     env.close()

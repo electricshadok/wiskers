@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import torch
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
+from tensordict import TensorDict
 
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
@@ -36,15 +37,18 @@ def adroit_env():
 def test_adroit_hand_env_observation_shape():
     env = AdroitHandEnv(task="door")
     obs, info = env.reset(seed=42)
-    assert isinstance(obs, torch.Tensor)
-    assert obs.shape == (480, 480, 3)
-    assert obs.dtype == torch.uint8
+    assert isinstance(obs, TensorDict)
+    assert obs.batch_size == torch.Size([])
+    assert obs["render"].shape == (480, 480, 3)
+    assert obs["render"].dtype == torch.uint8
 
     action = env.sample_action()
     assert action.shape == (28,)
     next_obs, reward, terminated, truncated, info = env.step(action)
-    assert next_obs.shape == (480, 480, 3)
-    assert next_obs.dtype == torch.uint8
+    assert isinstance(next_obs, TensorDict)
+    assert next_obs.batch_size == torch.Size([])
+    assert next_obs["render"].shape == (480, 480, 3)
+    assert next_obs["render"].dtype == torch.uint8
     assert isinstance(reward, float)
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)
@@ -66,7 +70,7 @@ def test_adroit_hand_available_tasks():
 def test_adroit_random_policy(adroit_env):
     policy = AdroitHandRandomPolicy(action_dim=28)
     obs, _ = adroit_env.reset()
-    action = policy(obs, step=0)
+    action = policy(obs["render"], step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (28,)
     assert action.dtype == torch.float32
@@ -76,8 +80,8 @@ def test_adroit_random_policy(adroit_env):
 def test_adroit_heuristic_policy(adroit_env):
     policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, action_dim=28)
     obs, _ = adroit_env.reset()
-    act1 = policy(obs, step=0)
-    act2 = policy(obs, step=1)
+    act1 = policy(obs["render"], step=0)
+    act2 = policy(obs["render"], step=1)
     assert act1.shape == (28,)
     assert act2.shape == (28,)
     assert torch.all(act1 >= -1.0) and torch.all(act1 <= 1.0)

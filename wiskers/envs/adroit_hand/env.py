@@ -8,7 +8,7 @@ import gymnasium as gym
 import gymnasium_robotics
 import mujoco
 import numpy as np
-import torch
+from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
 
@@ -58,7 +58,7 @@ class AdroitHandEnv(TorchGymEnv):
         )
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(h, w, 3), dtype=np.uint8)
 
-    def _process_obs(self, raw_obs: Any) -> torch.Tensor:
+    def _process_obs(self, raw_obs: Any) -> TensorDict:
         frame = self.env.render()
         if frame is None:
             raise RuntimeError("AdroitHand render() returned None. Ensure render_mode='rgb_array'.")

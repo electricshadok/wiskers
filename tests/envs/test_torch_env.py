@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from wiskers.envs import TorchGymEnv
 
@@ -25,15 +26,17 @@ def test_torch_gym_env_resize():
     assert torch_env.observation_space.shape == (64, 64, 3)
 
     obs, info = torch_env.reset()
-    assert isinstance(obs, torch.Tensor)
-    assert obs.shape == (64, 64, 3)
-    assert obs.dtype == torch.uint8
+    assert isinstance(obs, TensorDict)
+    assert obs.batch_size == torch.Size([])
+    assert obs["render"].shape == (64, 64, 3)
+    assert obs["render"].dtype == torch.uint8
 
     action = torch.tensor([0.5, -0.5], dtype=torch.float32)
     next_obs, reward, term, trunc, info = torch_env.step(action)
-    assert isinstance(next_obs, torch.Tensor)
-    assert next_obs.shape == (64, 64, 3)
-    assert next_obs.dtype == torch.uint8
+    assert isinstance(next_obs, TensorDict)
+    assert next_obs.batch_size == torch.Size([])
+    assert next_obs["render"].shape == (64, 64, 3)
+    assert next_obs["render"].dtype == torch.uint8
     assert reward == 1.0
 
 
@@ -44,6 +47,6 @@ def test_torch_gym_env_no_resize():
     assert torch_env.observation_space.shape == (120, 160, 3)
 
     obs, _ = torch_env.reset()
-    assert isinstance(obs, torch.Tensor)
-    assert obs.shape == (120, 160, 3)
-
+    assert isinstance(obs, TensorDict)
+    assert obs.batch_size == torch.Size([])
+    assert obs["render"].shape == (120, 160, 3)
