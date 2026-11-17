@@ -26,11 +26,9 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.TorchGymEnv
+      _target_: wiskers.envs.adroit_hand.AdroitHandEnv
       image_size: [64, 64]
-      env:
-        _target_: wiskers.envs.adroit_hand.make_adroit_hand_env
-        task: door
+      task: door
     policy:
       _target_: wiskers.envs.adroit_hand.AdroitHandHeuristicPolicy
       momentum: 0.85

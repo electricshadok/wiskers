@@ -26,12 +26,10 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.TorchGymEnv
+      _target_: wiskers.envs.franka.FrankaKitchenEnv
       image_size: [64, 64]
-      env:
-        _target_: wiskers.envs.franka.make_franka_kitchen_env
-        tasks_to_complete:
-          - microwave
+      tasks_to_complete:
+        - microwave
     policy:
       _target_: wiskers.envs.franka.FrankaKitchenHeuristicPolicy
       momentum: 0.85

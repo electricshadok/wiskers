@@ -6,14 +6,13 @@ from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand import (
     AVAILABLE_TASKS,
+    AdroitHandEnv,
     AdroitHandHeuristicPolicy,
     AdroitHandNeuralPolicy,
     AdroitHandPolicy,
     AdroitHandRandomPolicy,
-    make_adroit_hand_env,
 )
 
 
@@ -29,30 +28,32 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def adroit_env():
-    env = make_adroit_hand_env(task="door")
+    env = AdroitHandEnv(task="door", image_size=(64, 64))
     yield env
     env.close()
 
 
-def test_make_adroit_hand_env_observation_shape(adroit_env):
-    obs, info = adroit_env.reset(seed=42)
-    assert isinstance(obs, np.ndarray)
+def test_adroit_hand_env_observation_shape():
+    env = AdroitHandEnv(task="door")
+    obs, info = env.reset(seed=42)
+    assert isinstance(obs, torch.Tensor)
     assert obs.shape == (480, 480, 3)
-    assert obs.dtype == np.uint8
+    assert obs.dtype == torch.uint8
 
-    action = adroit_env.action_space.sample()
+    action = env.sample_action()
     assert action.shape == (28,)
-    next_obs, reward, terminated, truncated, info = adroit_env.step(action)
+    next_obs, reward, terminated, truncated, info = env.step(action)
     assert next_obs.shape == (480, 480, 3)
-    assert next_obs.dtype == np.uint8
-    assert isinstance(reward, (int, float, np.floating))
-    assert isinstance(terminated, (bool, np.bool_))
-    assert isinstance(truncated, (bool, np.bool_))
+    assert next_obs.dtype == torch.uint8
+    assert isinstance(reward, float)
+    assert isinstance(terminated, bool)
+    assert isinstance(truncated, bool)
+    env.close()
 
 
-def test_make_adroit_hand_env_invalid_task():
+def test_adroit_hand_env_invalid_task():
     with pytest.raises(ValueError, match="Unknown task"):
-        make_adroit_hand_env(task="non_existent_task")
+        AdroitHandEnv(task="non_existent_task")
 
 
 def test_adroit_hand_available_tasks():
@@ -63,9 +64,8 @@ def test_adroit_hand_available_tasks():
 
 
 def test_adroit_random_policy(adroit_env):
-    torch_env = TorchGymEnv(adroit_env, image_size=(64, 64))
     policy = AdroitHandRandomPolicy(action_dim=28)
-    obs, _ = torch_env.reset()
+    obs, _ = adroit_env.reset()
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (28,)
@@ -74,9 +74,8 @@ def test_adroit_random_policy(adroit_env):
 
 
 def test_adroit_heuristic_policy(adroit_env):
-    torch_env = TorchGymEnv(adroit_env, image_size=(64, 64))
     policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, action_dim=28)
-    obs, _ = torch_env.reset()
+    obs, _ = adroit_env.reset()
     act1 = policy(obs, step=0)
     act2 = policy(obs, step=1)
     assert act1.shape == (28,)
@@ -92,7 +91,7 @@ def test_adroit_hand_collector_integration(adroit_env):
     policy = AdroitHandHeuristicPolicy()
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=TorchGymEnv(adroit_env, image_size=(64, 64)),
+        env=adroit_env,
         policy=policy,
         transform=transform,
         num_episodes=1,
@@ -140,8 +139,7 @@ def test_adroit_neural_policy():
 
 
 def test_adroit_policies_share_action_contract(adroit_env):
-    env = TorchGymEnv(adroit_env)
-    ref_action = env.sample_action()
+    ref_action = adroit_env.sample_action()
     obs = torch.rand(3, 64, 64)
 
     policies = [
@@ -158,4 +156,4 @@ def test_adroit_policies_share_action_contract(adroit_env):
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert env.action_space.contains(env._to_env_action(action)), name
+            assert adroit_env.action_space.contains(adroit_env._to_env_action(action)), name

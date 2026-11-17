@@ -1,4 +1,4 @@
-from wiskers.envs.breakout.env import make_breakout_env
+from wiskers.envs.breakout.env import BreakoutEnv
 from wiskers.envs.breakout.policies import (
     BreakoutHeuristicPolicy,
     BreakoutNeuralPolicy,
@@ -8,10 +8,9 @@ from wiskers.envs.breakout.policies import (
 
 
 __all__ = [
-    "make_breakout_env",
+    "BreakoutEnv",
     "BreakoutPolicy",
     "BreakoutRandomPolicy",
     "BreakoutHeuristicPolicy",
     "BreakoutNeuralPolicy",
 ]
-

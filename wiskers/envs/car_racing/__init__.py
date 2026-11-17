@@ -1,4 +1,4 @@
-from wiskers.envs.car_racing.env import NoZoomCarRacing, make_car_racing_env
+from wiskers.envs.car_racing.env import CarRacingEnv, NoZoomCarRacing
 from wiskers.envs.car_racing.policies import (
     CarRacingHeuristicPolicy,
     CarRacingNeuralPolicy,
@@ -9,10 +9,9 @@ from wiskers.envs.car_racing.policies import (
 
 __all__ = [
     "NoZoomCarRacing",
-    "make_car_racing_env",
+    "CarRacingEnv",
     "CarRacingPolicy",
     "CarRacingRandomPolicy",
     "CarRacingHeuristicPolicy",
     "CarRacingNeuralPolicy",
 ]
-

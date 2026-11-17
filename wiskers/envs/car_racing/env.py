@@ -1,9 +1,10 @@
 """
-CarRacing-v3 environment factory and wrappers.
+CarRacing-v3 environment.
 """
 
-import gymnasium as gym
 from gymnasium.envs.box2d.car_racing import CarRacing
+
+from wiskers.envs.torch_env import TorchGymEnv
 
 
 class NoZoomCarRacing(CarRacing):
@@ -44,14 +45,20 @@ class NoZoomCarRacing(CarRacing):
         return obs
 
 
-def make_car_racing_env(show_indicators: bool = False) -> gym.Env:
+class CarRacingEnv(TorchGymEnv):
     """
-    Construct a NoZoomCarRacing environment.
+    CarRacing-v3 environment (with locked gameplay zoom) emitting PyTorch uint8 RGB observations.
 
     Args:
+        image_size: Target ``(height, width)`` to resize frames to. If ``None``,
+            preserves the native ``(96, 96)`` resolution.
         show_indicators: Whether to render the bottom black HUD bar and score text.
-
-    Returns:
-        Gymnasium environment instance.
     """
-    return NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)
+
+    def __init__(
+        self,
+        image_size: tuple[int, int] | None = None,
+        show_indicators: bool = False,
+    ) -> None:
+        env = NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)
+        super().__init__(env, image_size=image_size)

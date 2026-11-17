@@ -6,13 +6,12 @@ from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs import TorchGymEnv
 from wiskers.envs.franka import (
     AVAILABLE_TASKS,
+    FrankaKitchenEnv,
     FrankaKitchenHeuristicPolicy,
     FrankaKitchenNeuralPolicy,
     FrankaKitchenRandomPolicy,
-    make_franka_kitchen_env,
 )
 
 
@@ -28,37 +27,39 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def franka_env():
-    env = make_franka_kitchen_env(tasks_to_complete=["microwave"])
+    env = FrankaKitchenEnv(image_size=(64, 64), tasks_to_complete=["microwave"])
     yield env
     env.close()
 
 
-def test_make_franka_kitchen_env_observation_shape(franka_env):
-    obs, info = franka_env.reset(seed=42)
-    assert isinstance(obs, np.ndarray)
+def test_franka_kitchen_env_observation_shape():
+    env = FrankaKitchenEnv(tasks_to_complete=["microwave"])
+    obs, info = env.reset(seed=42)
+    assert isinstance(obs, torch.Tensor)
     assert obs.shape == (480, 480, 3)
-    assert obs.dtype == np.uint8
+    assert obs.dtype == torch.uint8
 
-    action = franka_env.action_space.sample()
+    action = env.sample_action()
     assert action.shape == (9,)
-    next_obs, reward, terminated, truncated, info = franka_env.step(action)
+    next_obs, reward, terminated, truncated, info = env.step(action)
     assert next_obs.shape == (480, 480, 3)
-    assert next_obs.dtype == np.uint8
-    assert isinstance(reward, (int, float, np.floating))
-    assert isinstance(terminated, (bool, np.bool_))
-    assert isinstance(truncated, (bool, np.bool_))
+    assert next_obs.dtype == torch.uint8
+    assert isinstance(reward, float)
+    assert isinstance(terminated, bool)
+    assert isinstance(truncated, bool)
+    env.close()
 
 
-def test_make_franka_kitchen_env_multiple_tasks():
-    env = make_franka_kitchen_env(tasks_to_complete=["microwave", "kettle"])
+def test_franka_kitchen_env_multiple_tasks():
+    env = FrankaKitchenEnv(tasks_to_complete=["microwave", "kettle"])
     obs, _ = env.reset(seed=0)
     assert obs.shape == (480, 480, 3)
     env.close()
 
 
-def test_make_franka_kitchen_env_invalid_task():
+def test_franka_kitchen_env_invalid_task():
     with pytest.raises(ValueError, match="Unknown task"):
-        make_franka_kitchen_env(tasks_to_complete=["non_existent_task"])
+        FrankaKitchenEnv(tasks_to_complete=["non_existent_task"])
 
 
 def test_franka_kitchen_available_tasks():
@@ -68,11 +69,10 @@ def test_franka_kitchen_available_tasks():
 
 
 def test_franka_random_policy(franka_env):
-    torch_env = TorchGymEnv(franka_env, image_size=(64, 64))
     policy = FrankaKitchenRandomPolicy()
     assert policy.action_dim == 9
 
-    obs, _ = torch_env.reset()
+    obs, _ = franka_env.reset()
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (9,)
@@ -81,11 +81,10 @@ def test_franka_random_policy(franka_env):
 
 
 def test_franka_heuristic_policy(franka_env):
-    torch_env = TorchGymEnv(franka_env, image_size=(64, 64))
     policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2)
     assert policy.action_dim == 9
 
-    obs, _ = torch_env.reset()
+    obs, _ = franka_env.reset()
     act1 = policy(obs, step=0)
     act2 = policy(obs, step=1)
     assert act1.shape == (9,)
@@ -101,7 +100,7 @@ def test_franka_kitchen_collector_integration(franka_env):
     policy = FrankaKitchenHeuristicPolicy()
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=TorchGymEnv(franka_env, image_size=(64, 64)),
+        env=franka_env,
         policy=policy,
         transform=transform,
         num_episodes=1,
@@ -120,7 +119,6 @@ def test_franka_kitchen_collector_integration(franka_env):
     assert buffer[0].obs["render"].dtype == torch.uint8
     assert buffer[0].action.shape == (10, 9)
     assert buffer[0].action.dtype == torch.float32
-
 
 
 def test_franka_neural_policy():
@@ -149,8 +147,7 @@ def test_franka_neural_policy():
 
 
 def test_franka_policies_share_action_contract(franka_env):
-    env = TorchGymEnv(franka_env)
-    ref_action = env.sample_action()
+    ref_action = franka_env.sample_action()
     obs = torch.rand(3, 64, 64)
 
     policies = [
@@ -167,4 +164,4 @@ def test_franka_policies_share_action_contract(franka_env):
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert env.action_space.contains(env._to_env_action(action)), name
+            assert franka_env.action_space.contains(franka_env._to_env_action(action)), name

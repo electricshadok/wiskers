@@ -26,11 +26,9 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.TorchGymEnv
+      _target_: wiskers.envs.car_racing.CarRacingEnv
       image_size: [64, 64]
-      env:
-        _target_: wiskers.envs.car_racing.make_car_racing_env
-        show_indicators: false
+      show_indicators: false
     policy:
       _target_: wiskers.envs.car_racing.CarRacingHeuristicPolicy
     transform: ${transform}
