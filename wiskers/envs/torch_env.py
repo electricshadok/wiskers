@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from tensordict import TensorDict
 
 
-class TorchGymEnv(gym.Wrapper):
+class TorchGymEnv:
     """
     Adapter between Gymnasium and PyTorch.
 
@@ -30,15 +30,23 @@ class TorchGymEnv(gym.Wrapper):
         env: gym.Env,
         image_size: tuple[int, int] | None = None,
     ) -> None:
-        super().__init__(env)
+        self.env = env
         self.image_size = tuple(image_size) if image_size is not None else None
 
-        obs_space = getattr(self.env, "observation_space", None)
-        if self.image_size is not None and obs_space is not None and hasattr(obs_space, "shape"):
-            old_shape = obs_space.shape
-            if old_shape is not None and len(old_shape) >= 2:
-                new_shape = self.image_size + old_shape[2:]
-                self.observation_space = gym.spaces.Box(low=0, high=255, shape=new_shape, dtype=np.uint8)
+    @property
+    def action_space(self) -> gym.Space:
+        return self.env.action_space
+
+    @property
+    def unwrapped(self) -> gym.Env:
+        return self.env.unwrapped
+
+    @property
+    def spec(self) -> Any:
+        return self.env.spec
+
+    def close(self) -> None:
+        self.env.close()
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         obs = torch.from_numpy(np.ascontiguousarray(raw_obs))

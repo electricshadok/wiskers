@@ -23,8 +23,6 @@ def test_torch_gym_env_resize():
     env = DummyGymEnv(shape=(120, 160, 3))
     torch_env = TorchGymEnv(env, image_size=(64, 64))
 
-    assert torch_env.observation_space.shape == (64, 64, 3)
-
     obs, info = torch_env.reset()
     assert isinstance(obs, TensorDict)
     assert obs.batch_size == torch.Size([])
@@ -43,8 +41,6 @@ def test_torch_gym_env_resize():
 def test_torch_gym_env_no_resize():
     env = DummyGymEnv(shape=(120, 160, 3))
     torch_env = TorchGymEnv(env, image_size=None)
-
-    assert torch_env.observation_space.shape == (120, 160, 3)
 
     obs, _ = torch_env.reset()
     assert isinstance(obs, TensorDict)

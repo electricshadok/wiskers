@@ -71,12 +71,6 @@ class AdroitHandEnv(TorchGymEnv):
             render_mode="rgb_array",
         )
         super().__init__(env, image_size=image_size)
-        renderer = getattr(env.unwrapped, "mujoco_renderer", None)
-        h, w = self.image_size or (
-            getattr(renderer, "height", 480),
-            getattr(renderer, "width", 480),
-        )
-        self.observation_space = gym.spaces.Box(low=0, high=255, shape=(h, w, 3), dtype=np.uint8)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         frame = self.env.render()
