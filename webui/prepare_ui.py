@@ -1,5 +1,5 @@
 """
-Pre-collect short rollout trajectories on the main thread for the Streamlit WebUI.
+Pre-collect short rollout trajectories on the main thread for the WebUI.
 
 Usage:
     python webui/prepare_ui.py
@@ -52,7 +52,7 @@ def apply_ui_overrides(config: Any) -> Any:
     config.data_module.collector.num_episodes = NUM_EPISODES
     config.data_module.collector.max_steps = MAX_STEPS
     config.data_module.collector.min_steps = MIN_STEPS
-    config.data_module.collector.env.env.image_size = IMAGE_SIZE
+    config.data_module.collector.env.image_size = IMAGE_SIZE
     config.data_module.sampler.num_steps = SAMPLER_NUM_STEPS
     return config
 
@@ -80,9 +80,7 @@ def prepare_dataset_cache(config_path: str, force: bool = False) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Pre-collect rollout trajectories for the Streamlit Dataset Inspector."
-    )
+    parser = argparse.ArgumentParser(description="Pre-collect rollout trajectories for the WebUI Dataset Inspector.")
     parser.add_argument(
         "--config",
         type=str,

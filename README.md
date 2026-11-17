@@ -129,12 +129,12 @@ python wiskers/pipeline/inspect_dataset.py --config dataset/franka_kitchen
 python wiskers/pipeline/inspect_dataset.py --config dataset/adroit_hand
 ```
 
-## Streamlit WebUI
+## WebUI
 
-Streamlit provides an interactive WebUI to explore rollout trajectories, transitions, and models:
+Launch the interactive WebUI to visualize datasets, rollout trajectories, and transitions:
 
 ```bash
-./streamlit.sh
+./webui/run.sh
 ```
 
 <details>

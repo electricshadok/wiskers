@@ -60,8 +60,7 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
                 "Select Rollout Episode",
                 range(len(episodes)),
                 format_func=lambda i: (
-                    f"Episode {i + 1}  •  {len(episodes[i])} steps  •  "
-                    f"R={episodes[i].reward.sum().item():.1f}"
+                    f"Episode {i + 1}  •  {len(episodes[i])} steps  •  R={episodes[i].reward.sum().item():.1f}"
                 ),
             )
 
@@ -158,7 +157,7 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
 
     # ── Return trajectory curve ──────────────────────────────────────────
     st.markdown("#### 📈 Episode Return Curve")
-    cum_rewards = rewards_seq.cumsum(dim=0).numpy()
+    cum_rewards = rewards_seq.squeeze(-1).cumsum(dim=0).numpy()
     st.line_chart(cum_rewards, height=180)
     st.caption(
         f"Step {step_idx}: reward = **{reward_val:+.3f}**  |  "
