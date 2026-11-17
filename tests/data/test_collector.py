@@ -78,6 +78,8 @@ def test_collector_collect_one_episode_no_args():
     episode = collector.collect_one_episode()
 
     assert len(episode) == 8
+    assert collector.device == torch.device("cpu")
+    assert episode.device == torch.device("cpu")
     assert episode.is_valid()
     assert episode.obs["render"].dtype == torch.uint8
     assert episode.obs["render"].shape == (8, 16, 16, 3)

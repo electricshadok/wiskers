@@ -38,6 +38,7 @@ data_module:
     min_steps: 50
     max_steps: 250
     seed: ${seed}
+    device: cpu
     verbose: true
 
   # DataLoader batch size
