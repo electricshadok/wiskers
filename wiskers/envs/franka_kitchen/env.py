@@ -36,19 +36,18 @@ class FrankaKitchenEnv(TorchGymEnv):
 
     Observation keys (batch_size=[]):
         - ``"render"`` (uint8[H, W, 3]): RGB camera frame.
-        - ``"state"`` (TensorDict, batch_size=[]):
-            - ``"robot_qpos"`` (float32[9]): ``observation[0:9]`` — 7 Panda arm joint
-              angles (rad) + 2 gripper finger translations (m).
-            - ``"robot_qvel"`` (float32[9]): ``observation[9:18]`` — 7 Panda arm joint
-              angular velocities (rad/s) + 2 gripper finger linear velocities (m/s).
-            - ``"obj_qpos"`` (float32[21]): ``observation[18:39]`` — kitchen object
-              positions/orientations (4 burners [8], light switch [2], slide cabinet [1],
-              2 hinge cabinets [2], microwave door [1], kettle (x, y, z) [3] +
-              quaternion (qx, qy, qz, qw) [4]).
-            - ``"obj_qvel"`` (float32[20]): ``observation[39:59]`` — kitchen object
-              velocities (4 burners [8], light switch [2], slide cabinet [1],
-              2 hinge cabinets [2], microwave door [1], kettle linear [3] + angular [3]
-              velocity).
+        - ``"state:robot_qpos"`` (float32[9]): ``observation[0:9]`` — 7 Panda arm joint
+          angles (rad) + 2 gripper finger translations (m).
+        - ``"state:robot_qvel"`` (float32[9]): ``observation[9:18]`` — 7 Panda arm joint
+          angular velocities (rad/s) + 2 gripper finger linear velocities (m/s).
+        - ``"state:obj_qpos"`` (float32[21]): ``observation[18:39]`` — kitchen object
+          positions/orientations (4 burners [8], light switch [2], slide cabinet [1],
+          2 hinge cabinets [2], microwave door [1], kettle (x, y, z) [3] +
+          quaternion (qx, qy, qz, qw) [4]).
+        - ``"state:obj_qvel"`` (float32[20]): ``observation[39:59]`` — kitchen object
+          velocities (4 burners [8], light switch [2], slide cabinet [1],
+          2 hinge cabinets [2], microwave door [1], kettle linear [3] + angular [3]
+          velocity).
 
     Reference:
         https://robotics.farama.org/envs/franka_kitchen/franka_kitchen/
@@ -87,15 +86,10 @@ class FrankaKitchenEnv(TorchGymEnv):
         return TensorDict(
             {
                 "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
-                "state": TensorDict(
-                    {
-                        "robot_qpos": state[0:9],
-                        "robot_qvel": state[9:18],
-                        "obj_qpos": state[18:39],
-                        "obj_qvel": state[39:59],
-                    },
-                    batch_size=[],
-                ),
+                "state:robot_qpos": state[0:9],
+                "state:robot_qvel": state[9:18],
+                "state:obj_qpos": state[18:39],
+                "state:obj_qvel": state[39:59],
             },
             batch_size=[],
         )

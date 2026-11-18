@@ -48,11 +48,10 @@ class CarRacingEnv(TorchGymEnv):
 
     Observation keys (batch_size=[]):
         - ``"render"`` (uint8[H, W, 3]): RGB camera frame.
-        - ``"state"`` (TensorDict, batch_size=[]):
-            - ``"car"`` (float32[6]): ``[x, y, angle, vx, vy, angular_velocity]``
-              from the Box2D chassis body.
-            - ``"wheels"`` (float32[5]): ``[w0_omega, w1_omega, w2_omega, w3_omega, steering_angle]``
-              (4 wheel ABS angular speeds + front wheel steering joint angle).
+        - ``"state:car"`` (float32[6]): ``[x, y, angle, vx, vy, angular_velocity]``
+          from the Box2D chassis body.
+        - ``"state:wheels"`` (float32[5]): ``[w0_omega, w1_omega, w2_omega, w3_omega, steering_angle]``
+          (4 wheel ABS angular speeds + front wheel steering joint angle).
 
     Reference:
         https://gymnasium.farama.org/environments/box2d/car_racing/
@@ -79,25 +78,20 @@ class CarRacingEnv(TorchGymEnv):
         return TensorDict(
             {
                 "render": render_to_tensor(raw_obs, self.image_size),
-                "state": TensorDict(
-                    {
-                        "car": torch.tensor(
-                            [
-                                hull.position[0],
-                                hull.position[1],
-                                hull.angle,
-                                hull.linearVelocity[0],
-                                hull.linearVelocity[1],
-                                hull.angularVelocity,
-                            ],
-                            dtype=torch.float32,
-                        ),
-                        "wheels": torch.tensor(
-                            [*(w.omega for w in car.wheels), car.wheels[0].joint.angle],
-                            dtype=torch.float32,
-                        ),
-                    },
-                    batch_size=[],
+                "state:car": torch.tensor(
+                    [
+                        hull.position[0],
+                        hull.position[1],
+                        hull.angle,
+                        hull.linearVelocity[0],
+                        hull.linearVelocity[1],
+                        hull.angularVelocity,
+                    ],
+                    dtype=torch.float32,
+                ),
+                "state:wheels": torch.tensor(
+                    [*(w.omega for w in car.wheels), car.wheels[0].joint.angle],
+                    dtype=torch.float32,
                 ),
             },
             batch_size=[],

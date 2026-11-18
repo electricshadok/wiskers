@@ -40,16 +40,14 @@ def test_franka_kitchen_env_observation_shape():
     assert obs.batch_size == torch.Size([])
     assert obs["render"].shape == (480, 480, 3)
     assert obs["render"].dtype == torch.uint8
-    assert isinstance(obs["state"], TensorDict)
-    assert obs["state"].batch_size == torch.Size([])
-    assert obs["state", "robot_qpos"].shape == (9,)
-    assert obs["state", "robot_qpos"].dtype == torch.float32
-    assert obs["state", "robot_qvel"].shape == (9,)
-    assert obs["state", "robot_qvel"].dtype == torch.float32
-    assert obs["state", "obj_qpos"].shape == (21,)
-    assert obs["state", "obj_qpos"].dtype == torch.float32
-    assert obs["state", "obj_qvel"].shape == (20,)
-    assert obs["state", "obj_qvel"].dtype == torch.float32
+    assert obs["state:robot_qpos"].shape == (9,)
+    assert obs["state:robot_qpos"].dtype == torch.float32
+    assert obs["state:robot_qvel"].shape == (9,)
+    assert obs["state:robot_qvel"].dtype == torch.float32
+    assert obs["state:obj_qpos"].shape == (21,)
+    assert obs["state:obj_qpos"].dtype == torch.float32
+    assert obs["state:obj_qvel"].shape == (20,)
+    assert obs["state:obj_qvel"].dtype == torch.float32
 
     action = env.sample_action()
     assert action.shape == (9,)
@@ -58,16 +56,14 @@ def test_franka_kitchen_env_observation_shape():
     assert next_obs.batch_size == torch.Size([])
     assert next_obs["render"].shape == (480, 480, 3)
     assert next_obs["render"].dtype == torch.uint8
-    assert isinstance(next_obs["state"], TensorDict)
-    assert next_obs["state"].batch_size == torch.Size([])
-    assert next_obs["state", "robot_qpos"].shape == (9,)
-    assert next_obs["state", "robot_qpos"].dtype == torch.float32
-    assert next_obs["state", "robot_qvel"].shape == (9,)
-    assert next_obs["state", "robot_qvel"].dtype == torch.float32
-    assert next_obs["state", "obj_qpos"].shape == (21,)
-    assert next_obs["state", "obj_qpos"].dtype == torch.float32
-    assert next_obs["state", "obj_qvel"].shape == (20,)
-    assert next_obs["state", "obj_qvel"].dtype == torch.float32
+    assert next_obs["state:robot_qpos"].shape == (9,)
+    assert next_obs["state:robot_qpos"].dtype == torch.float32
+    assert next_obs["state:robot_qvel"].shape == (9,)
+    assert next_obs["state:robot_qvel"].dtype == torch.float32
+    assert next_obs["state:obj_qpos"].shape == (21,)
+    assert next_obs["state:obj_qpos"].dtype == torch.float32
+    assert next_obs["state:obj_qvel"].shape == (20,)
+    assert next_obs["state:obj_qvel"].dtype == torch.float32
     assert isinstance(reward, float)
     assert isinstance(terminated, bool)
     assert isinstance(truncated, bool)
@@ -82,19 +78,18 @@ def test_franka_kitchen_state_dimensions_match_farama_spec(franka_env):
 
     obs, _ = franka_env.reset(seed=42)
     expected_dims = {
-        "robot_qpos": 9,
-        "robot_qvel": 9,
-        "obj_qpos": 21,
-        "obj_qvel": 20,
+        "state:robot_qpos": 9,
+        "state:robot_qvel": 9,
+        "state:obj_qpos": 21,
+        "state:obj_qvel": 20,
     }
-    state_td = obs["state"]
-    assert list(state_td.keys()) == list(expected_dims.keys())
+    assert [k for k in obs.keys() if k.startswith("state:")] == list(expected_dims.keys())
     for key, dim in expected_dims.items():
-        assert state_td[key].shape == (dim,)
-        assert state_td[key].dtype == torch.float32
+        assert obs[key].shape == (dim,)
+        assert obs[key].dtype == torch.float32
 
-    assert sum(state_td[key].shape[-1] for key in expected_dims) == 59
-    reconstructed = torch.cat([state_td[key] for key in expected_dims], dim=-1)
+    assert sum(obs[key].shape[-1] for key in expected_dims) == 59
+    reconstructed = torch.cat([obs[key] for key in expected_dims], dim=-1)
     assert torch.equal(reconstructed, expected_raw)
 
 
@@ -165,14 +160,14 @@ def test_franka_kitchen_collector_integration(franka_env):
     assert buffer.num_steps == 10
     assert buffer[0].obs["render"].shape == (10, 64, 64, 3)
     assert buffer[0].obs["render"].dtype == torch.uint8
-    assert buffer[0].obs["state", "robot_qpos"].shape == (10, 9)
-    assert buffer[0].obs["state", "robot_qpos"].dtype == torch.float32
-    assert buffer[0].obs["state", "robot_qvel"].shape == (10, 9)
-    assert buffer[0].obs["state", "robot_qvel"].dtype == torch.float32
-    assert buffer[0].obs["state", "obj_qpos"].shape == (10, 21)
-    assert buffer[0].obs["state", "obj_qpos"].dtype == torch.float32
-    assert buffer[0].obs["state", "obj_qvel"].shape == (10, 20)
-    assert buffer[0].obs["state", "obj_qvel"].dtype == torch.float32
+    assert buffer[0].obs["state:robot_qpos"].shape == (10, 9)
+    assert buffer[0].obs["state:robot_qpos"].dtype == torch.float32
+    assert buffer[0].obs["state:robot_qvel"].shape == (10, 9)
+    assert buffer[0].obs["state:robot_qvel"].dtype == torch.float32
+    assert buffer[0].obs["state:obj_qpos"].shape == (10, 21)
+    assert buffer[0].obs["state:obj_qpos"].dtype == torch.float32
+    assert buffer[0].obs["state:obj_qvel"].shape == (10, 20)
+    assert buffer[0].obs["state:obj_qvel"].dtype == torch.float32
     assert buffer[0].action.shape == (10, 9)
     assert buffer[0].action.dtype == torch.float32
 

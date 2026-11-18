@@ -38,11 +38,10 @@ class AdroitHandEnv(TorchGymEnv):
 
     Observation keys (batch_size=[]):
         - ``"render"`` (uint8[H, W, 3]): RGB camera frame.
-        - ``"state"`` (TensorDict, batch_size=[]):
-            - ``"hand"`` (float32[N]): Arm, wrist, and finger joint angles
-              (``N=27`` door, ``26`` hammer, ``24`` pen, ``30`` relocate).
-            - ``"obj"`` (float32[M]): Object/target state and velocities
-              (``M=12`` door, ``20`` hammer, ``21`` pen, ``9`` relocate).
+        - ``"state:hand"`` (float32[N]): Arm, wrist, and finger joint angles
+          (``N=27`` door, ``26`` hammer, ``24`` pen, ``30`` relocate).
+        - ``"state:obj"`` (float32[M]): Object/target state and velocities
+          (``M=12`` door, ``20`` hammer, ``21`` pen, ``9`` relocate).
 
     Reference:
         https://robotics.farama.org/envs/adroit_hand/
@@ -83,13 +82,8 @@ class AdroitHandEnv(TorchGymEnv):
         return TensorDict(
             {
                 "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
-                "state": TensorDict(
-                    {
-                        "hand": state[:n],
-                        "obj": state[n:],
-                    },
-                    batch_size=[],
-                ),
+                "state:hand": state[:n],
+                "state:obj": state[n:],
             },
             batch_size=[],
         )

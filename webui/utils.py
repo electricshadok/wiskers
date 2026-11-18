@@ -1,5 +1,3 @@
-from typing import Any
-
 import numpy as np
 import streamlit as st
 import torch
@@ -9,30 +7,12 @@ from webui.dataset.adapters import get_adapter
 from wiskers.data.datamodule import TrajectoryDataModule
 
 
-def _obs_schema_dict(obs_td: TensorDict) -> dict[str, Any]:
-    """Build a nested dictionary describing each observation field's dtype and shape."""
-    schema: dict[str, Any] = {}
-    for key, val in obs_td.items():
-        if isinstance(val, TensorDict):
-            schema[key] = _obs_schema_dict(val)
-        else:
-            dtype_str = str(val.dtype).replace("torch.", "")
-            shape_str = ", ".join(str(d) for d in val.shape)
-            schema[key] = f"{dtype_str}[{shape_str}]"
-    return schema
-
-
-def _obs_schema_dict(obs_td: TensorDict) -> dict[str, Any]:
-    """Build a nested dictionary describing each observation field's dtype and shape."""
-    schema: dict[str, Any] = {}
-    for key, val in obs_td.items():
-        if isinstance(val, TensorDict):
-            schema[key] = _obs_schema_dict(val)
-        else:
-            dtype_str = str(val.dtype).replace("torch.", "")
-            shape_str = ", ".join(str(d) for d in val.shape)
-            schema[key] = f"{dtype_str}[{shape_str}]"
-    return schema
+def _obs_schema_dict(obs_td: TensorDict) -> dict[str, str]:
+    """Build a flat dictionary describing each observation field's dtype and shape."""
+    return {
+        str(key): f"{str(val.dtype).replace('torch.', '')}[{', '.join(str(d) for d in val.shape)}]"
+        for key, val in obs_td.items()
+    }
 
 
 def _obs_to_display_numpy(obs_frame: torch.Tensor, obs_range: tuple[float, float] = (0.0, 1.0)) -> np.ndarray:

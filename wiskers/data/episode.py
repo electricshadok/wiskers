@@ -161,6 +161,10 @@ class Episode(TensorDict):
         if set(obs.keys()) != set(nxt_obs.keys()):
             raise KeyError("Episode 'obs' and 'next/obs' must have matching keys")
 
+        for key, val in obs.items():
+            if not isinstance(val, torch.Tensor):
+                raise ValueError(f"Episode 'obs/{key}' must be a torch.Tensor (flat obs), got {type(val)}")
+
         # 6. Transition signals ('reward', 'done', 'terminated', 'truncated'): trailing (*, 1) shape and dtypes
         for flag_key in ("reward", "done", "terminated", "truncated"):
             t = nxt[flag_key]
