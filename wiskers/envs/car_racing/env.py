@@ -8,6 +8,7 @@ from gymnasium.envs.box2d.car_racing import CarRacing
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.utils import render_to_tensor
 
 
 class NoZoomCarRacing(CarRacing):
@@ -33,19 +34,12 @@ class NoZoomCarRacing(CarRacing):
         return super()._create_image_array(screen, size)
 
     def reset(self, **kwargs):
-        obs_info = super().reset(**kwargs)
-        if isinstance(obs_info, tuple) and len(obs_info) == 2:
-            obs, info = obs_info
-        else:
-            obs, info = obs_info, {}
+        _, info = super().reset(**kwargs)
 
         # Lock camera zoom immediately to standard gameplay scale (bypass zoom-in animation)
         self.t = 1.0
         obs = self._render("state_pixels")
-
-        if isinstance(obs_info, tuple) and len(obs_info) == 2:
-            return obs, info
-        return obs
+        return obs, info
 
 
 class CarRacingEnv(TorchGymEnv):
@@ -74,8 +68,9 @@ class CarRacingEnv(TorchGymEnv):
         image_size: tuple[int, int] | None = None,
         show_indicators: bool = False,
     ) -> None:
+        self.image_size = tuple(image_size) if image_size is not None else None
         env = NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)
-        super().__init__(env, image_size=image_size)
+        super().__init__(env)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         car = self.env.car
@@ -83,7 +78,7 @@ class CarRacingEnv(TorchGymEnv):
         hull = car.hull
         return TensorDict(
             {
-                "render": self._render_to_tensor(raw_obs),
+                "render": render_to_tensor(raw_obs, self.image_size),
                 "state": TensorDict(
                     {
                         "car": torch.tensor(

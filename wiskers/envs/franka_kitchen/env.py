@@ -12,6 +12,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.utils import render_to_tensor
 
 
 mujoco.mjtJoint.__eq__ = lambda self, other: (
@@ -70,12 +71,13 @@ class FrankaKitchenEnv(TorchGymEnv):
             if task not in AVAILABLE_TASKS:
                 raise ValueError(f"Unknown task '{task}'. Available tasks: {list(AVAILABLE_TASKS)}")
 
+        self.image_size = tuple(image_size) if image_size is not None else None
         env = gym.make(
             "FrankaKitchen-v1",
             tasks_to_complete=tasks,
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size)
+        super().__init__(env)
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
         frame = self.env.render()
@@ -84,7 +86,7 @@ class FrankaKitchenEnv(TorchGymEnv):
         state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
         return TensorDict(
             {
-                "render": self._render_to_tensor(np.asarray(frame, dtype=np.uint8)),
+                "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
                 "state": TensorDict(
                     {
                         "robot_qpos": state[0:9],

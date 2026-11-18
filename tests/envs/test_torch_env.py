@@ -4,6 +4,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.envs import TorchGymEnv
+from wiskers.envs.utils import render_to_tensor
 
 
 class DummyGymEnv(gym.Env):
@@ -19,30 +20,27 @@ class DummyGymEnv(gym.Env):
         return np.ones(self.observation_space.shape, dtype=np.uint8) * 200, 1.0, False, False, {}
 
 
-def test_torch_gym_env_resize():
+def test_torch_gym_env_render_to_tensor_resize():
+    frame = np.ones((120, 160, 3), dtype=np.uint8) * 100
+    resized = render_to_tensor(frame, image_size=(64, 64))
+    assert resized.shape == (64, 64, 3)
+    assert resized.dtype == torch.uint8
+
+
+def test_torch_gym_env_reset_and_step():
     env = DummyGymEnv(shape=(120, 160, 3))
-    torch_env = TorchGymEnv(env, image_size=(64, 64))
+    torch_env = TorchGymEnv(env)
 
     obs, info = torch_env.reset()
     assert isinstance(obs, TensorDict)
     assert obs.batch_size == torch.Size([])
-    assert obs["render"].shape == (64, 64, 3)
+    assert obs["render"].shape == (120, 160, 3)
     assert obs["render"].dtype == torch.uint8
 
     action = torch.tensor([0.5, -0.5], dtype=torch.float32)
     next_obs, reward, term, trunc, info = torch_env.step(action)
     assert isinstance(next_obs, TensorDict)
     assert next_obs.batch_size == torch.Size([])
-    assert next_obs["render"].shape == (64, 64, 3)
+    assert next_obs["render"].shape == (120, 160, 3)
     assert next_obs["render"].dtype == torch.uint8
     assert reward == 1.0
-
-
-def test_torch_gym_env_no_resize():
-    env = DummyGymEnv(shape=(120, 160, 3))
-    torch_env = TorchGymEnv(env, image_size=None)
-
-    obs, _ = torch_env.reset()
-    assert isinstance(obs, TensorDict)
-    assert obs.batch_size == torch.Size([])
-    assert obs["render"].shape == (120, 160, 3)

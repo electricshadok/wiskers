@@ -96,8 +96,8 @@ def test_collector_policy_env_validation():
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
     # Discrete env with Continuous policy -> ValueError
-    discrete_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(4)), image_size=(64, 64))
-    box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))), image_size=(64, 64))
+    discrete_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(4)))
+    box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))))
 
     with pytest.raises(ValueError, match="Env has Discrete action space"):
         Collector(env=discrete_env, policy=CarRacingRandomPolicy(), transform=transform)

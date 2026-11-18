@@ -10,6 +10,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.utils import render_to_tensor
 
 
 mujoco.mjtJoint.__eq__ = lambda self, other: (
@@ -63,6 +64,7 @@ class AdroitHandEnv(TorchGymEnv):
         if task_key not in AVAILABLE_TASKS:
             raise ValueError(f"Unknown task '{task}'. Available tasks: {list(AVAILABLE_TASKS.keys())}")
 
+        self.image_size = tuple(image_size) if image_size is not None else None
         self.task = task_key
         self._hand_dim = HAND_DIM[task_key]
 
@@ -70,7 +72,7 @@ class AdroitHandEnv(TorchGymEnv):
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size)
+        super().__init__(env)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         frame = self.env.render()
@@ -80,7 +82,7 @@ class AdroitHandEnv(TorchGymEnv):
         n = self._hand_dim
         return TensorDict(
             {
-                "render": self._render_to_tensor(np.asarray(frame, dtype=np.uint8)),
+                "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
                 "state": TensorDict(
                     {
                         "hand": state[:n],
