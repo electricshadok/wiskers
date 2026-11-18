@@ -74,7 +74,7 @@ def test_collector_collect_one_episode_no_args():
     """collect_one_episode takes no parameters and uses self.env, self.policy, self.max_steps."""
     env = TorchGymEnv(DummyDiscreteEnv(step_limit=8))
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
-    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
+    collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 8
@@ -122,7 +122,7 @@ def test_collector_terminated_and_truncated_distinction():
 
     env = TorchGymEnv(TruncatedEnv())
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
-    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
+    collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 5
@@ -137,7 +137,7 @@ def test_collector_max_steps_clamping():
     """Collector clamps rollouts at max_steps if environment does not terminate earlier."""
     env = TorchGymEnv(DummyDiscreteEnv(step_limit=50))
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
-    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, max_steps=12, verbose=False)
+    collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=12, verbose=False)
     episode = collector.collect_one_episode()
 
     assert len(episode) == 12
@@ -162,7 +162,7 @@ def test_collector_min_steps_filtering():
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(
         env=env,
-        policy=DummyPolicy(),
+        controller=DummyPolicy(),
         transform=transform,
         num_episodes=3,
         min_steps=10,  # Must reject 3-step episodes
@@ -182,7 +182,13 @@ def test_collector_continuous_actions():
     env = TorchGymEnv(DummyContinuousEnv(step_limit=6))
     buffer = ReplayBuffer(capacity_episodes=5)
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
-    collector = Collector(env=env, policy=DummyContinuousPolicy(), transform=transform, num_episodes=2, verbose=False)
+    collector = Collector(
+        env=env,
+        controller=DummyContinuousPolicy(),
+        transform=transform,
+        num_episodes=2,
+        verbose=False,
+    )
     total_steps = collector.collect(buffer)
 
     assert total_steps == 12
@@ -195,7 +201,7 @@ def test_collector_collect_one_episode_with_idx():
     """collect_one_episode accepts an explicit episode_idx parameter."""
     env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
-    collector = Collector(env=env, policy=DummyPolicy(), transform=transform, seed=10, max_steps=20, verbose=False)
+    collector = Collector(env=env, controller=DummyPolicy(), transform=transform, seed=10, max_steps=20, verbose=False)
     ep0 = collector.collect_one_episode(episode_idx=0)
     ep5 = collector.collect_one_episode(episode_idx=5)
     assert len(ep0) == 4
@@ -214,7 +220,7 @@ def test_collector_hydra_instantiation():
                     "step_limit": 20,
                 },
             },
-            "policy": {
+            "controller": {
                 "_target_": "tests.data.test_collector.DummyPolicy",
             },
             "transform": {
@@ -246,7 +252,7 @@ def test_collector_with_transform():
 
     env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
-    collector = Collector(env=env, policy=InspectingPolicy(), transform=transform, max_steps=10, verbose=False)
+    collector = Collector(env=env, controller=InspectingPolicy(), transform=transform, max_steps=10, verbose=False)
     ep = collector.collect_one_episode()
 
     assert len(seen_obs) == 4

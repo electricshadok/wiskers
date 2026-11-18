@@ -39,7 +39,7 @@ def test_datamodule_train_dataloader():
     class DummyCollector:
         min_steps = 10
         max_steps = 50
-        policy = None
+        controller = None
 
     sampler = UniformChunkSampler(num_steps=NUM_STEPS)
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))
@@ -131,7 +131,7 @@ def test_datamodule_with_collector(monkeypatch):
         def __init__(self):
             self.min_steps = 10
             self.max_steps = 50
-            self.policy = "dummy_policy"
+            self.controller = "dummy_policy"
             self.collected = False
 
         def collect(self, buffer):
@@ -149,7 +149,7 @@ def test_datamodule_with_collector(monkeypatch):
         transform=transform,
         batch_size=2,
     )
-    assert dm.policy == "dummy_policy"
+    assert dm.controller == "dummy_policy"
     dm.setup()
     assert collector.collected
     assert dm.replay_buffer.num_episodes == 1
@@ -160,7 +160,7 @@ def test_datamodule_collector_validation():
         def __init__(self, min_steps=10, max_steps=50):
             self.min_steps = min_steps
             self.max_steps = max_steps
-            self.policy = None
+            self.controller = None
 
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=20)

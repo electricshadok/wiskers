@@ -30,7 +30,7 @@ data_module:
       _target_: wiskers.envs.car_racing.CarRacingEnv
       image_size: [64, 64]
       show_indicators: false
-    policy:
+    controller:
       _target_: wiskers.envs.car_racing.CarRacingHeuristicPolicy
     transform: ${transform}
     num_episodes: 20

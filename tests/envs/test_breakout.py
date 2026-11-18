@@ -54,7 +54,7 @@ def test_breakout_datamodule_init():
     replay_buffer = ReplayBuffer(capacity_episodes=100)
     sampler = UniformChunkSampler(num_steps=20)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
-    collector = Collector(env=env, policy=policy, transform=transform, num_episodes=0, min_steps=20)
+    collector = Collector(env=env, controller=policy, transform=transform, num_episodes=0, min_steps=20)
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
         sampler=sampler,
@@ -66,7 +66,7 @@ def test_breakout_datamodule_init():
     assert dm.num_steps == 20
     assert dm.collector.min_steps == 20
     assert dm.replay_buffer.is_empty
-    assert dm.policy is policy
+    assert dm.controller is policy
 
 
 def test_breakout_datamodule_validation():
@@ -81,7 +81,7 @@ def test_breakout_datamodule_validation():
             replay_buffer=replay_buffer,
             sampler=UniformChunkSampler(num_steps=50),
             collector=Collector(
-                env=env, policy=policy, transform=transform, num_episodes=1, min_steps=40, max_steps=40
+                env=env, controller=policy, transform=transform, num_episodes=1, min_steps=40, max_steps=40
             ),
             transform=transform,
         )
@@ -92,7 +92,7 @@ def test_breakout_datamodule_validation():
             replay_buffer=replay_buffer,
             sampler=UniformChunkSampler(num_steps=50),
             collector=Collector(
-                env=env, policy=policy, transform=transform, num_episodes=1, min_steps=20, max_steps=100
+                env=env, controller=policy, transform=transform, num_episodes=1, min_steps=20, max_steps=100
             ),
             transform=transform,
         )
@@ -102,7 +102,7 @@ def test_breakout_datamodule_validation():
         TrajectoryDataModule(
             replay_buffer=replay_buffer,
             sampler=UniformChunkSampler(num_steps=50),
-            collector=Collector(env=env, policy=policy, transform=transform, num_episodes=1, max_steps=100),
+            collector=Collector(env=env, controller=policy, transform=transform, num_episodes=1, max_steps=100),
             transform=transform,
         )
 
@@ -114,7 +114,7 @@ def test_breakout_datamodule_setup_and_dataloader():
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=env, policy=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=10, verbose=False
+        env=env, controller=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=10, verbose=False
     )
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
@@ -155,7 +155,7 @@ def test_breakout_datamodule_custom_policy():
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=env, policy=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=6, verbose=False
+        env=env, controller=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=6, verbose=False
     )
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
@@ -185,7 +185,7 @@ def test_breakout_datamodule_with_sampler():
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
-        env=env, policy=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=10, verbose=False
+        env=env, controller=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=10, verbose=False
     )
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,

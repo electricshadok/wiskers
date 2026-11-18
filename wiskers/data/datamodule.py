@@ -92,8 +92,8 @@ class TrajectoryDataModule(L.LightningDataModule):
         return self.sampler.num_steps
 
     @property
-    def policy(self) -> Any:
-        return self.collector.policy
+    def controller(self) -> Any:
+        return self.collector.controller
 
     def setup(self, stage: str | None = None) -> None:
         if self.replay_buffer.is_empty:

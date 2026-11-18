@@ -140,7 +140,7 @@ def test_adroit_hand_collector_integration(adroit_env):
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
         env=adroit_env,
-        policy=policy,
+        controller=policy,
         transform=transform,
         num_episodes=1,
         min_steps=5,

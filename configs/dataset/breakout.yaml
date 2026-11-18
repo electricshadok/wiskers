@@ -29,7 +29,7 @@ data_module:
     env:
       _target_: wiskers.envs.breakout.BreakoutEnv
       image_size: [64, 64]
-    policy:
+    controller:
       _target_: wiskers.envs.breakout.BreakoutHeuristicPolicy
       epsilon: 0.1
     transform: ${transform}

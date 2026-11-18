@@ -30,7 +30,7 @@ data_module:
       _target_: wiskers.envs.adroit_hand.AdroitHandEnv
       image_size: [64, 64]
       task: door
-    policy:
+    controller:
       _target_: wiskers.envs.adroit_hand.AdroitHandHeuristicPolicy
       momentum: 0.85
       noise_scale: 0.25

@@ -27,7 +27,7 @@ def _make_episode(T: int = 10, H: int = 4, W: int = 4, C: int = 3, action_dim: i
 def test_buffer_base_class():
     # Buffer cannot be instantiated directly
     with pytest.raises(TypeError):
-        Buffer()
+        Buffer()  # type: ignore[abstract]
 
     replay = ReplayBuffer(capacity_episodes=5)
     rollout = RolloutBuffer()
@@ -377,7 +377,7 @@ def test_collector_with_rollout_buffer():
 
     collector = Collector(
         env=TorchGymEnv(DummyEnv()),
-        policy=DummyPolicy(),
+        controller=DummyPolicy(),
         transform=EpisodeToTensor(image_size=(3, 4, 4), obs_range=(0.0, 1.0)),
         num_episodes=2,
         min_steps=5,

@@ -6,30 +6,30 @@ import gymnasium as gym
 import torch
 from tensordict import TensorDict
 
+from wiskers.controller import Controller
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
 from wiskers.data.transforms import EpisodeTransform
 from wiskers.envs.torch_env import TorchGymEnv
-from wiskers.policies import Policy
 
 
 class Collector:
     """
-    Rollout collector that gathers episodes from a TorchGymEnv using a policy
-    and stores them in a Buffer as CPU PyTorch tensors.
+    Rollout collector that gathers episodes from a TorchGymEnv using a Controller
+    (e.g. a Policy or Planner) and stores them in a Buffer as CPU PyTorch tensors.
 
     Guarantees:
         - Collects ``num_episodes`` valid episodes.
         - Enforces ``min_steps``: any episode ending earlier than ``min_steps`` is discarded.
         - Enforces ``max_steps``: clamps episodes from exceeding ``max_steps``.
         - Stores observations as compact ``uint8`` CPU tensors while passing transformed
-          PyTorch tensors to the policy.
+          PyTorch tensors to the controller.
 
     Args:
         env (TorchGymEnv): The PyTorch-wrapped Gymnasium environment instance.
-        policy (Policy): Policy instance implementing ``Policy``.
+        controller (Controller): Controller instance implementing ``Controller`` (``Policy`` or ``Planner``).
         transform (EpisodeTransform): Transform used to convert raw ``uint8``
-            observations into normalized ``torch.Tensor`` before passing them to ``policy``.
+            observations into normalized ``torch.Tensor`` before passing them to ``controller``.
         num_episodes (int): Target number of valid episodes to collect.
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
         max_steps (int): Maximum step cutoff per episode (clamped).
@@ -40,7 +40,7 @@ class Collector:
     def __init__(
         self,
         env: TorchGymEnv,
-        policy: Policy,
+        controller: Controller,
         transform: EpisodeTransform,
         num_episodes: int = 10,
         min_steps: int = 0,
@@ -49,12 +49,12 @@ class Collector:
         verbose: bool = True,
     ) -> None:
         self.env = env
-        self.policy = policy
-        # Ensure neural policies run in eval mode during rollout to disable Dropout
-        # and freeze BatchNorm statistics, while supporting non-nn.Module heuristic policies.
-        if isinstance(self.policy, torch.nn.Module):
-            self.policy.eval()
-        self._validate_policy_action_dim()
+        self.controller = controller
+        # Ensure neural controllers run in eval mode during rollout to disable Dropout
+        # and freeze BatchNorm statistics, while supporting non-nn.Module heuristic/planner controllers.
+        if isinstance(self.controller, torch.nn.Module):
+            self.controller.eval()
+        self._validate_controller_action_dim()
         self.transform = transform
         self.num_episodes = num_episodes
         self.min_steps = min_steps
@@ -63,25 +63,26 @@ class Collector:
         self.verbose = verbose
         self._episode_idx = 0
 
-    def _validate_policy_action_dim(self) -> None:
-        """Verify that policy action_dim is compatible with env action_space."""
+    def _validate_controller_action_dim(self) -> None:
+        """Verify that controller action_dim is compatible with env action_space."""
         if isinstance(self.env.action_space, gym.spaces.Discrete):
-            if self.policy.action_dim != 1:
+            if self.controller.action_dim != 1:
                 raise ValueError(
-                    f"Env has Discrete action space, but policy has action_dim={self.policy.action_dim} (expected 1)."
+                    f"Env has Discrete action space, but controller has "
+                    f"action_dim={self.controller.action_dim} (expected 1)."
                 )
         elif isinstance(self.env.action_space, gym.spaces.Box):
             expected_dim = self.env.action_space.shape[0] if self.env.action_space.shape else 1
-            if self.policy.action_dim != expected_dim:
+            if self.controller.action_dim != expected_dim:
                 raise ValueError(
                     f"Env has Box action space with shape {self.env.action_space.shape}, "
-                    f"but policy has action_dim={self.policy.action_dim} (expected {expected_dim})."
+                    f"but controller has action_dim={self.controller.action_dim} (expected {expected_dim})."
                 )
 
     @torch.inference_mode()
     def collect_one_episode(self, episode_idx: int = 0) -> Episode:
         """
-        Run a single environment rollout using self.env and self.policy up to self.max_steps.
+        Run a single environment rollout using self.env and self.controller up to self.max_steps.
 
         Args:
             episode_idx (int): Sequence index of the episode to offset the base seed (seed + episode_idx).
@@ -89,7 +90,7 @@ class Collector:
         Returns:
             Episode containing collected transitions as CPU tensors.
         """
-        self.policy.reset()
+        self.controller.reset()
 
         obs, _ = self.env.reset(seed=self.seed + episode_idx)
 
@@ -105,7 +106,7 @@ class Collector:
                 break
 
             obs_tensor = self.transform.transform_obs(obs)
-            action = self.policy(obs_tensor, step)
+            action = self.controller(obs_tensor, step)
 
             next_obs, reward, terminated, truncated, _ = self.env.step(action)
             done = terminated or truncated

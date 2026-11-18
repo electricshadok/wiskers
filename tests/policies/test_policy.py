@@ -2,6 +2,7 @@ import gymnasium as gym
 import pytest
 import torch
 
+from wiskers.controller import Controller
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs import TorchGymEnv
@@ -100,8 +101,34 @@ def test_collector_policy_env_validation():
     box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))))
 
     with pytest.raises(ValueError, match="Env has Discrete action space"):
-        Collector(env=discrete_env, policy=CarRacingRandomPolicy(), transform=transform)
+        Collector(env=discrete_env, controller=CarRacingRandomPolicy(), transform=transform)
 
     # Box env with wrong action_dim -> ValueError
     with pytest.raises(ValueError, match="Env has Box action space with shape"):
-        Collector(env=box_env, policy=FrankaKitchenRandomPolicy(), transform=transform)
+        Collector(env=box_env, controller=FrankaKitchenRandomPolicy(), transform=transform)
+
+
+def test_controller_protocol_supports_policy_and_custom_planner():
+    class DummyPlanner:
+        action_dim: int = 3
+
+        def __init__(self) -> None:
+            self.resets = 0
+
+        def reset(self) -> None:
+            self.resets += 1
+
+        def __call__(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+            return torch.zeros(self.action_dim, dtype=torch.float32)
+
+    planner = DummyPlanner()
+    assert isinstance(planner, Controller)
+    assert isinstance(CarRacingRandomPolicy(), Controller)
+
+    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))))
+    collector = Collector(env=env, controller=planner, transform=transform, num_episodes=1, max_steps=3, verbose=False)
+    ep = collector.collect_one_episode()
+
+    assert planner.resets == 1
+    assert ep.action.shape == (3, 3)

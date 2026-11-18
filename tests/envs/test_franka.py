@@ -145,7 +145,7 @@ def test_franka_kitchen_collector_integration(franka_env):
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
     collector = Collector(
         env=franka_env,
-        policy=policy,
+        controller=policy,
         transform=transform,
         num_episodes=1,
         min_steps=5,
