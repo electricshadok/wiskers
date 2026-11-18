@@ -47,10 +47,12 @@ data_module:
 def test_load_config_cli_overrides():
     cfg = load_config(
         "training/carracing_world_models",
-        overrides=["dataset=breakout", "trainer.max_epochs=42"],
+        overrides=["dataset=breakout", "trainer.max_epochs=42", "data_module.sampler.num_steps=32"],
     )
     assert cfg.data_module.collector.env._target_ == "wiskers.envs.breakout.env.BreakoutEnv"
     assert cfg.trainer.max_epochs == 42
+    assert cfg.data_module.sampler.num_steps == 32
+    assert cfg.data_module.collector.min_steps == 32
 
 
 def test_train_cli_fast_dev_run_does_not_create_pipeline_folders():

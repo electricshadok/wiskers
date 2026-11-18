@@ -22,7 +22,7 @@ data_module:
       noise_scale: 0.25
     transform: ${transform}
     num_episodes: 20
-    min_steps: 50
+    min_steps: ${data_module.sampler.num_steps}
     max_steps: 250
     seed: ${seed}
     verbose: true
@@ -36,7 +36,7 @@ data_module:
   # Sampler that extracts sequence chunks from episodes for training batches
   sampler:
     _target_: wiskers.data.sampler.UniformChunkSampler
-    num_steps: 50  # Number of consecutive steps per sampled chunk
+    num_steps: 50  # Consecutive steps per sampled chunk (must be <= collector.min_steps)
 
   # Transform that converts a sampled Episode chunk into PyTorch tensors
   transform: ${transform}
