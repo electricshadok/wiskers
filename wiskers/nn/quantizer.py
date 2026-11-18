@@ -166,7 +166,9 @@ class VectorQuantizer(nn.Module):
         else:
             self.codebook = Codebook(num_codes, code_dim)
 
-    def _quantize(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def _quantize(
+        self, z: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Replace each latent vector with its nearest codebook vector.
 
@@ -174,8 +176,9 @@ class VectorQuantizer(nn.Module):
             z (Tensor): Encoder feature map of shape (B, D, H, W).
 
         Returns:
-            z_q (Tensor): Quantized fesature map of shape (B, D, H, W).
-            indices (Tensor): Indices of selected codebook entries, shape (N,).
+            z_q (Tensor): Quantized feature map of shape (B, D, H, W).
+            encoding_indices (Tensor): Indices of selected codebook entries, shape (N,).
+            z_encoder (Tensor): Flattened encoder outputs, shape (N, D).
         """
         B, D, H, W = z.shape  # (B, D, H, W)
 
