@@ -174,6 +174,49 @@ class AdroitHandUIAdapter(DataModuleUIAdapter):
         }
 
 
+class ShadowHandUIAdapter(DataModuleUIAdapter):
+    """UI adapter for Shadow Dexterous Hand (continuous 20-DoF action space)."""
+
+    def describe_step(self, action: torch.Tensor, reward: float, done: bool) -> Dict[str, StepInfo]:
+        a = action.detach().cpu().flatten()
+        wrist_norm = float(torch.linalg.norm(a[:2]).item())
+        finger_norm = float(torch.linalg.norm(a[2:]).item())
+        grip_mean = float(a[2:].mean().item())
+
+        return {
+            "Wrist (L2)": StepInfo(
+                value=f"{wrist_norm:.3f}",
+                bar=min(1.0, wrist_norm / 1.42),
+                status=None,
+                note="Wrist joints (2 DoF) norm",
+            ),
+            "Finger Joints (L2)": StepInfo(
+                value=f"{finger_norm:.3f}",
+                bar=min(1.0, finger_norm / 4.25),
+                status=None,
+                note="Dexterous finger actuation norm",
+            ),
+            "Mean Grip": StepInfo(
+                value=f"{grip_mean:+.3f}",
+                bar=(grip_mean + 1.0) / 2.0,
+                status=None,
+                note="Extend (-1) / Flex (+1)",
+            ),
+            "Reward": StepInfo(
+                value=f"{reward:.3f}",
+                bar=None,
+                status="success" if reward == 0 else "info",
+                note="✅ Goal reached" if reward == 0 else "In progress",
+            ),
+            "Done": StepInfo(
+                value=str(done),
+                bar=None,
+                status="error" if done else "success",
+                note="🚨 Episode terminated" if done else "🟢 Episode active",
+            ),
+        }
+
+
 class DefaultUIAdapter(DataModuleUIAdapter):
     """Fallback adapter for DataModules without a registered adapter."""
 
@@ -201,7 +244,9 @@ def get_adapter(data_module: TrajectoryDataModule) -> DataModuleUIAdapter:
         return BreakoutUIAdapter()
     if "franka" in env_str or "kitchen" in env_str:
         return FrankaKitchenUIAdapter()
-    if "adroit" in env_str or "hand" in env_str:
+    if "adroit" in env_str:
         return AdroitHandUIAdapter()
+    if "shadow" in env_str or "hand" in env_str:
+        return ShadowHandUIAdapter()
 
     return DefaultUIAdapter()

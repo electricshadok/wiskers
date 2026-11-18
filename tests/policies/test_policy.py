@@ -10,6 +10,7 @@ from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandom
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
 from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPolicy
 from wiskers.envs.franka_kitchen.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
+from wiskers.envs.shadow_hand.policies import ShadowHandPolicy, ShadowHandRandomPolicy
 from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.policies.base import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
 
@@ -75,13 +76,16 @@ def test_env_policies_inherit_from_policy():
     assert issubclass(AdroitHandPolicy, ContinuousPolicy)
     assert issubclass(FrankaKitchenPolicy, Policy)
     assert issubclass(FrankaKitchenPolicy, ContinuousPolicy)
+    assert issubclass(ShadowHandPolicy, Policy)
+    assert issubclass(ShadowHandPolicy, ContinuousPolicy)
 
     breakout_pol = BreakoutRandomPolicy()
     car_pol = CarRacingRandomPolicy()
     adroit_pol = AdroitHandRandomPolicy()
     franka_pol = FrankaKitchenRandomPolicy()
+    shadow_pol = ShadowHandRandomPolicy()
 
-    for pol in (breakout_pol, car_pol, adroit_pol, franka_pol):
+    for pol in (breakout_pol, car_pol, adroit_pol, franka_pol, shadow_pol):
         assert isinstance(pol, Policy)
         pol.reset()
 
@@ -92,6 +96,7 @@ def test_env_policies_inherit_from_policy():
     assert car_pol(dummy_obs, step=0).shape == (3,)
     assert adroit_pol(dummy_obs, step=0).shape == (28,)
     assert franka_pol(dummy_obs, step=0).shape == (9,)
+    assert shadow_pol(dummy_obs, step=0).shape == (20,)
 
 
 def test_collector_policy_env_validation():

@@ -1,0 +1,47 @@
+seed: 0
+
+# Shared transform for both Collector (policy input) and TrajectoryDataModule (training batches)
+transform:
+  _target_: wiskers.data.transforms.EpisodeToTensor
+  image_size: [3, 64, 64]  # [C, H, W] (C = 1 for grayscale or 3 for RGB)
+  obs_range: [0.0, 1.0]    # [low, high] normalization range for observations
+
+data_module:
+  _target_: wiskers.data.datamodule.TrajectoryDataModule
+
+  # Replay buffer that stores complete episode trajectories in memory
+  replay_buffer:
+    _target_: wiskers.data.buffer.ReplayBuffer
+    capacity_episodes: 500  # Maximum number of complete episodes to keep in memory
+    device: cpu
+
+  # Sampler that extracts sequence chunks from episodes for training batches
+  sampler:
+    _target_: wiskers.data.sampler.UniformChunkSampler
+    num_steps: 50  # Number of consecutive steps per sampled chunk
+
+  # Transform that converts a sampled Episode chunk into PyTorch tensors
+  transform: ${transform}
+
+  # Rollout data collection settings
+  collector:
+    _target_: wiskers.data.collector.Collector
+    env:
+      _target_: wiskers.envs.shadow_hand.env.ShadowHandEnv
+      image_size: [64, 64]
+      task: block
+      show_target: false
+    controller:
+      _target_: wiskers.envs.shadow_hand.policies.ShadowHandHeuristicPolicy
+      momentum: 0.85
+      noise_scale: 0.25
+    transform: ${transform}
+    num_episodes: 20
+    min_steps: 50
+    max_steps: 250
+    seed: ${seed}
+    verbose: true
+
+  # DataLoader settings
+  batch_size: 16
+  num_workers: 2
