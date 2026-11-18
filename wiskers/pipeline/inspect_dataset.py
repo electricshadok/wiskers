@@ -35,7 +35,7 @@ class InspectDatasetCLI:
     Command-line interface for loading dataset and printing its details.
 
     Args:
-        config_name (str): Configuration name (e.g. 'dataset/carracing') or path.
+        config_name (str): Configuration name (e.g. 'dataset/car_racing') or path.
         config_path (str): Root configuration directory (default: 'configs').
     """
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         "-cn",
         type=str,
         required=True,
-        help="Configuration name relative to config-path (e.g. dataset/carracing)",
+        help="Configuration name relative to config-path (e.g. dataset/car_racing)",
     )
     args = parser.parse_args()
     cmd = InspectDatasetCLI(args.config_name, config_path=args.config_path)

@@ -10,11 +10,11 @@ def resolve_config_file(config_name: str, config_path: str = "./configs") -> str
     Resolve a config file given config_name and config_path root.
 
     Examples:
-        resolve_config_file("training/carracing_world_models", "./configs")
-        -> "configs/training/carracing_world_models.yaml"
+        resolve_config_file("training/car_racing_world_models", "./configs")
+        -> "configs/training/car_racing_world_models.yaml"
 
-        resolve_config_file("./configs/training/carracing_world_models.yaml")
-        -> "configs/training/carracing_world_models.yaml"
+        resolve_config_file("./configs/training/car_racing_world_models.yaml")
+        -> "configs/training/car_racing_world_models.yaml"
     """
     if os.path.exists(config_name):
         return os.path.normpath(config_name)
@@ -52,7 +52,7 @@ def load_config(
     Load a configuration file, resolving Hydra config groups and CLI overrides.
 
     Args:
-        config_name (str): Configuration name (e.g. 'training/carracing_world_models')
+        config_name (str): Configuration name (e.g. 'training/car_racing_world_models')
                            or path to YAML file.
         config_path (str): Root directory for configs (default: 'configs').
         overrides (Optional[List[str]]): CLI overrides (e.g. ['dataset=breakout', 'trainer.max_epochs=10']).

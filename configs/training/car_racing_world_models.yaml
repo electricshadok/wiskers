@@ -1,6 +1,6 @@
 # Composition of dataset, model, and training configuration
 defaults:
-  - dataset: carracing
+  - dataset: car_racing
   - module: world_models
   - _self_
 

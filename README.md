@@ -16,7 +16,7 @@ Wiskers decouples environments, trajectory collection, buffers, and neural archi
 
 ```yaml
 defaults:
-  - dataset: carracing
+  - dataset: car_racing
   - module: world_models
   - _self_
 ```
@@ -57,7 +57,7 @@ pytest tests
 Use this for the fastest sanity check that everything compiles and runs without executing the full training pipeline:
 
 ```bash
-python wiskers/pipeline/train.py --config training/carracing_world_models --fast_dev_run
+python wiskers/pipeline/train.py --config training/car_racing_world_models --fast_dev_run
 ```
 
 `--quick_run`
@@ -65,7 +65,7 @@ python wiskers/pipeline/train.py --config training/carracing_world_models --fast
 Use this to simulate a short training run and catch bugs across the full pipeline (checkpointing, logging, etc.):
 
 ```bash
-python wiskers/pipeline/train.py --config training/carracing_world_models --quick_run
+python wiskers/pipeline/train.py --config training/car_racing_world_models --quick_run
 ```
 
 ## Training
@@ -73,17 +73,17 @@ python wiskers/pipeline/train.py --config training/carracing_world_models --quic
 Launch training with a chosen experiment configuration (`--config-name`, `--config`, or `-cn`):
 
 ```bash
-# Shorthand name (resolves to ./configs/training/carracing_world_models.yaml)
-python wiskers/pipeline/train.py --config training/carracing_world_models
+# Shorthand name (resolves to ./configs/training/car_racing_world_models.yaml)
+python wiskers/pipeline/train.py --config training/car_racing_world_models
 
 # Direct path to a YAML file
-python wiskers/pipeline/train.py --config ./configs/training/carracing_world_models.yaml
+python wiskers/pipeline/train.py --config ./configs/training/car_racing_world_models.yaml
 
 # Reproduce an exact previous run using its saved config snapshot
 python wiskers/pipeline/train.py --config experiments/world_models/version_0/config.yaml
 
 # Custom config root directory (--config-path or -cp)
-python wiskers/pipeline/train.py --config-path ./configs --config training/carracing_world_models
+python wiskers/pipeline/train.py --config-path ./configs --config training/car_racing_world_models
 ```
 
 > 💡 **Experiment Reproducibility**: Every full training run saves a self-contained snapshot of the complete, resolved configuration to `experiments/<name>/<version>/config.yaml`. You can re-run or evaluate that exact run at any time by passing that YAML file directly to `--config`.
@@ -94,13 +94,13 @@ You can override config groups (`dataset`, `module`) or any nested parameter dir
 
 ```bash
 # Swap dataset group (e.g. train World Models on Breakout instead of CarRacing)
-python wiskers/pipeline/train.py --config training/carracing_world_models dataset=breakout
+python wiskers/pipeline/train.py --config training/car_racing_world_models dataset=breakout
 
 # Override trainer hyperparameters or module architectures
-python wiskers/pipeline/train.py --config training/carracing_world_models trainer.max_epochs=20 module.vae.latent_dim=64
+python wiskers/pipeline/train.py --config training/car_racing_world_models trainer.max_epochs=20 module.vae.latent_dim=64
 
 # Combine group selection with fast development run
-python wiskers/pipeline/train.py --config training/carracing_world_models dataset=breakout --fast_dev_run
+python wiskers/pipeline/train.py --config training/car_racing_world_models dataset=breakout --fast_dev_run
 ```
 
 ## Prediction & Evaluation
@@ -108,7 +108,7 @@ python wiskers/pipeline/train.py --config training/carracing_world_models datase
 Run evaluation or inference with a configuration:
 
 ```bash
-python wiskers/pipeline/predict.py --config training/carracing_world_models
+python wiskers/pipeline/predict.py --config training/car_racing_world_models
 ```
 
 ## Inspect Datasets
@@ -120,7 +120,7 @@ Inspect and verify trajectory dataloaders and rollout replay buffers:
 python wiskers/pipeline/inspect_dataset.py --config dataset/breakout
 
 # CarRacing-v3 trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/carracing
+python wiskers/pipeline/inspect_dataset.py --config dataset/car_racing
 
 # Franka Kitchen robotics manipulator trajectory dataloader
 python wiskers/pipeline/inspect_dataset.py --config dataset/franka_kitchen

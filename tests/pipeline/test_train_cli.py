@@ -7,7 +7,7 @@ from wiskers.pipeline.train import TrainCLI, TrainPipelineCLI
 
 
 def test_load_config_defaults_inheritance():
-    cfg = load_config("training/carracing_world_models")
+    cfg = load_config("training/car_racing_world_models")
     assert "data_module" in cfg
     assert cfg.data_module.batch_size == 16
     assert cfg.module._target_ == "wiskers.systems.world_models.WorldModels"
@@ -27,7 +27,7 @@ def test_load_config_franka_kitchen_world_models_override():
 def test_load_config_override_dataset_param():
     test_yaml = """
 defaults:
-  - dataset: carracing
+  - dataset: car_racing
 
 data_module:
   batch_size: 64
@@ -46,7 +46,7 @@ data_module:
 
 def test_load_config_cli_overrides():
     cfg = load_config(
-        "training/carracing_world_models",
+        "training/car_racing_world_models",
         overrides=["dataset=breakout", "trainer.max_epochs=42", "data_module.sampler.num_steps=32"],
     )
     assert cfg.data_module.collector.env._target_ == "wiskers.envs.breakout.env.BreakoutEnv"
@@ -57,7 +57,7 @@ def test_load_config_cli_overrides():
 
 def test_train_cli_fast_dev_run_does_not_create_pipeline_folders():
     with tempfile.TemporaryDirectory() as tmpdir:
-        cli = TrainCLI("training/carracing_world_models")
+        cli = TrainCLI("training/car_racing_world_models")
         cli.config.tensor_board_logger.save_dir = tmpdir
 
         with patch("lightning.Trainer.fit"):
@@ -68,7 +68,7 @@ def test_train_cli_fast_dev_run_does_not_create_pipeline_folders():
 
 def test_train_pipeline_cli_creates_folders_and_runs_pipeline():
     with tempfile.TemporaryDirectory() as tmpdir:
-        cli = TrainPipelineCLI("training/carracing_world_models")
+        cli = TrainPipelineCLI("training/car_racing_world_models")
         cli.config.tensor_board_logger.save_dir = tmpdir
 
         # Nothing should be created before run()

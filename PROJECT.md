@@ -148,9 +148,9 @@ configs/
 A training config simply references a dataset and a module using Hydra `defaults:` and overrides only task-specific parameters:
 
 ```yaml
-# configs/training/carracing_world_models.yaml
+# configs/training/car_racing_world_models.yaml
 defaults:
-  - dataset: carracing
+  - dataset: car_racing
   - module: world_models
   - _self_
 

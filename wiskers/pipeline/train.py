@@ -23,7 +23,7 @@ class TrainCLI:
     (no loggers, callbacks, profiler, testing, or artifact export).
 
     Args:
-        config_name (str): Configuration name (e.g. 'training/carracing_world_models') or path.
+        config_name (str): Configuration name (e.g. 'training/car_racing_world_models') or path.
         config_path (str): Root configuration directory (default: 'configs').
         overrides (Optional[List[str]]): CLI configuration overrides.
     """
@@ -71,7 +71,7 @@ class TrainPipelineCLI(TrainCLI):
     profiling, testing, and model export (ONNX, safetensors).
 
     Args:
-        config_name (str): Configuration name (e.g. 'training/carracing_world_models') or path.
+        config_name (str): Configuration name (e.g. 'training/car_racing_world_models') or path.
         config_path (str): Root configuration directory (default: 'configs').
         overrides (Optional[List[str]]): CLI configuration overrides.
     """
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         "-cn",
         type=str,
         required=True,
-        help="Configuration name relative to config-path (e.g. training/carracing_world_models)",
+        help="Configuration name relative to config-path (e.g. training/car_racing_world_models)",
     )
     parser.add_argument(
         "--fast_dev_run",

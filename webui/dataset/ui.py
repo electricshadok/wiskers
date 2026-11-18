@@ -22,9 +22,10 @@ def format_config_name(path: str) -> str:
     display_names = {
         "adroit_hand": "Adroit Hand",
         "breakout": "ALE/Breakout-v5",
-        "carracing": "CarRacing-v3",
+        "car_racing": "CarRacing-v3",
         "franka": "Franka Kitchen",
         "franka_kitchen": "Franka Kitchen",
+        "shadow_hand": "Shadow Hand",
     }
     label = display_names.get(stem, stem.replace("_", " ").title())
     return f"{label} ({Path(path).name})"
