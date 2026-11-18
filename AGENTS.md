@@ -7,7 +7,8 @@
 ## Repository & `wiskers/` Architecture
 - **`wiskers/controller.py` & `wiskers/metrics.py`**: Core protocols and standalone utilities — `Controller` protocol (`obs: TensorDict, step -> action Tensor`) for policies/planners, and VQ metrics (`codebook_usage_metrics`).
 - **`wiskers/envs/`**: Torch-first Gymnasium environment wrappers (`TorchGymEnv` in `torch_env.py`, `render_to_tensor` in `utils.py`) and per-environment packages (`adroit_hand/`, `breakout/`, `car_racing/`, `franka_kitchen/`, `shadow_hand/`) with env implementations + env-specific policies. Environments emit flat `TensorDict` observations (e.g., `"render"`, `"ram"`, `"state:*"`).
-- **`wiskers/policies/`**: Base rollout policies (`Policy`, `DiscretePolicy`, `ContinuousPolicy`, `RandomPolicy` in `base.py`) mapping `obs: TensorDict` to 1D action `torch.Tensor`s and conforming to `Controller`.
+- **`wiskers/policy/`**: Base rollout policies (`Policy`, `DiscretePolicy`, `ContinuousPolicy`, `RandomPolicy` in `base.py`) mapping `obs: TensorDict` to 1D action `torch.Tensor`s and conforming to `Controller`.
+- **`wiskers/planner/`**: Model-based receding-horizon planners (`Planner`, `DynamicsModel` in `base.py`) conforming to `Controller` for MPC planning in imagination.
 - **`wiskers/data/`**: Trajectory storage and dataloading pipeline:
   - `episode.py`: `Episode(TensorDict)` schema (`obs`, `action`, `reward`, `done`).
   - `buffer.py`: `Buffer`, `ReplayBuffer`, `RolloutBuffer`.

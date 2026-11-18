@@ -64,7 +64,7 @@ flowchart TD
   - Provides a single step/reset API:
     $$\text{obs}_{t+1}, r_t, d_t, \text{info} = \text{env.step}(a_t)$$
 
-### 2.2 Policies (`wiskers.policies`)
+### 2.2 Policies (`wiskers.policy`)
 - **Role**: Implements action selection strategies during environment rollout or inference.
 - **Key Abstraction — `Policy`**:
   - Exposes `policy(obs, step) -> torch.Tensor` with explicit `reset()` lifecycle.

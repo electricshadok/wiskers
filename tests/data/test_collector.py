@@ -9,7 +9,7 @@ from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.torch_env import TorchGymEnv
-from wiskers.policies.base import ContinuousPolicy, DiscretePolicy
+from wiskers.policy.base import ContinuousPolicy, DiscretePolicy
 
 
 class DummyPolicy(DiscretePolicy):

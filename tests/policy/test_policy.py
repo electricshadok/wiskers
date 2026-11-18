@@ -12,7 +12,7 @@ from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPol
 from wiskers.envs.franka_kitchen.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
 from wiskers.envs.shadow_hand.policies import ShadowHandPolicy, ShadowHandRandomPolicy
 from wiskers.envs.torch_env import TorchGymEnv
-from wiskers.policies.base import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
+from wiskers.policy.base import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
 
 
 class _DummyEnv(gym.Env):

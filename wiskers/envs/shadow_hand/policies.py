@@ -9,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.nn.heads import ContinuousActor
-from wiskers.policies.base import ContinuousPolicy
+from wiskers.policy.base import ContinuousPolicy
 
 
 class ShadowHandPolicy(ContinuousPolicy):
