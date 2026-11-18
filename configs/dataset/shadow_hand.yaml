@@ -9,20 +9,6 @@ transform:
 data_module:
   _target_: wiskers.data.datamodule.TrajectoryDataModule
 
-  # Replay buffer that stores complete episode trajectories in memory
-  replay_buffer:
-    _target_: wiskers.data.buffer.ReplayBuffer
-    capacity_episodes: 500  # Maximum number of complete episodes to keep in memory
-    device: cpu
-
-  # Sampler that extracts sequence chunks from episodes for training batches
-  sampler:
-    _target_: wiskers.data.sampler.UniformChunkSampler
-    num_steps: 50  # Number of consecutive steps per sampled chunk
-
-  # Transform that converts a sampled Episode chunk into PyTorch tensors
-  transform: ${transform}
-
   # Rollout data collection settings
   collector:
     _target_: wiskers.data.collector.Collector
@@ -41,6 +27,20 @@ data_module:
     max_steps: 250
     seed: ${seed}
     verbose: true
+
+  # Replay buffer that stores complete episode trajectories in memory
+  replay_buffer:
+    _target_: wiskers.data.buffer.ReplayBuffer
+    capacity_episodes: 500  # Maximum number of complete episodes to keep in memory
+    device: cpu
+
+  # Sampler that extracts sequence chunks from episodes for training batches
+  sampler:
+    _target_: wiskers.data.sampler.UniformChunkSampler
+    num_steps: 50  # Number of consecutive steps per sampled chunk
+
+  # Transform that converts a sampled Episode chunk into PyTorch tensors
+  transform: ${transform}
 
   # DataLoader settings
   batch_size: 16

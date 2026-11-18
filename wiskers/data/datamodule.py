@@ -13,9 +13,9 @@ Usage:
     # ... populate replay_buffer with seed episodes ...
 
     dm = TrajectoryDataModule(
+        collector=collector,
         replay_buffer=replay_buffer,
         sampler=sampler,
-        collector=collector,
         transform=transform,
         batch_size=32,
     )
@@ -53,9 +53,9 @@ class TrajectoryDataModule(L.LightningDataModule):
     during training.
 
     Args:
+        collector (Collector): Collector to seed the buffer during setup().
         replay_buffer (ReplayBuffer): Buffer to store collected episodes.
         sampler (TrajectorySampler): Sampling strategy to draw chunks.
-        collector (Collector): Collector to seed the buffer during setup().
         transform (EpisodeTransform): Transform converting sampled Episode chunks into tensors.
         batch_size (int): Number of chunks per training batch (default: 32).
         num_workers (int): DataLoader workers (default: 0).
@@ -63,9 +63,9 @@ class TrajectoryDataModule(L.LightningDataModule):
 
     def __init__(
         self,
+        collector: Collector,
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
-        collector: Collector,
         transform: EpisodeTransform,
         batch_size: int = 32,
         num_workers: int = 0,
