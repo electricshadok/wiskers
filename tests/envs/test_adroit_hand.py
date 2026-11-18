@@ -114,7 +114,7 @@ def test_adroit_hand_available_tasks():
 def test_adroit_random_policy(adroit_env):
     policy = AdroitHandRandomPolicy(action_dim=28)
     obs, _ = adroit_env.reset()
-    action = policy(obs["render"], step=0)
+    action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (28,)
     assert action.dtype == torch.float32
@@ -124,8 +124,8 @@ def test_adroit_random_policy(adroit_env):
 def test_adroit_heuristic_policy(adroit_env):
     policy = AdroitHandHeuristicPolicy(momentum=0.8, noise_scale=0.2, action_dim=28)
     obs, _ = adroit_env.reset()
-    act1 = policy(obs["render"], step=0)
-    act2 = policy(obs["render"], step=1)
+    act1 = policy(obs, step=0)
+    act2 = policy(obs, step=1)
     assert act1.shape == (28,)
     assert act2.shape == (28,)
     assert torch.all(act1 >= -1.0) and torch.all(act1 <= 1.0)
@@ -171,7 +171,7 @@ def test_adroit_neural_policy():
     params = list(policy.parameters())
     assert params and all(p.requires_grad for p in params)
 
-    obs = torch.rand(image_size)
+    obs = TensorDict({"render": torch.rand(image_size)}, batch_size=[])
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (28,)
@@ -179,7 +179,7 @@ def test_adroit_neural_policy():
     assert torch.all(action >= -1.0) and torch.all(action <= 1.0)
 
     # Backward gradient flow
-    feat = obs.flatten()
+    feat = obs["render"].flatten()
     out = policy.actor(feat)[0]
     out.sum().backward()
     assert all(p.grad is not None for p in params)
@@ -191,7 +191,7 @@ def test_adroit_neural_policy():
 
 def test_adroit_policies_share_action_contract(adroit_env):
     ref_action = adroit_env.sample_action()
-    obs = torch.rand(3, 64, 64)
+    obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
         AdroitHandRandomPolicy(),

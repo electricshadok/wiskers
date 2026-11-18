@@ -5,6 +5,7 @@ Base policy interfaces for discrete and continuous environment rollouts.
 import gymnasium as gym
 import torch
 import torch.nn as nn
+from tensordict import TensorDict
 
 
 class Policy(nn.Module):
@@ -28,15 +29,15 @@ class Policy(nn.Module):
 
     def forward(
         self,
-        obs: torch.Tensor,
+        obs: TensorDict,
         step: int = 0,
     ) -> torch.Tensor:
         """
         Compute the action tensor for a single environment step.
 
         Args:
-            obs (torch.Tensor): Observation tensor for the current step
-                (e.g., shape ``(C, H, W)`` for images or ``(obs_dim,)`` for vectors).
+            obs (TensorDict): Observation TensorDict for the current step
+                (e.g., ``obs["render"]`` of shape ``(C, H, W)`` and/or state tensors).
             step (int): Current step index within the episode.
 
         Returns:
@@ -72,7 +73,7 @@ class RandomPolicy(Policy):
         else:
             raise ValueError(f"Unsupported action space: {type(action_space)}")
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         """
         Sample an action uniformly at random.
 

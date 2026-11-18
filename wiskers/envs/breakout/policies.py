@@ -2,6 +2,7 @@ import random
 from typing import Sequence
 
 import torch
+from tensordict import TensorDict
 
 from wiskers.nn.heads import CategoricalActor
 from wiskers.policies import DiscretePolicy
@@ -22,7 +23,7 @@ class BreakoutRandomPolicy(BreakoutPolicy):
         self.fire_frequency = fire_frequency
         self.num_actions = num_actions
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         if step % self.fire_frequency == 0:
             return torch.tensor([1], dtype=torch.long)  # FIRE
         return torch.tensor([random.randint(0, self.num_actions - 1)], dtype=torch.long)
@@ -30,7 +31,7 @@ class BreakoutRandomPolicy(BreakoutPolicy):
 
 class BreakoutHeuristicPolicy(BreakoutPolicy):
     """
-    Heuristic policy that tracks ball movement using ALE RAM state when available.
+    Heuristic policy that tracks ball movement using ALE RAM state in ``obs["ram"]``.
 
     RAM addresses for Breakout:
         72  : paddle x-coordinate
@@ -38,42 +39,32 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         101 : ball y-coordinate
     """
 
-    def __init__(self, epsilon: float = 0.1, ale_source: object | None = None) -> None:
+    def __init__(self, epsilon: float = 0.1) -> None:
         super().__init__()
         self.epsilon = epsilon
-        self.ale_source = ale_source
 
     def _sample_random(self) -> torch.Tensor:
         return torch.tensor([random.randint(0, self.num_actions - 1)], dtype=torch.long)
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        if random.random() < self.epsilon or self.ale_source is None:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        if random.random() < self.epsilon or "ram" not in obs.keys():
             return torch.tensor([1], dtype=torch.long) if step == 0 else self._sample_random()
 
-        try:
-            unwrapped = getattr(self.ale_source, "unwrapped", self.ale_source)
-            ale = getattr(unwrapped, "ale", None)
-            if ale is None:
-                return self._sample_random()
+        ram = obs["ram"]
+        paddle_x = int(ram[72].item())
+        ball_x = int(ram[99].item())
+        ball_y = int(ram[101].item())
 
-            ram = ale.getRAM()
-            paddle_x = int(ram[72])
-            ball_x = int(ram[99])
-            ball_y = int(ram[101])
+        # If ball is waiting to be served or just reset, press FIRE
+        if ball_y == 0 or step == 0:
+            return torch.tensor([1], dtype=torch.long)  # FIRE
 
-            # If ball is waiting to be served or just reset, press FIRE
-            if ball_y == 0 or step == 0:
-                return torch.tensor([1], dtype=torch.long)  # FIRE
-
-            # Track the ball with the paddle
-            if paddle_x < ball_x - 2:
-                return torch.tensor([2], dtype=torch.long)  # RIGHT
-            elif paddle_x > ball_x + 2:
-                return torch.tensor([3], dtype=torch.long)  # LEFT
-            else:
-                return torch.tensor([random.choice([0, 2, 3])], dtype=torch.long)
-        except Exception:
-            return self._sample_random()
+        # Track the ball with the paddle
+        if paddle_x < ball_x - 2:
+            return torch.tensor([2], dtype=torch.long)  # RIGHT
+        if paddle_x > ball_x + 2:
+            return torch.tensor([3], dtype=torch.long)  # LEFT
+        return torch.tensor([random.choice([0, 2, 3])], dtype=torch.long)
 
 
 class BreakoutNeuralPolicy(BreakoutPolicy):
@@ -103,8 +94,8 @@ class BreakoutNeuralPolicy(BreakoutPolicy):
             num_layers=num_layers,
         )
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        feat = obs.flatten(start_dim=-3)
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        feat = obs["render"].flatten(start_dim=-3)
         if self.training:
             action = self.actor.dist(feat).sample()
         else:

@@ -13,16 +13,16 @@ from wiskers.policies import ContinuousPolicy, DiscretePolicy
 
 
 class DummyPolicy(DiscretePolicy):
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        assert isinstance(obs, torch.Tensor)
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        assert isinstance(obs, TensorDict)
         return torch.tensor([0], dtype=torch.long)
 
 
 class DummyContinuousPolicy(ContinuousPolicy):
     action_dim = 2
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        assert isinstance(obs, torch.Tensor)
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        assert isinstance(obs, TensorDict)
         return torch.tensor([0.25, -0.75], dtype=torch.float32)
 
 
@@ -242,11 +242,11 @@ def test_collector_hydra_instantiation():
 
 
 def test_collector_with_transform():
-    """Collector passes transformed torch.Tensor obs to policy while storing uint8 tensor in Episode."""
-    seen_obs: list[torch.Tensor] = []
+    """Collector passes transformed TensorDict obs to controller while storing uint8 tensor in Episode."""
+    seen_obs: list[TensorDict] = []
 
     class InspectingPolicy(DiscretePolicy):
-        def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
             seen_obs.append(obs)
             return torch.tensor([0], dtype=torch.long)
 
@@ -256,9 +256,10 @@ def test_collector_with_transform():
     ep = collector.collect_one_episode()
 
     assert len(seen_obs) == 4
-    assert seen_obs[0].shape == (3, 8, 8)
-    assert seen_obs[0].dtype == torch.float32
-    assert torch.allclose(seen_obs[0], torch.full((3, 8, 8), -1.0))
+    assert isinstance(seen_obs[0], TensorDict)
+    assert seen_obs[0]["render"].shape == (3, 8, 8)
+    assert seen_obs[0]["render"].dtype == torch.float32
+    assert torch.allclose(seen_obs[0]["render"], torch.full((3, 8, 8), -1.0))
     # Episode stores raw uint8 transitions [T, H, W, C]
     assert ep.obs["render"].dtype == torch.uint8
     assert ep.obs["render"].shape == (4, 16, 16, 3)

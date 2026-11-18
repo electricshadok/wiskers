@@ -29,6 +29,7 @@ Usage:
 from typing import Any
 
 import lightning as L
+import torch
 from torch.utils.data import DataLoader
 
 from wiskers.data.buffer import ReplayBuffer
@@ -36,6 +37,11 @@ from wiskers.data.collector import Collector
 from wiskers.data.dataset import TrajectoryDataset
 from wiskers.data.sampler import TrajectorySampler
 from wiskers.data.transforms import EpisodeTransform
+
+
+def _collate_batch(samples: list[dict[str, Any]]) -> dict[str, Any]:
+    """Collate sample dicts by stacking both Tensor and TensorDict fields along dim 0."""
+    return {key: torch.stack([s[key] for s in samples]) for key in samples[0]}
 
 
 class TrajectoryDataModule(L.LightningDataModule):
@@ -112,6 +118,7 @@ class TrajectoryDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             persistent_workers=self.num_workers > 0,
+            collate_fn=_collate_batch,
         )
 
     # NOTE: no held-out split yet — validation/test reuse the replay buffer.

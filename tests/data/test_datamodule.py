@@ -58,8 +58,9 @@ def test_datamodule_train_dataloader():
     # Keys
     assert set(batch.keys()) == {"obs", "action", "reward", "done", "terminated", "truncated"}
 
-    # Shapes: obs is (B, T + 1, C, H, W), others are (B, T, ...)
-    assert batch["obs"].shape == (BATCH_SIZE, NUM_STEPS + 1, 3, 8, 8)
+    # Shapes: obs is TensorDict(B, T + 1) with render (B, T + 1, C, H, W), others are (B, T, ...)
+    assert isinstance(batch["obs"], TensorDict)
+    assert batch["obs"]["render"].shape == (BATCH_SIZE, NUM_STEPS + 1, 3, 8, 8)
     assert batch["action"].shape == (BATCH_SIZE, NUM_STEPS, 4)
     assert batch["reward"].shape == (BATCH_SIZE, NUM_STEPS, 1)
     assert batch["done"].shape == (BATCH_SIZE, NUM_STEPS, 1)
@@ -67,7 +68,7 @@ def test_datamodule_train_dataloader():
     assert batch["truncated"].shape == (BATCH_SIZE, NUM_STEPS, 1)
 
     # dtypes
-    assert batch["obs"].dtype == torch.float32
+    assert batch["obs"]["render"].dtype == torch.float32
     assert batch["action"].dtype == torch.float32
     assert batch["reward"].dtype == torch.float32
     assert batch["done"].dtype == torch.float32
@@ -75,8 +76,8 @@ def test_datamodule_train_dataloader():
     assert batch["truncated"].dtype == torch.float32
 
     # Observations were uint8 [0,255] → normalised to [0,1]
-    assert batch["obs"].min() >= 0.0
-    assert batch["obs"].max() <= 1.0
+    assert batch["obs"]["render"].min() >= 0.0
+    assert batch["obs"]["render"].max() <= 1.0
 
 
 def test_episode_to_tensor_resize_and_grayscale():
@@ -84,15 +85,16 @@ def test_episode_to_tensor_resize_and_grayscale():
 
     rgb_transform = EpisodeToTensor(image_size=(3, 32, 32), obs_range=(0.0, 1.0))
     out_rgb = rgb_transform(ep)
-    assert out_rgb["obs"].shape == (7, 3, 32, 32)
-    assert out_rgb["obs"].dtype == torch.float32
-    assert out_rgb["obs"].min() >= 0.0
-    assert out_rgb["obs"].max() <= 1.0
+    assert isinstance(out_rgb["obs"], TensorDict)
+    assert out_rgb["obs"]["render"].shape == (7, 3, 32, 32)
+    assert out_rgb["obs"]["render"].dtype == torch.float32
+    assert out_rgb["obs"]["render"].min() >= 0.0
+    assert out_rgb["obs"]["render"].max() <= 1.0
 
     gray_transform = EpisodeToTensor(image_size=(1, 12, 12), obs_range=(0.0, 1.0))
     out_gray = gray_transform(ep)
-    assert out_gray["obs"].shape == (7, 1, 12, 12)
-    assert out_gray["obs"].dtype == torch.float32
+    assert out_gray["obs"]["render"].shape == (7, 1, 12, 12)
+    assert out_gray["obs"]["render"].dtype == torch.float32
 
     # Test obs_range=(-1.0, 1.0)
     terminated = torch.zeros((1, 1), dtype=torch.bool)
@@ -109,9 +111,9 @@ def test_episode_to_tensor_resize_and_grayscale():
     )
     sym_transform = EpisodeToTensor(image_size=(3, 1, 1), obs_range=(-1.0, 1.0))
     out_sym = sym_transform(ep_extremes)
-    assert torch.isclose(out_sym["obs"][0, 0, 0, 0], torch.tensor(-1.0))
-    assert torch.isclose(out_sym["obs"][0, 2, 0, 0], torch.tensor(1.0))
-    assert -1.0 <= out_sym["obs"].min() and out_sym["obs"].max() <= 1.0
+    assert torch.isclose(out_sym["obs"]["render"][0, 0, 0, 0], torch.tensor(-1.0))
+    assert torch.isclose(out_sym["obs"]["render"][0, 2, 0, 0], torch.tensor(1.0))
+    assert -1.0 <= out_sym["obs"]["render"].min() and out_sym["obs"]["render"].max() <= 1.0
 
     with pytest.raises(ValueError, match="3-element sequence"):
         EpisodeToTensor(image_size=(64, 64), obs_range=(0.0, 1.0))

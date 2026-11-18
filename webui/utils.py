@@ -89,7 +89,7 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
             st.session_state[cache_key] = next(iter(data_module.train_dataloader()))
 
         batch = st.session_state[cache_key]
-        num_chunks = int(batch["obs"].shape[0])
+        num_chunks = int(batch["obs"].batch_size[0])
 
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Batch Size", f"{num_chunks}")
@@ -109,7 +109,7 @@ def dataset_ui(data_module: TrajectoryDataModule) -> None:
                 ),
             )
 
-        obs_seq = batch["obs"][chunk_idx]
+        obs_seq = batch["obs"][chunk_idx][obs_key]
         actions_seq = batch["action"][chunk_idx]
         rewards_seq = batch["reward"][chunk_idx]
         dones_seq = batch["done"][chunk_idx]

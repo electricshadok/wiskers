@@ -66,7 +66,7 @@ class WorldModels(L.LightningModule):
         self.learning_rate = learning_rate
 
     def _shared_step(self, batch, stage: str):
-        obs = batch["obs"]  # [B, T + 1, C, H, W]
+        obs = batch["obs"]["render"]  # [B, T + 1, C, H, W]
         action = batch["action"]  # [B, T, A]
         done = batch["done"]  # [B, T, 1]
         B, T1 = obs.shape[:2]

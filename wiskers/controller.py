@@ -5,6 +5,7 @@ Controller protocol for rollout action selection (policies or planners).
 from typing import Protocol, runtime_checkable
 
 import torch
+from tensordict import TensorDict
 
 
 @runtime_checkable
@@ -20,6 +21,6 @@ class Controller(Protocol):
         """Reset any internal episodic state at the start of a rollout."""
         ...
 
-    def __call__(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def __call__(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         """Select a 1D action tensor of shape ``(action_dim,)`` for the current observation."""
         ...

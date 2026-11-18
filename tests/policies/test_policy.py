@@ -1,6 +1,7 @@
 import gymnasium as gym
 import pytest
 import torch
+from tensordict import TensorDict
 
 from wiskers.controller import Controller
 from wiskers.data.collector import Collector
@@ -44,13 +45,13 @@ def test_policy_interface():
         action_dim = 1
 
     with pytest.raises(NotImplementedError):
-        IncompletePolicy()(torch.zeros(3, 64, 64))
+        IncompletePolicy()(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
 
 
 def test_random_policy_discrete():
     pol = RandomPolicy(gym.spaces.Discrete(4))
     assert pol.action_dim == 1
-    act = pol(torch.zeros(3, 64, 64))
+    act = pol(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
     assert isinstance(act, torch.Tensor)
     assert act.shape == (1,) and act.dtype == torch.int64
     assert 0 <= act.item() < 4
@@ -59,7 +60,7 @@ def test_random_policy_discrete():
 def test_random_policy_box():
     pol = RandomPolicy(gym.spaces.Box(-1.0, 1.0, shape=(5,)))
     assert pol.action_dim == 5
-    act = pol(torch.zeros(3, 64, 64))
+    act = pol(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
     assert isinstance(act, torch.Tensor)
     assert act.shape == (5,)
     assert act.dtype == torch.float32
@@ -84,7 +85,7 @@ def test_env_policies_inherit_from_policy():
         assert isinstance(pol, Policy)
         pol.reset()
 
-    dummy_obs = torch.zeros((3, 64, 64), dtype=torch.float32)
+    dummy_obs = TensorDict({"render": torch.zeros((3, 64, 64), dtype=torch.float32)}, batch_size=[])
     b_act = breakout_pol(dummy_obs, step=0)
     assert isinstance(b_act, torch.Tensor)
     assert b_act.shape == (1,) and b_act.dtype == torch.long
@@ -118,7 +119,7 @@ def test_controller_protocol_supports_policy_and_custom_planner():
         def reset(self) -> None:
             self.resets += 1
 
-        def __call__(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        def __call__(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
             return torch.zeros(self.action_dim, dtype=torch.float32)
 
     planner = DummyPlanner()

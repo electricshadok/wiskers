@@ -106,7 +106,7 @@ def test_datamodule_with_explicit_sampler():
     loader = dm.train_dataloader()
     batch = next(iter(loader))
 
-    assert batch["obs"].shape == (2, 9, 3, 8, 8)
+    assert batch["obs"]["render"].shape == (2, 9, 3, 8, 8)
     assert batch["action"].shape == (2, 8, 4)
 
 

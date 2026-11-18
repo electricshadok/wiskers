@@ -6,6 +6,7 @@ from typing import Sequence
 
 import gymnasium as gym
 import torch
+from tensordict import TensorDict
 
 from wiskers.nn.heads import ContinuousActor
 from wiskers.policies import ContinuousPolicy
@@ -30,7 +31,7 @@ class AdroitHandRandomPolicy(AdroitHandPolicy):
             low=-1.0, high=1.0, shape=(self.action_dim,), dtype=float
         )
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         return torch.from_numpy(self.action_space.sample()).float()
 
 
@@ -60,7 +61,7 @@ class AdroitHandHeuristicPolicy(AdroitHandPolicy):
     def reset(self) -> None:
         self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         if self.current_action.shape[0] != self.action_dim:
             self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
         noise = torch.randn(self.action_dim, dtype=torch.float32) * self.noise_scale
@@ -98,6 +99,6 @@ class AdroitHandNeuralPolicy(AdroitHandPolicy):
             num_layers=num_layers,
         )
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        feat = obs.flatten(start_dim=-3)
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        feat = obs["render"].flatten(start_dim=-3)
         return self.actor.sample(feat)[0] if self.training else self.actor(feat)[0]

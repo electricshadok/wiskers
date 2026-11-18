@@ -3,6 +3,7 @@ from typing import Sequence
 
 import gymnasium as gym
 import torch
+from tensordict import TensorDict
 
 from wiskers.nn.heads import ContinuousActor
 from wiskers.policies import ContinuousPolicy
@@ -25,7 +26,7 @@ class CarRacingRandomPolicy(CarRacingPolicy):
             dtype=float,
         )
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         return torch.from_numpy(self.action_space.sample()).float()
 
 
@@ -44,7 +45,7 @@ class CarRacingHeuristicPolicy(CarRacingPolicy):
     def reset(self) -> None:
         self.steering = 0.0
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         self.steering = self.steering * 0.8 + random.uniform(-0.2, 0.2)
         self.steering = max(-1.0, min(1.0, self.steering))
         gas = random.uniform(0.4, 0.8)
@@ -80,8 +81,8 @@ class CarRacingNeuralPolicy(CarRacingPolicy):
             num_layers=num_layers,
         )
 
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        feat = obs.flatten(start_dim=-3)
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        feat = obs["render"].flatten(start_dim=-3)
         action = self.actor.sample(feat)[0] if self.training else self.actor(feat)[0]
         steering = action[..., :1]
         gas_brake = (action[..., 1:] + 1.0) / 2.0

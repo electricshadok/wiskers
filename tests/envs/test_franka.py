@@ -117,7 +117,7 @@ def test_franka_random_policy(franka_env):
     assert policy.action_dim == 9
 
     obs, _ = franka_env.reset()
-    action = policy(obs["render"], step=0)
+    action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (9,)
     assert action.dtype == torch.float32
@@ -129,8 +129,8 @@ def test_franka_heuristic_policy(franka_env):
     assert policy.action_dim == 9
 
     obs, _ = franka_env.reset()
-    act1 = policy(obs["render"], step=0)
-    act2 = policy(obs["render"], step=1)
+    act1 = policy(obs, step=0)
+    act2 = policy(obs, step=1)
     assert act1.shape == (9,)
     assert act2.shape == (9,)
     assert torch.all(act1 >= -1.0) and torch.all(act1 <= 1.0)
@@ -179,7 +179,7 @@ def test_franka_neural_policy():
     params = list(policy.parameters())
     assert params and all(p.requires_grad for p in params)
 
-    obs = torch.rand(image_size)
+    obs = TensorDict({"render": torch.rand(image_size)}, batch_size=[])
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (9,)
@@ -187,7 +187,7 @@ def test_franka_neural_policy():
     assert torch.all(action >= -1.0) and torch.all(action <= 1.0)
 
     # Backward gradient flow
-    feat = obs.flatten()
+    feat = obs["render"].flatten()
     out = policy.actor(feat)[0]
     out.sum().backward()
     assert all(p.grad is not None for p in params)
@@ -199,7 +199,7 @@ def test_franka_neural_policy():
 
 def test_franka_policies_share_action_contract(franka_env):
     ref_action = franka_env.sample_action()
-    obs = torch.rand(3, 64, 64)
+    obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
         FrankaKitchenRandomPolicy(),

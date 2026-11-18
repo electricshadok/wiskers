@@ -19,25 +19,24 @@ class EpisodeTransform(ABC):
     """
 
     @abstractmethod
-    def transform_obs(self, obs: TensorDict | torch.Tensor) -> torch.Tensor:
+    def transform_obs(self, obs: TensorDict) -> TensorDict:
         """
-        Convert a raw uint8 observation (single frame ``(H, W, C)``, sequence ``(T, H, W, C)``,
-        or ``TensorDict`` containing ``obs_key``) into a normalized float32 PyTorch tensor
-        (``(C, H, W)`` or ``(T, C, H, W)``).
+        Transform a raw observation ``TensorDict`` (single step ``batch_size=[]`` or sequence
+        ``batch_size=[T]``) into a normalized ``TensorDict`` ready for models/controllers.
         """
         ...
 
     @abstractmethod
-    def __call__(self, episode: Episode) -> dict[str, torch.Tensor]:
+    def __call__(self, episode: Episode) -> dict[str, TensorDict | torch.Tensor]:
         """
-        Convert one Episode chunk into a dictionary of PyTorch tensors.
+        Convert one Episode chunk into a dictionary of PyTorch tensors / TensorDicts.
 
         Args:
             episode (Episode): Trajectory chunk of length ``T``.
 
         Returns:
-            dict[str, torch.Tensor]: Dictionary mapping field names to tensors with
-            leading time dimension ``T`` (collated by DataLoader into ``(B, T, ...)``).
+            dict[str, TensorDict | torch.Tensor]: Dictionary mapping field names to tensors or
+            TensorDicts with leading time dimension ``T`` (collated by DataLoader into ``(B, T, ...)``).
         """
         ...
 
@@ -79,18 +78,17 @@ class EpisodeToTensor(EpisodeTransform):
         self.obs_range: tuple[float, float] = (low, high)
         self.obs_key = obs_key
 
-    def transform_obs(self, obs: TensorDict | torch.Tensor) -> torch.Tensor:
+    def transform_obs(self, obs: TensorDict) -> TensorDict:
         """
-        Convert a raw uint8 observation into a normalized ``float32`` tensor in ``obs_range``.
+        Convert raw uint8 image observations under ``self.obs_key`` into normalized
+        ``float32`` tensors in ``obs_range`` while preserving all other observation keys.
 
-        Accepts either a ``TensorDict`` (extracting ``obs[self.obs_key]``) or a raw tensor.
-        Supports both a single frame ``(H, W, C)`` -> ``(C, H, W)`` and a
-        sequence of frames ``(T, H, W, C)`` -> ``(T, C, H, W)``.
+        Supports both a single observation ``batch_size=[]`` (``(H, W, C) -> (C, H, W)``)
+        and a sequence ``batch_size=[T]`` (``(T, H, W, C) -> (T, C, H, W)``).
         """
-        if isinstance(obs, TensorDict):
-            obs = obs[self.obs_key]
-        single_frame = obs.ndim == 3
-        obs_tensor = obs.unsqueeze(0) if single_frame else obs
+        img = obs[self.obs_key]
+        single_frame = img.ndim == 3
+        obs_tensor = img.unsqueeze(0) if single_frame else img
 
         # (T, H, W, C) -> (T, C, H, W)
         obs_tensor = obs_tensor.permute(0, 3, 1, 2).float() / 255.0
@@ -116,33 +114,31 @@ class EpisodeToTensor(EpisodeTransform):
             obs_tensor = obs_tensor * (high - low) + low
 
         if single_frame:
-            return obs_tensor.squeeze(0)
-        return obs_tensor
+            obs_tensor = obs_tensor.squeeze(0)
 
-    def __call__(self, episode: Episode) -> dict[str, torch.Tensor]:
+        out = {k: v for k, v in obs.items() if k != self.obs_key}
+        out[self.obs_key] = obs_tensor
+        return TensorDict(out, batch_size=obs.batch_size)
+
+    def __call__(self, episode: Episode) -> dict[str, TensorDict | torch.Tensor]:
         """
-        Convert one Episode chunk into a dictionary of float32 PyTorch tensors.
+        Convert one Episode chunk into a dictionary of PyTorch tensors / TensorDicts.
 
         Args:
-            episode (Episode): Trajectory chunk of ``T`` transitions containing:
-                - ``obs``: Observation modalities (e.g. ``"render"`` of raw ``uint8`` frames)
-                - ``action``: ``torch.Tensor`` of shape ``(T, action_dim)``, dtype ``float32``
-                - ``reward``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``float32``
-                - ``done``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``bool``
-                - ``terminated``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``bool``
-                - ``truncated``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``bool``
+            episode (Episode): Trajectory chunk of ``T`` transitions.
 
         Returns:
-            dict[str, torch.Tensor]: Dictionary of tensors (collated by DataLoader into ``(B, ...)``):
-                - ``"obs"``: ``torch.Tensor`` of shape ``(T + 1, C, H, W)``, dtype ``torch.float32`` in ``obs_range``
-                - ``"action"``: ``torch.Tensor`` of shape ``(T, action_dim)``, dtype ``torch.float32``
+            dict[str, TensorDict | torch.Tensor]: Dictionary containing:
+                - ``"obs"``: ``TensorDict`` with ``batch_size=[T + 1]`` (``obs[obs_key]`` of shape
+                  ``(T + 1, C, H, W)``, dtype ``torch.float32`` in ``obs_range``)
+                - ``"action"``: ``torch.Tensor`` of shape ``(T, action_dim)``
                 - ``"reward"``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``torch.float32``
                 - ``"done"``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
                 - ``"terminated"``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
                 - ``"truncated"``: ``torch.Tensor`` of shape ``(T, 1)``, dtype ``torch.float32`` (``0.0`` or ``1.0``)
         """
-        obs_curr = episode.obs[self.obs_key]
-        obs_next = episode["next", "obs", self.obs_key]
+        obs_curr = episode.obs
+        obs_next = episode["next", "obs"]
         obs_seq = obs_curr if len(episode) == 0 else torch.cat([obs_curr[:1], obs_next], dim=0)
         return {
             "obs": self.transform_obs(obs_seq),

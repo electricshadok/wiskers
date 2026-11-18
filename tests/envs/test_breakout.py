@@ -133,20 +133,21 @@ def test_breakout_datamodule_setup_and_dataloader():
     batch = next(iter(loader))
 
     assert set(batch.keys()) == {"obs", "action", "reward", "done", "terminated", "truncated"}
-    assert batch["obs"].shape == (2, 6, 3, 64, 64)
+    assert isinstance(batch["obs"], TensorDict)
+    assert batch["obs"]["render"].shape == (2, 6, 3, 64, 64)
     assert batch["action"].shape == (2, 5, 1)
     assert batch["reward"].shape == (2, 5, 1)
     assert batch["done"].shape == (2, 5, 1)
     assert batch["terminated"].shape == (2, 5, 1)
     assert batch["truncated"].shape == (2, 5, 1)
-    assert batch["obs"].dtype == torch.float32
-    assert batch["obs"].min() >= 0.0
-    assert batch["obs"].max() <= 1.0
+    assert batch["obs"]["render"].dtype == torch.float32
+    assert batch["obs"]["render"].min() >= 0.0
+    assert batch["obs"]["render"].max() <= 1.0
 
 
 def test_breakout_datamodule_custom_policy():
     class ConstantFirePolicy(BreakoutPolicy):
-        def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
+        def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
             return torch.tensor([1], dtype=torch.long)
 
     policy = ConstantFirePolicy()
@@ -173,8 +174,8 @@ def test_breakout_random_policy():
     policy = BreakoutRandomPolicy(fire_frequency=5)
     obs, _ = env.reset()
     assert policy.action_dim == 1
-    assert int(policy(obs["render"], step=0).item()) == 1
-    assert int(policy(obs["render"], step=1).item()) in {0, 1, 2, 3}
+    assert int(policy(obs, step=0).item()) == 1
+    assert int(policy(obs, step=1).item()) in {0, 1, 2, 3}
     env.close()
 
 
@@ -198,7 +199,7 @@ def test_breakout_datamodule_with_sampler():
     dm.setup()
     loader = dm.train_dataloader()
     batch = next(iter(loader))
-    assert batch["obs"].shape == (2, 6, 3, 64, 64)
+    assert batch["obs"]["render"].shape == (2, 6, 3, 64, 64)
 
 
 def test_breakout_neural_policy():
@@ -208,7 +209,7 @@ def test_breakout_neural_policy():
     params = list(policy.parameters())
     assert params and all(p.requires_grad for p in params)
 
-    obs = torch.rand(image_size)
+    obs = TensorDict({"render": torch.rand(image_size)}, batch_size=[])
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (1,)
@@ -216,7 +217,7 @@ def test_breakout_neural_policy():
     assert int(action.item()) in {0, 1, 2, 3}
 
     # Backward gradient flow
-    feat = obs.flatten()
+    feat = obs["render"].flatten()
     logits = policy.actor(feat)
     logits.sum().backward()
     assert all(p.grad is not None for p in params)
@@ -229,7 +230,7 @@ def test_breakout_neural_policy():
 def test_breakout_policies_share_action_contract():
     env = BreakoutEnv(image_size=(64, 64))
     ref_action = env.sample_action()
-    obs = torch.rand(3, 64, 64)
+    obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
         BreakoutRandomPolicy(),
