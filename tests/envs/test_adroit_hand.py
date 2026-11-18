@@ -7,9 +7,8 @@ from tensordict import TensorDict
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs.adroit_hand import (
-    AVAILABLE_TASKS,
-    AdroitHandEnv,
+from wiskers.envs.adroit_hand.env import AVAILABLE_TASKS, AdroitHandEnv
+from wiskers.envs.adroit_hand.policies import (
     AdroitHandHeuristicPolicy,
     AdroitHandNeuralPolicy,
     AdroitHandPolicy,

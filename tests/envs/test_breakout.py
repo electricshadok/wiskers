@@ -7,8 +7,8 @@ from wiskers.data.collector import Collector
 from wiskers.data.datamodule import TrajectoryDataModule
 from wiskers.data.sampler import UniformChunkSampler
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs.breakout import (
-    BreakoutEnv,
+from wiskers.envs.breakout.env import BreakoutEnv
+from wiskers.envs.breakout.policies import (
     BreakoutHeuristicPolicy,
     BreakoutNeuralPolicy,
     BreakoutPolicy,

@@ -27,10 +27,10 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.breakout.BreakoutEnv
+      _target_: wiskers.envs.breakout.env.BreakoutEnv
       image_size: [64, 64]
     controller:
-      _target_: wiskers.envs.breakout.BreakoutHeuristicPolicy
+      _target_: wiskers.envs.breakout.policies.BreakoutHeuristicPolicy
       epsilon: 0.1
     transform: ${transform}
     num_episodes: 20

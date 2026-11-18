@@ -27,12 +27,12 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.franka_kitchen.FrankaKitchenEnv
+      _target_: wiskers.envs.franka_kitchen.env.FrankaKitchenEnv
       image_size: [64, 64]
       tasks_to_complete:
         - microwave
     controller:
-      _target_: wiskers.envs.franka_kitchen.FrankaKitchenHeuristicPolicy
+      _target_: wiskers.envs.franka_kitchen.policies.FrankaKitchenHeuristicPolicy
       momentum: 0.85
       noise_scale: 0.25
     transform: ${transform}

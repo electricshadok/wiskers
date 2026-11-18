@@ -353,8 +353,8 @@ def test_collector_with_rollout_buffer():
 
     from wiskers.data.collector import Collector
     from wiskers.data.transforms import EpisodeToTensor
-    from wiskers.envs import TorchGymEnv
-    from wiskers.policies import DiscretePolicy
+    from wiskers.envs.torch_env import TorchGymEnv
+    from wiskers.policies.base import DiscretePolicy
 
     class DummyPolicy(DiscretePolicy):
         def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:

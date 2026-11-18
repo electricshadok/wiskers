@@ -7,8 +7,8 @@ from wiskers.data.collector import Collector
 from wiskers.data.datamodule import TrajectoryDataModule
 from wiskers.data.sampler import UniformChunkSampler
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs.car_racing import (
-    CarRacingEnv,
+from wiskers.envs.car_racing.env import CarRacingEnv
+from wiskers.envs.car_racing.policies import (
     CarRacingHeuristicPolicy,
     CarRacingNeuralPolicy,
     CarRacingPolicy,

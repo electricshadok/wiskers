@@ -27,11 +27,11 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.car_racing.CarRacingEnv
+      _target_: wiskers.envs.car_racing.env.CarRacingEnv
       image_size: [64, 64]
       show_indicators: false
     controller:
-      _target_: wiskers.envs.car_racing.CarRacingHeuristicPolicy
+      _target_: wiskers.envs.car_racing.policies.CarRacingHeuristicPolicy
     transform: ${transform}
     num_episodes: 20
     min_steps: 50

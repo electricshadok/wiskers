@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.nn.heads import CategoricalActor
-from wiskers.policies import DiscretePolicy
+from wiskers.policies.base import DiscretePolicy
 
 
 class BreakoutPolicy(DiscretePolicy):

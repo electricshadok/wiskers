@@ -27,11 +27,11 @@ data_module:
   collector:
     _target_: wiskers.data.collector.Collector
     env:
-      _target_: wiskers.envs.adroit_hand.AdroitHandEnv
+      _target_: wiskers.envs.adroit_hand.env.AdroitHandEnv
       image_size: [64, 64]
       task: door
     controller:
-      _target_: wiskers.envs.adroit_hand.AdroitHandHeuristicPolicy
+      _target_: wiskers.envs.adroit_hand.policies.AdroitHandHeuristicPolicy
       momentum: 0.85
       noise_scale: 0.25
     transform: ${transform}

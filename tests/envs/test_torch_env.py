@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs import TorchGymEnv
+from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.envs.utils import render_to_tensor
 
 

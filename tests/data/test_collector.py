@@ -8,8 +8,8 @@ from tensordict import TensorDict
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs import TorchGymEnv
-from wiskers.policies import ContinuousPolicy, DiscretePolicy
+from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.policies.base import ContinuousPolicy, DiscretePolicy
 
 
 class DummyPolicy(DiscretePolicy):
@@ -214,7 +214,7 @@ def test_collector_hydra_instantiation():
         {
             "_target_": "wiskers.data.collector.Collector",
             "env": {
-                "_target_": "wiskers.envs.TorchGymEnv",
+                "_target_": "wiskers.envs.torch_env.TorchGymEnv",
                 "env": {
                     "_target_": "tests.data.test_collector.DummyDiscreteEnv",
                     "step_limit": 20,

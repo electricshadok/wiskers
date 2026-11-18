@@ -6,12 +6,12 @@ from tensordict import TensorDict
 from wiskers.controller import Controller
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
-from wiskers.envs import TorchGymEnv
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
 from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPolicy
 from wiskers.envs.franka_kitchen.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
-from wiskers.policies import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
+from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.policies.base import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
 
 
 class _DummyEnv(gym.Env):

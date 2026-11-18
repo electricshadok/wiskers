@@ -49,7 +49,7 @@ def test_load_config_cli_overrides():
         "training/carracing_world_models",
         overrides=["dataset=breakout", "trainer.max_epochs=42"],
     )
-    assert cfg.data_module.collector.env._target_ == "wiskers.envs.breakout.BreakoutEnv"
+    assert cfg.data_module.collector.env._target_ == "wiskers.envs.breakout.env.BreakoutEnv"
     assert cfg.trainer.max_epochs == 42
 
 
