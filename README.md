@@ -152,16 +152,12 @@ tensorboard --logdir=experiments/ --port=6006
 
 ## Docker
 
-### Build Docker container
-
 ```bash
+# Build Docker container
 ./build_docker.sh
-```
 
-### Start Docker container
-
-```bash
-docker run --rm -it wiskers:1.0
+# Start Docker container
+docker run --rm -it wiskers:latest
 ```
 
 ## Code Formatter & Type Checking

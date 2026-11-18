@@ -1,53 +1,51 @@
-# Use the NVIDIA CUDA base image with version 12.3.1 and Ubuntu 20.04
-FROM nvidia/cuda:12.3.1-runtime-ubuntu20.04
+# NVIDIA CUDA base image (Ubuntu 22.04)
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
-# Set metadata labels for the image
+ARG VERSION=0.1.0
+
+# Image metadata
 LABEL maintainer="Vincent Bonnet"
-LABEL version="1.0"
+LABEL version="${VERSION}"
 LABEL description="Docker image for Wiskers"
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Preconfigure tzdata package for automatic timezone configuration
-# Prevent the python installation to ask for geographic zone
+# Configure timezone non-interactively
 ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Update package list and install Python 3
-RUN apt-get update && apt-get install -y bash \
-    python3.10 \
-    python3-pip
+# System dependencies for swig/Box2D compilation and headless MuJoCo/OpenGL rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    build-essential \
+    ca-certificates \
+    libegl1 \
+    libgl1 \
+    libgles2 \
+    libglfw3 \
+    libglvnd0 \
+    libx11-6 \
+    libxext6 \
+    swig \
+    && rm -rf /var/lib/apt/lists/*
 
-# Add Python to PATH
-ENV PATH="/usr/bin/python3:$PATH"
+# Install uv from the official Astral image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Copy configuration
-COPY configs /app/configs
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    MUJOCO_GL=egl \
+    PATH="/app/.venv/bin:$PATH"
 
-# Copy package source code
-COPY src /app/src
+# Install Python 3.13 and third-party dependencies (cached layer)
+COPY pyproject.toml uv.lock ./
+RUN uv python install 3.13 && \
+    uv sync --locked --no-install-project --no-dev
 
-# Copy tests
-COPY tests /app/tests
-
-# Upgrade pip and install packages
-RUN python3 -m pip install --no-cache-dir --upgrade pip && \
-    python3 -m pip install --no-cache-dir \
-    torch==2.1.2 \
-    torchvision==0.16.2 \
-    torchaudio==2.1.2 \
-    numpy \
-    scipy \
-    tensorboard \
-    omegaconf \
-    pytest \
-    lightning \
-    einops \ 
-    safetensors
-
-# Create an alias to map python to python3
-RUN echo 'alias python=python3' >> ~/.bashrc
-
-# Add your directory to PYTHONPATH
-ENV PYTHONPATH="/app/src:$PYTHONPATH"
+# Copy project files and install wiskers
+COPY README.md ./
+COPY wiskers ./wiskers
+COPY configs ./configs
+COPY webui ./webui
+COPY tests ./tests
+RUN uv sync --locked --no-dev
