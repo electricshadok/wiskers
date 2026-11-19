@@ -127,6 +127,9 @@ python wiskers/pipeline/inspect_dataset.py --config dataset/franka_kitchen
 
 # Adroit Hand dexterous manipulation trajectory dataloader
 python wiskers/pipeline/inspect_dataset.py --config dataset/adroit_hand
+
+# Shadow Dexterous Hand trajectory dataloader
+python wiskers/pipeline/inspect_dataset.py --config dataset/shadow_hand
 ```
 
 ## WebUI
