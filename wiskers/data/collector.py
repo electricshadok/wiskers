@@ -2,11 +2,10 @@
 Modular rollout collector for trajectory-based RL and world models.
 """
 
-import gymnasium as gym
 import torch
 from tensordict import TensorDict
 
-from wiskers.controller import Controller
+from wiskers.controller import Controller, validate_controller
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
 from wiskers.data.transforms import EpisodeTransform
@@ -50,11 +49,7 @@ class Collector:
     ) -> None:
         self.env = env
         self.controller = controller
-        # Ensure neural controllers run in eval mode during rollout to disable Dropout
-        # and freeze BatchNorm statistics, while supporting non-nn.Module heuristic/planner controllers.
-        if isinstance(self.controller, torch.nn.Module):
-            self.controller.eval()
-        self._validate_controller_action_dim()
+        validate_controller(self.controller, self.env.action_spec)
         self.transform = transform
         self.num_episodes = num_episodes
         self.min_steps = min_steps
@@ -62,22 +57,6 @@ class Collector:
         self.seed = seed
         self.verbose = verbose
         self._episode_idx = 0
-
-    def _validate_controller_action_dim(self) -> None:
-        """Verify that controller action_dim is compatible with env action_space."""
-        if isinstance(self.env.action_space, gym.spaces.Discrete):
-            if self.controller.action_dim != 1:
-                raise ValueError(
-                    f"Env has Discrete action space, but controller has "
-                    f"action_dim={self.controller.action_dim} (expected 1)."
-                )
-        elif isinstance(self.env.action_space, gym.spaces.Box):
-            expected_dim = self.env.action_space.shape[0] if self.env.action_space.shape else 1
-            if self.controller.action_dim != expected_dim:
-                raise ValueError(
-                    f"Env has Box action space with shape {self.env.action_space.shape}, "
-                    f"but controller has action_dim={self.controller.action_dim} (expected {expected_dim})."
-                )
 
     @torch.inference_mode()
     def collect_one_episode(self, episode_idx: int = 0) -> Episode:

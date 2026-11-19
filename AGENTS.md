@@ -5,8 +5,8 @@
 - **Use explicit submodule imports**: Import from the defining file path (e.g., `from wiskers.nn.conv.bam import BAM`, `from wiskers.systems.world_models import WorldModels`) and use full module `_target_` paths in Hydra configs under `configs/`.
 
 ## Repository & `wiskers/` Architecture
-- **`wiskers/controller.py` & `wiskers/metrics.py`**: Core protocols and standalone utilities — `Controller` protocol (`obs: TensorDict, step -> action Tensor`) for policies/planners, and VQ metrics (`codebook_usage_metrics`).
-- **`wiskers/envs/`**: Torch-first Gymnasium environment wrappers (`TorchGymEnv` in `torch_env.py`, `render_to_tensor` in `utils.py`) and per-environment packages (`adroit_hand/`, `breakout/`, `car_racing/`, `franka_kitchen/`, `shadow_hand/`) with env implementations + env-specific policies. Environments emit flat `TensorDict` observations (e.g., `"render"`, `"ram"`, `"state:*"`).
+- **`wiskers/controller.py` & `wiskers/metrics.py`**: Core protocols and standalone utilities — `Controller` protocol (`obs: TensorDict, step -> action Tensor`) + `validate_controller(controller, action_spec)` for policies/planners, and VQ metrics (`codebook_usage_metrics`).
+- **`wiskers/envs/`**: Torch-first Gymnasium environment wrappers (`TorchGymEnv` in `torch_env.py`, `ActionSpec` in `action_spec.py`, `render_to_tensor` in `utils.py`) and per-environment packages (`adroit_hand/`, `breakout/`, `car_racing/`, `franka_kitchen/`, `shadow_hand/`) with env implementations + env-specific policies. Environments emit flat `TensorDict` observations (e.g., `"render"`, `"ram"`, `"state:*"`).
 - **`wiskers/policy/`**: Base rollout policies (`Policy`, `DiscretePolicy`, `ContinuousPolicy`, `RandomPolicy` in `base.py`) mapping `obs: TensorDict` to 1D action `torch.Tensor`s and conforming to `Controller`.
 - **`wiskers/planner/`**: Model-based receding-horizon planners (`Planner`, `DynamicsModel` in `base.py`, `RandomShootingPlanner` in `random_shooting.py`) conforming to `Controller` for MPC planning in imagination.
 - **`wiskers/data/`**: Trajectory storage and dataloading pipeline:

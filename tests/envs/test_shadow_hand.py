@@ -85,7 +85,7 @@ def test_shadow_hand_state_dimensions_match_farama_spec(
 ):
     env = ShadowHandEnv(task=task, image_size=(64, 64))
     try:
-        raw_obs, _ = env.env.reset(seed=42)
+        raw_obs, _ = env._gym_env.reset(seed=42)
         expected_obs = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
         expected_achieved = torch.from_numpy(np.ascontiguousarray(raw_obs["achieved_goal"], dtype=np.float32))
         expected_desired = torch.from_numpy(np.ascontiguousarray(raw_obs["desired_goal"], dtype=np.float32))
@@ -216,15 +216,15 @@ def test_shadow_policies_share_action_contract(shadow_env):
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert shadow_env.action_space.contains(shadow_env._to_env_action(action)), name
+            assert shadow_env.action_spec.contains(action), name
 
 
 def test_shadow_hand_show_target_option():
     env_hidden = ShadowHandEnv(task="block", image_size=(64, 64), show_target=False)
     env_shown = ShadowHandEnv(task="block", image_size=(64, 64), show_target=True)
     try:
-        m_hidden = env_hidden.env.unwrapped.model
-        m_shown = env_shown.env.unwrapped.model
+        m_hidden = env_hidden._gym_env.unwrapped.model
+        m_shown = env_shown._gym_env.unwrapped.model
 
         target_geom_id = m_hidden.geom("target").id
         target_mat_id = m_hidden.mat("material:target").id

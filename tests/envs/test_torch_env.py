@@ -1,8 +1,10 @@
 import gymnasium as gym
 import numpy as np
+import pytest
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
 from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.envs.utils import render_to_tensor
 
@@ -44,3 +46,40 @@ def test_torch_gym_env_reset_and_step():
     assert next_obs["render"].shape == (120, 160, 3)
     assert next_obs["render"].dtype == torch.uint8
     assert reward == 1.0
+
+
+def test_torch_gym_env_builds_action_spec_from_gym_spaces():
+    box_env = TorchGymEnv(DummyGymEnv())
+    assert isinstance(box_env.action_spec, BoundedActionSpec)
+    assert box_env.action_spec.shape == (2,)
+    assert box_env.action_spec.dtype == torch.float32
+    assert box_env.action_spec.contains(box_env.sample_action())
+
+    class IntBoxGymEnv(DummyGymEnv):
+        def __init__(self):
+            super().__init__()
+            self.action_space = gym.spaces.Box(low=0, high=5, shape=(3,), dtype=np.int64)
+
+    int_box_env = TorchGymEnv(IntBoxGymEnv())
+    assert isinstance(int_box_env.action_spec, BoundedActionSpec)
+    assert int_box_env.action_spec.shape == (3,)
+    assert int_box_env.action_spec.dtype == torch.int64
+    assert int_box_env.action_spec.contains(int_box_env.sample_action())
+
+    class DiscreteGymEnv(DummyGymEnv):
+        def __init__(self):
+            super().__init__()
+            self.action_space = gym.spaces.Discrete(4)
+
+    disc_env = TorchGymEnv(DiscreteGymEnv())
+    assert isinstance(disc_env.action_spec, DiscreteActionSpec)
+    assert disc_env.action_spec.n == 4
+    assert disc_env.action_spec.contains(disc_env.sample_action())
+
+    class UnsupportedGymEnv(DummyGymEnv):
+        def __init__(self):
+            super().__init__()
+            self.action_space = gym.spaces.MultiDiscrete([2, 3])
+
+    with pytest.raises(ValueError, match="Unsupported action space"):
+        TorchGymEnv(UnsupportedGymEnv())

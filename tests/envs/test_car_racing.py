@@ -264,6 +264,6 @@ def test_car_racing_policies_share_action_contract():
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert env.action_space.contains(env._to_env_action(action)), name
+            assert env.action_spec.contains(action), name
 
     env.close()

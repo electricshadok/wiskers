@@ -234,9 +234,7 @@ def get_adapter(data_module: TrajectoryDataModule) -> DataModuleUIAdapter:
     """
     Return the UI adapter for the given TrajectoryDataModule instance.
     """
-    env = data_module.collector.env
-    spec = env.spec or env.unwrapped.spec
-    env_str = spec.id.lower() if (spec is not None and spec.id) else type(env.unwrapped).__name__.lower()
+    env_str = type(data_module.collector.env).__name__.lower()
 
     if "carracing" in env_str or "car_racing" in env_str:
         return CarRacingUIAdapter()

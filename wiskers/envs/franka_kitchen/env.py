@@ -79,7 +79,7 @@ class FrankaKitchenEnv(TorchGymEnv):
         super().__init__(env)
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
-        frame = self.env.render()
+        frame = self._gym_env.render()
         if frame is None:
             raise RuntimeError("FrankaKitchen render() returned None. Ensure render_mode='rgb_array'.")
         state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))

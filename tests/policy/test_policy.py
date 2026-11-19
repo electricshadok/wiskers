@@ -3,7 +3,7 @@ import pytest
 import torch
 from tensordict import TensorDict
 
-from wiskers.controller import Controller
+from wiskers.controller import Controller, validate_controller
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
@@ -106,12 +106,16 @@ def test_collector_policy_env_validation():
     discrete_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(4)))
     box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))))
 
-    with pytest.raises(ValueError, match="Env has Discrete action space"):
+    with pytest.raises(ValueError, match="Env has Discrete action spec"):
         Collector(env=discrete_env, controller=CarRacingRandomPolicy(), transform=transform)
 
-    # Box env with wrong action_dim -> ValueError
-    with pytest.raises(ValueError, match="Env has Box action space with shape"):
+    # Bounded env with wrong action_dim -> ValueError
+    with pytest.raises(ValueError, match="Env has Bounded action spec with shape"):
         Collector(env=box_env, controller=FrankaKitchenRandomPolicy(), transform=transform)
+
+    # Direct validate_controller call succeeds when dimensions match
+    validate_controller(BreakoutRandomPolicy(), discrete_env.action_spec)
+    validate_controller(CarRacingRandomPolicy(), box_env.action_spec)
 
 
 def test_controller_protocol_supports_policy_and_custom_planner():

@@ -70,9 +70,9 @@ def test_franka_kitchen_env_observation_shape():
 
 
 def test_franka_kitchen_state_dimensions_match_farama_spec(franka_env):
-    assert franka_env.env.observation_space["observation"].shape == (59,)
+    assert franka_env._gym_env.observation_space["observation"].shape == (59,)
 
-    raw_obs, _ = franka_env.env.reset(seed=42)
+    raw_obs, _ = franka_env._gym_env.reset(seed=42)
     expected_raw = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
 
     obs, _ = franka_env.reset(seed=42)
@@ -214,4 +214,4 @@ def test_franka_policies_share_action_contract(franka_env):
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert franka_env.action_space.contains(franka_env._to_env_action(action)), name
+            assert franka_env.action_spec.contains(action), name

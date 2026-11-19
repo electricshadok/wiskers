@@ -72,7 +72,7 @@ class CarRacingEnv(TorchGymEnv):
         super().__init__(env)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        car = self.env.car
+        car = self._gym_env.car
         assert car is not None
         hull = car.hull
         return TensorDict(

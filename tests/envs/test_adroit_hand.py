@@ -80,9 +80,9 @@ def test_adroit_hand_state_dimensions_match_farama_spec(
 ):
     env = AdroitHandEnv(task=task, image_size=(64, 64))
     try:
-        assert env.env.observation_space.shape == (raw_dim,)
+        assert env._gym_env.observation_space.shape == (raw_dim,)
 
-        raw_obs, _ = env.env.reset(seed=42)
+        raw_obs, _ = env._gym_env.reset(seed=42)
         expected_raw = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
 
         obs, _ = env.reset(seed=42)
@@ -206,4 +206,4 @@ def test_adroit_policies_share_action_contract(adroit_env):
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert adroit_env.action_space.contains(adroit_env._to_env_action(action)), name
+            assert adroit_env.action_spec.contains(action), name

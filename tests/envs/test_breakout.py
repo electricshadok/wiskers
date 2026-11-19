@@ -19,7 +19,7 @@ from wiskers.envs.breakout.policies import (
 def test_breakout_env_observation_shape_and_ram():
     env = BreakoutEnv()
     try:
-        assert env.env.unwrapped.ale.getRAMSize() == 128
+        assert env._gym_env.unwrapped.ale.getRAMSize() == 128
 
         obs, _ = env.reset(seed=42)
         assert isinstance(obs, TensorDict)
@@ -28,7 +28,7 @@ def test_breakout_env_observation_shape_and_ram():
         assert obs["render"].dtype == torch.uint8
         assert obs["ram"].shape == (128,)
         assert obs["ram"].dtype == torch.uint8
-        assert torch.equal(obs["ram"], torch.from_numpy(env.env.unwrapped.ale.getRAM()))
+        assert torch.equal(obs["ram"], torch.from_numpy(env._gym_env.unwrapped.ale.getRAM()))
 
         action = env.sample_action()
         assert action.shape == (1,)
@@ -40,7 +40,7 @@ def test_breakout_env_observation_shape_and_ram():
         assert next_obs["render"].dtype == torch.uint8
         assert next_obs["ram"].shape == (128,)
         assert next_obs["ram"].dtype == torch.uint8
-        assert torch.equal(next_obs["ram"], torch.from_numpy(env.env.unwrapped.ale.getRAM()))
+        assert torch.equal(next_obs["ram"], torch.from_numpy(env._gym_env.unwrapped.ale.getRAM()))
         assert isinstance(reward, float)
         assert isinstance(terminated, bool)
         assert isinstance(truncated, bool)
@@ -246,6 +246,6 @@ def test_breakout_policies_share_action_contract():
             assert isinstance(action, torch.Tensor), name
             assert action.shape == ref_action.shape, f"{name}: {action.shape} != {ref_action.shape}"
             assert action.dtype == ref_action.dtype, f"{name}: {action.dtype} != {ref_action.dtype}"
-            assert env.action_space.contains(env._to_env_action(action)), name
+            assert env.action_spec.contains(action), name
 
     env.close()

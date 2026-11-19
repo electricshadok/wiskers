@@ -38,7 +38,7 @@ class BreakoutEnv(TorchGymEnv):
         super().__init__(env)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        ram = self.env.unwrapped.ale.getRAM()
+        ram = self._gym_env.unwrapped.ale.getRAM()
         return TensorDict(
             {
                 "render": render_to_tensor(raw_obs, self.image_size),

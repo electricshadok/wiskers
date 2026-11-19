@@ -77,7 +77,7 @@ class ShadowHandEnv(TorchGymEnv):
 
     def _hide_target_visuals(self) -> None:
         """Set alpha=0 on target geoms, materials, and sites so goal markers are hidden in renders."""
-        model: Any = getattr(self.env.unwrapped, "model", None)
+        model: Any = getattr(self._gym_env.unwrapped, "model", None)
         if model is None:
             return
         for i in range(model.ngeom):
@@ -91,7 +91,7 @@ class ShadowHandEnv(TorchGymEnv):
                 model.site_rgba[i, 3] = 0.0
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
-        frame = self.env.render()
+        frame = self._gym_env.render()
         if frame is None:
             raise RuntimeError("ShadowHand render() returned None. Ensure render_mode='rgb_array'.")
         obs_vec = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
