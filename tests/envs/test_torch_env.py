@@ -31,7 +31,7 @@ def test_torch_gym_env_reset_and_step():
     env = DummyGymEnv(shape=(120, 160, 3))
     torch_env = TorchGymEnv(env)
 
-    obs, info = torch_env.reset()
+    obs, info = torch_env.reset(seed=0)
     assert isinstance(obs, TensorDict)
     assert obs.batch_size == torch.Size([])
     assert obs["render"].shape == (120, 160, 3)

@@ -123,7 +123,7 @@ def test_shadow_hand_available_tasks():
 
 def test_shadow_random_policy(shadow_env):
     policy = ShadowHandRandomPolicy()
-    obs, _ = shadow_env.reset()
+    obs, _ = shadow_env.reset(seed=42)
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (20,)
@@ -133,7 +133,7 @@ def test_shadow_random_policy(shadow_env):
 
 def test_shadow_heuristic_policy(shadow_env):
     policy = ShadowHandHeuristicPolicy(momentum=0.8, noise_scale=0.2)
-    obs, _ = shadow_env.reset()
+    obs, _ = shadow_env.reset(seed=42)
     act1 = policy(obs, step=0)
     act2 = policy(obs, step=1)
     assert act1.shape == (20,)

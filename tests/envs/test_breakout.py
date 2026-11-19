@@ -172,7 +172,7 @@ def test_breakout_datamodule_custom_policy():
 def test_breakout_random_policy():
     env = BreakoutEnv(image_size=(64, 64))
     policy = BreakoutRandomPolicy(fire_frequency=5)
-    obs, _ = env.reset()
+    obs, _ = env.reset(seed=42)
     assert policy.action_dim == 1
     assert int(policy(obs, step=0).item()) == 1
     assert int(policy(obs, step=1).item()) in {0, 1, 2, 3}

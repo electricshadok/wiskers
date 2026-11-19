@@ -174,7 +174,7 @@ def test_car_racing_datamodule_custom_policy():
 def test_car_racing_heuristic_policy():
     env = CarRacingEnv(image_size=(64, 64))
     policy = CarRacingHeuristicPolicy()
-    obs, _ = env.reset()
+    obs, _ = env.reset(seed=42)
     assert policy.action_dim == 3
     policy.steering = 0.5
     policy.reset()
@@ -188,7 +188,7 @@ def test_car_racing_heuristic_policy():
 def test_car_racing_random_policy():
     env = CarRacingEnv(image_size=(64, 64))
     policy = CarRacingRandomPolicy()
-    obs, _ = env.reset()
+    obs, _ = env.reset(seed=42)
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (3,)

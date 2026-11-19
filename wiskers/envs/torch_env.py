@@ -47,8 +47,7 @@ class TorchGymEnv:
 
     def reset(
         self,
-        *,
-        seed: int | None = None,
+        seed: int,
         options: dict[str, Any] | None = None,
     ) -> tuple[TensorDict, dict[str, Any]]:
         raw_obs, info = self.env.reset(seed=seed, options=options)

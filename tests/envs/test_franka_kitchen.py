@@ -115,7 +115,7 @@ def test_franka_random_policy(franka_env):
     policy = FrankaKitchenRandomPolicy()
     assert policy.action_dim == 9
 
-    obs, _ = franka_env.reset()
+    obs, _ = franka_env.reset(seed=42)
     action = policy(obs, step=0)
     assert isinstance(action, torch.Tensor)
     assert action.shape == (9,)
@@ -127,7 +127,7 @@ def test_franka_heuristic_policy(franka_env):
     policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2)
     assert policy.action_dim == 9
 
-    obs, _ = franka_env.reset()
+    obs, _ = franka_env.reset(seed=42)
     act1 = policy(obs, step=0)
     act2 = policy(obs, step=1)
     assert act1.shape == (9,)
