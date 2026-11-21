@@ -6,7 +6,7 @@ from tensordict import TensorDict
 
 from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
 from wiskers.envs.torch_env import TorchGymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
 
 
 class DummyGymEnv(gym.Env):
@@ -83,3 +83,11 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
 
     with pytest.raises(ValueError, match="Unsupported action space"):
         TorchGymEnv(UnsupportedGymEnv())
+
+
+def test_patch_mujoco_joint_eq():
+    import mujoco
+
+    patch_mujoco_joint_eq()
+    assert mujoco.mjtJoint.mjJNT_FREE == int(mujoco.mjtJoint.mjJNT_FREE)
+    assert mujoco.mjtJoint.mjJNT_FREE == np.int32(int(mujoco.mjtJoint.mjJNT_FREE))

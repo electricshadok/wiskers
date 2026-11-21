@@ -37,3 +37,12 @@ def render_to_tensor(
             resized = F.interpolate(t, size=image_size, mode="area")
             obs = resized.squeeze(0).squeeze(0).to(torch.uint8)
     return obs
+
+
+def patch_mujoco_joint_eq() -> None:
+    """Allow ``mujoco.mjtJoint`` enum values to compare equal with Python/NumPy ints."""
+    import mujoco
+
+    mujoco.mjtJoint.__eq__ = lambda self, other: (
+        isinstance(other, (int, np.integer, mujoco.mjtJoint)) and int(self) == int(other)
+    )

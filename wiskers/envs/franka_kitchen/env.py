@@ -6,18 +6,13 @@ from typing import Any, Sequence
 
 import gymnasium as gym
 import gymnasium_robotics
-import mujoco
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
 
-
-mujoco.mjtJoint.__eq__ = lambda self, other: (
-    isinstance(other, (int, np.integer, mujoco.mjtJoint)) and int(self) == int(other)
-)
 
 AVAILABLE_TASKS: tuple[str, ...] = (
     "bottom burner",
@@ -63,6 +58,7 @@ class FrankaKitchenEnv(TorchGymEnv):
         image_size: tuple[int, int] | None = None,
         tasks_to_complete: Sequence[str] | None = ("microwave",),
     ) -> None:
+        patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
 
         tasks = list(tasks_to_complete) if tasks_to_complete is not None else ["microwave"]

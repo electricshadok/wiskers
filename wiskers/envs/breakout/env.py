@@ -12,10 +12,6 @@ from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.envs.utils import render_to_tensor
 
 
-# Register all ALE (Atari) environments
-gym.register_envs(ale_py)
-
-
 class BreakoutEnv(TorchGymEnv):
     """
     ALE/Breakout-v5 environment emitting multi-modal TensorDict observations.
@@ -34,6 +30,7 @@ class BreakoutEnv(TorchGymEnv):
 
     def __init__(self, image_size: tuple[int, int] | None = None) -> None:
         self.image_size = tuple(image_size) if image_size is not None else None
+        gym.register_envs(ale_py)
         env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
         super().__init__(env)
 
