@@ -4,6 +4,7 @@ import pathlib
 import shutil
 
 import lightning as L
+from hydra.utils import instantiate
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
@@ -12,7 +13,6 @@ from omegaconf import OmegaConf
 from safetensors.torch import save_model
 
 from wiskers.pipeline.config import load_config
-from wiskers.pipeline.instantiate import instantiate
 
 
 class TrainCLI:
@@ -172,15 +172,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run training with Hydra configuration.")
     parser.add_argument(
         "--config-path",
-        "-cp",
         type=str,
         default="./configs",
         help="Root directory for configurations (default: ./configs)",
     )
     parser.add_argument(
-        "--config-name",
         "--config",
-        "-cn",
         type=str,
         required=True,
         help="Configuration name relative to config-path (e.g. training/car_racing_world_models)",
@@ -198,8 +195,8 @@ if __name__ == "__main__":
     args, extra_args = parser.parse_known_args()
 
     if args.fast_dev_run:
-        cmd = TrainCLI(args.config_name, config_path=args.config_path, overrides=extra_args)
+        cmd = TrainCLI(args.config, config_path=args.config_path, overrides=extra_args)
         cmd.run(fast_dev_run=True)
     else:
-        cmd = TrainPipelineCLI(args.config_name, config_path=args.config_path, overrides=extra_args)
+        cmd = TrainPipelineCLI(args.config, config_path=args.config_path, overrides=extra_args)
         cmd.run(quick_run=args.quick_run)

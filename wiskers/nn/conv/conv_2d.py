@@ -196,14 +196,7 @@ class UpBlock2D(nn.Module):
         )
 
     def concatenate(self, encoder_layer, decoder_layer):
-        # Note: keep code but unecessary for the current unet implementation
-        # encoder_shape = encoder_layer.size()[-2:]
-        # decoder_shape = decoder_layer.size()[-2:]
-        # if encoder_shape != decoder_shape:
-        #    encoder_layer = TF.center_crop(encoder_layer, decoder_shape)
-
-        x = torch.cat((encoder_layer, decoder_layer), dim=1)
-        return x
+        return torch.cat((encoder_layer, decoder_layer), dim=1)
 
     def forward(self, x, skip_x: torch.Tensor | None = None):
         # in: [N, in_C, H, W]

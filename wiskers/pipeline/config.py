@@ -19,7 +19,7 @@ def resolve_config_file(config_name: str, config_path: str = "./configs") -> str
     if os.path.exists(config_name):
         return os.path.normpath(config_name)
 
-    for ext in ["", ".yaml", ".yml"]:
+    for ext in ("", ".yaml"):
         candidate = os.path.normpath(os.path.join(config_path, f"{config_name}{ext}"))
         if os.path.exists(candidate):
             return candidate
@@ -33,10 +33,9 @@ def resolve_group_path(config_path: str, group: str, name: str) -> str:
     """
     Resolve a Hydra config group path: <config_path>/<group>/<name>.yaml.
     """
-    for ext in [".yaml", ".yml"]:
-        candidate = os.path.normpath(os.path.join(config_path, group, f"{name}{ext}"))
-        if os.path.exists(candidate):
-            return candidate
+    candidate = os.path.normpath(os.path.join(config_path, group, f"{name}.yaml"))
+    if os.path.exists(candidate):
+        return candidate
 
     raise FileNotFoundError(
         f"Could not find config for group '{group}' with name '{name}' under '{config_path}/{group}/'"
@@ -88,8 +87,6 @@ def load_config(
         return raw_cfg
 
     defaults = raw_cfg.pop("defaults")
-    if isinstance(defaults, str):
-        defaults = [defaults]
 
     configs_to_merge: list[DictConfig] = []
     self_merged = False

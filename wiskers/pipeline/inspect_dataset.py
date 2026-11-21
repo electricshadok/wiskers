@@ -2,9 +2,9 @@ import argparse
 from typing import Any
 
 import lightning as L
+from hydra.utils import instantiate
 
 from wiskers.pipeline.config import load_config
-from wiskers.pipeline.instantiate import instantiate
 
 
 def describe_element(elem: Any, indent: int = 0, max_items: int = 3) -> None:
@@ -80,19 +80,16 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--config-path",
-        "-cp",
         type=str,
         default="./configs",
         help="Root directory for configurations (default: ./configs)",
     )
     parser.add_argument(
-        "--config-name",
         "--config",
-        "-cn",
         type=str,
         required=True,
         help="Configuration name relative to config-path (e.g. dataset/car_racing)",
     )
     args = parser.parse_args()
-    cmd = InspectDatasetCLI(args.config_name, config_path=args.config_path)
+    cmd = InspectDatasetCLI(args.config, config_path=args.config_path)
     cmd.run()

@@ -9,6 +9,7 @@ from webui.dataset.adapters.base import DefaultUIAdapter, EnvUIAdapter
 from webui.dataset.adapters.breakout import BreakoutUIAdapter
 from webui.dataset.adapters.car_racing import CarRacingUIAdapter
 from webui.dataset.adapters.franka_kitchen import FrankaKitchenUIAdapter
+from webui.dataset.adapters.inverted_pendulum import InvertedPendulumUIAdapter
 from webui.dataset.adapters.shadow_hand import ShadowHandUIAdapter
 from wiskers.data.datamodule import TrajectoryDataModule
 
@@ -18,6 +19,7 @@ _ADAPTERS: tuple[type[EnvUIAdapter], ...] = (
     BreakoutUIAdapter,
     CarRacingUIAdapter,
     FrankaKitchenUIAdapter,
+    InvertedPendulumUIAdapter,
     ShadowHandUIAdapter,
 )
 _BY_ENV_NAME: dict[str, type[EnvUIAdapter]] = {cls.env_name: cls for cls in _ADAPTERS}

@@ -70,7 +70,7 @@ python wiskers/pipeline/train.py --config training/car_racing_world_models --qui
 
 ## Training
 
-Launch training with a chosen experiment configuration (`--config-name`, `--config`, or `-cn`):
+Launch training with a chosen experiment configuration (`--config`):
 
 ```bash
 # Shorthand name (resolves to ./configs/training/car_racing_world_models.yaml)
@@ -82,7 +82,7 @@ python wiskers/pipeline/train.py --config ./configs/training/car_racing_world_mo
 # Reproduce an exact previous run using its saved config snapshot
 python wiskers/pipeline/train.py --config experiments/world_models/version_0/config.yaml
 
-# Custom config root directory (--config-path or -cp)
+# Custom config root directory (--config-path)
 python wiskers/pipeline/train.py --config-path ./configs --config training/car_racing_world_models
 ```
 
@@ -124,6 +124,9 @@ python wiskers/pipeline/inspect_dataset.py --config dataset/car_racing
 
 # Franka Kitchen robotics manipulator trajectory dataloader
 python wiskers/pipeline/inspect_dataset.py --config dataset/franka_kitchen
+
+# InvertedPendulum-v5 MuJoCo cart-pole trajectory dataloader
+python wiskers/pipeline/inspect_dataset.py --config dataset/inverted_pendulum
 
 # Adroit Hand dexterous manipulation trajectory dataloader
 python wiskers/pipeline/inspect_dataset.py --config dataset/adroit_hand

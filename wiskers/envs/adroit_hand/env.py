@@ -9,7 +9,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.envs.torch_env import TorchGymEnv
-from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
+from wiskers.envs.utils import render_to_tensor
 
 
 AVAILABLE_TASKS: dict[str, str] = {
@@ -52,7 +52,6 @@ class AdroitHandEnv(TorchGymEnv):
         task: str = "door",
         image_size: tuple[int, int] | None = None,
     ) -> None:
-        patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
 
         task_key = task.lower().strip()

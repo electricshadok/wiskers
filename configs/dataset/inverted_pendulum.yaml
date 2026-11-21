@@ -1,0 +1,45 @@
+seed: 0
+
+# Shared transform for both Collector (policy input) and TrajectoryDataModule (training batches)
+transform:
+  _target_: wiskers.data.transforms.EpisodeToTensor
+  image_size: [3, 64, 64]  # [C, H, W] (C = 1 for grayscale or 3 for RGB)
+  obs_range: [0.0, 1.0]    # [low, high] normalization range for observations
+
+data_module:
+  _target_: wiskers.data.datamodule.TrajectoryDataModule
+
+  # Rollout data collection settings
+  collector:
+    _target_: wiskers.data.collector.Collector
+    env:
+      _target_: wiskers.envs.inverted_pendulum.env.InvertedPendulumEnv
+      image_size: [64, 64]
+      reset_noise_scale: 0.01
+    controller:
+      _target_: wiskers.envs.inverted_pendulum.policies.InvertedPendulumNeuralPolicy
+      image_size: ${transform.image_size}
+    transform: ${transform}
+    num_episodes: 20
+    min_steps: ${data_module.sampler.num_steps}
+    max_steps: 250
+    seed: ${seed}
+    verbose: true
+
+  # Replay buffer that stores complete episode trajectories in memory
+  replay_buffer:
+    _target_: wiskers.data.buffer.ReplayBuffer
+    capacity_episodes: 500  # Maximum number of complete episodes to keep in memory
+    device: cpu
+
+  # Sampler that extracts sequence chunks from episodes for training batches
+  sampler:
+    _target_: wiskers.data.sampler.UniformChunkSampler
+    num_steps: 4  # Consecutive steps per sampled chunk (must be <= collector.min_steps)
+
+  # Transform that converts a sampled Episode chunk into PyTorch tensors
+  transform: ${transform}
+
+  # DataLoader settings
+  batch_size: 16
+  num_workers: 2
