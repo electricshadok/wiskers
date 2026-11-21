@@ -2,7 +2,7 @@
 PyTorch wrapper around Gymnasium environments.
 """
 
-from typing import Any
+from typing import Any, Self
 
 import gymnasium as gym
 import numpy as np
@@ -31,6 +31,12 @@ class TorchGymEnv:
     def close(self) -> None:
         self._gym_env.close()
 
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
     def _process_obs(self, raw_obs: Any) -> TensorDict:
         """Convert a raw Gymnasium observation into a TensorDict with batch_size=[]."""
         return TensorDict({"render": render_to_tensor(raw_obs)}, batch_size=[])
@@ -57,14 +63,10 @@ class TorchGymEnv:
         if isinstance(space, gym.spaces.Discrete):
             return DiscreteActionSpec(n=int(space.n))
         if isinstance(space, gym.spaces.Box):
-            if np.issubdtype(space.dtype, np.floating):
-                dtype = torch.float32
-            elif np.issubdtype(space.dtype, np.integer):
-                dtype = torch.int64
-            else:
+            if not np.issubdtype(space.dtype, np.floating):
                 raise ValueError(f"Unsupported Box action dtype: {space.dtype}")
-            low = torch.as_tensor(space.low, dtype=dtype)
-            high = torch.as_tensor(space.high, dtype=dtype)
+            low = torch.as_tensor(space.low, dtype=torch.float32)
+            high = torch.as_tensor(space.high, dtype=torch.float32)
             return BoundedActionSpec(low=low, high=high)
         raise ValueError(f"Unsupported action space: {type(space)}")
 

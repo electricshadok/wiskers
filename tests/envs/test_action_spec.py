@@ -55,36 +55,43 @@ def test_bounded_action_spec_validation():
     with pytest.raises(ValueError):
         BoundedActionSpec(low=torch.tensor(0.0), high=torch.tensor(1.0))
     with pytest.raises(ValueError):
+        BoundedActionSpec(low=torch.zeros(2, 3), high=torch.ones(2, 3))
+    with pytest.raises(ValueError):
+        BoundedActionSpec(low=torch.zeros(0), high=torch.ones(0))
+    with pytest.raises(ValueError):
         BoundedActionSpec(low=torch.zeros(2), high=torch.ones(3))
     with pytest.raises(ValueError):
-        BoundedActionSpec(low=torch.zeros(3, dtype=torch.float32), high=torch.ones(3, dtype=torch.int64))
-    with pytest.raises(ValueError):
+        BoundedActionSpec(low=torch.zeros(3, dtype=torch.float32), high=torch.ones(3, dtype=torch.float64))
+    with pytest.raises(ValueError, match="floating-point"):
+        BoundedActionSpec(low=torch.zeros(3, dtype=torch.int64), high=torch.ones(3, dtype=torch.int64))
+    with pytest.raises(ValueError, match="floating-point"):
         BoundedActionSpec(low=torch.zeros(3, dtype=torch.bool), high=torch.ones(3, dtype=torch.bool))
+    with pytest.raises(ValueError, match="devices"):
+        BoundedActionSpec(low=torch.zeros(2), high=torch.ones(2, device="meta"))
+    with pytest.raises(ValueError, match="finite"):
+        BoundedActionSpec(low=torch.tensor([float("nan")]), high=torch.tensor([1.0]))
+    with pytest.raises(ValueError, match="finite"):
+        BoundedActionSpec(low=torch.tensor([float("-inf")]), high=torch.tensor([1.0]))
+    with pytest.raises(ValueError, match="finite"):
+        BoundedActionSpec(low=torch.tensor([0.0]), high=torch.tensor([float("inf")]))
     with pytest.raises(ValueError):
         BoundedActionSpec(low=torch.full((3,), 2.0), high=torch.full((3,), 1.0))
 
 
-def test_bounded_action_spec_int():
-    spec = BoundedActionSpec(
-        low=torch.tensor([0, -1, 2], dtype=torch.int64),
-        high=torch.tensor([2, 1, 4], dtype=torch.int64),
+def test_bounded_action_spec_device():
+    cpu_spec = BoundedActionSpec(
+        low=torch.tensor([-1.0, 0.0, -0.5]),
+        high=torch.tensor([1.0, 2.0, 0.5]),
     )
-    assert isinstance(spec, ActionSpec)
-    assert spec.action_dim == 3
-    assert spec.shape == (3,)
-    assert spec.dtype == torch.int64
+    assert cpu_spec.sample().device == cpu_spec.low.device
 
-    for _ in range(20):
-        sample = spec.sample()
-        assert spec.contains(sample)
-    assert not spec.contains(torch.tensor([3, 0, 2], dtype=torch.int64))
-
-
-def test_bounded_action_spec_unbounded():
-    spec = BoundedActionSpec(
-        low=torch.full((2,), float("-inf")),
-        high=torch.full((2,), float("inf")),
-    )
-    sample = spec.sample()
-    assert spec.contains(sample)
-    assert torch.isfinite(sample).all()
+    device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else None)
+    if device is not None:
+        dev_spec = BoundedActionSpec(
+            low=cpu_spec.low.to(device),
+            high=cpu_spec.high.to(device),
+        )
+        assert cpu_spec != dev_spec
+        sample = dev_spec.sample()
+        assert sample.device == dev_spec.low.device
+        assert dev_spec.contains(sample)

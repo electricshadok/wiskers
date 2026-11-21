@@ -60,11 +60,8 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
             super().__init__()
             self.action_space = gym.spaces.Box(low=0, high=5, shape=(3,), dtype=np.int64)
 
-    int_box_env = TorchGymEnv(IntBoxGymEnv())
-    assert isinstance(int_box_env.action_spec, BoundedActionSpec)
-    assert int_box_env.action_spec.shape == (3,)
-    assert int_box_env.action_spec.dtype == torch.int64
-    assert int_box_env.action_spec.contains(int_box_env.action_spec.sample())
+    with pytest.raises(ValueError, match="Unsupported Box action dtype"):
+        TorchGymEnv(IntBoxGymEnv())
 
     class DiscreteGymEnv(DummyGymEnv):
         def __init__(self):
@@ -91,3 +88,17 @@ def test_patch_mujoco_joint_eq():
     patch_mujoco_joint_eq()
     assert mujoco.mjtJoint.mjJNT_FREE == int(mujoco.mjtJoint.mjJNT_FREE)
     assert mujoco.mjtJoint.mjJNT_FREE == np.int32(int(mujoco.mjtJoint.mjJNT_FREE))
+
+
+def test_torch_gym_env_context_manager():
+    closed = False
+
+    class TrackingEnv(DummyGymEnv):
+        def close(self):
+            nonlocal closed
+            closed = True
+
+    with TorchGymEnv(TrackingEnv()) as wrapped:
+        assert isinstance(wrapped, TorchGymEnv)
+        assert not closed
+    assert closed

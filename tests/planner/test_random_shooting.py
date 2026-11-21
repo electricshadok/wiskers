@@ -95,14 +95,6 @@ def test_random_shooting_invalid_action_spec():
     with pytest.raises(TypeError, match="BoundedActionSpec"):
         RandomShootingPlanner(model=model, action_spec=DiscreteActionSpec(n=4))  # type: ignore[arg-type]
 
-    int_spec = BoundedActionSpec(low=torch.tensor([0, 0]), high=torch.tensor([2, 2]))
-    with pytest.raises(ValueError, match="floating-point"):
-        RandomShootingPlanner(model=model, action_spec=int_spec)
-
-    inf_spec = BoundedActionSpec(low=torch.tensor([-float("inf"), -1.0]), high=torch.tensor([1.0, 1.0]))
-    with pytest.raises(ValueError, match="finite"):
-        RandomShootingPlanner(model=model, action_spec=inf_spec)
-
 
 def test_random_shooting_collector_integration():
     torch.manual_seed(0)

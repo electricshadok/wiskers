@@ -29,10 +29,6 @@ class RandomShootingPlanner(Planner):
     ) -> None:
         if not isinstance(action_spec, BoundedActionSpec):
             raise TypeError(f"RandomShootingPlanner requires BoundedActionSpec, got {type(action_spec).__name__}.")
-        if not action_spec.dtype.is_floating_point:
-            raise ValueError(f"RandomShootingPlanner requires a floating-point action_spec, got {action_spec.dtype}.")
-        if not (torch.isfinite(action_spec.low).all() and torch.isfinite(action_spec.high).all()):
-            raise ValueError("RandomShootingPlanner requires finite action bounds.")
         super().__init__(model=model, action_spec=action_spec, horizon=horizon, num_samples=num_samples)
 
     @property
