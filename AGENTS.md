@@ -30,6 +30,7 @@
 ## Tooling & Verification
 - Environment & dependencies are managed with `uv` (Python 3.13).
 - Formatting/linting follows `pyproject.toml` (Ruff: line length 120, double quotes, 2 blank lines after imports) and static typing follows `pyrefly.toml` (`Pyrefly`).
+- Do not write unit tests for `webui/`.
 - After code changes, run:
   ```bash
   uv run --no-sync ruff check .
