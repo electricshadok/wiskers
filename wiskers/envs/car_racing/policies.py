@@ -1,10 +1,10 @@
 import random
 from typing import Sequence
 
-import gymnasium as gym
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.action_spec import BoundedActionSpec
 from wiskers.nn.heads import ContinuousActor
 from wiskers.policy.base import ContinuousPolicy
 
@@ -12,22 +12,20 @@ from wiskers.policy.base import ContinuousPolicy
 class CarRacingPolicy(ContinuousPolicy):
     """Base policy for CarRacing. Continuous action space (steering, gas, brake)."""
 
-    action_dim: int = 3
+    def __init__(self) -> None:
+        super().__init__(
+            BoundedActionSpec(
+                low=torch.tensor([-1.0, 0.0, 0.0], dtype=torch.float32),
+                high=torch.tensor([1.0, 1.0, 1.0], dtype=torch.float32),
+            )
+        )
 
 
 class CarRacingRandomPolicy(CarRacingPolicy):
     """Uniform random exploration for CarRacing."""
 
-    def __init__(self, action_space: gym.spaces.Box | None = None) -> None:
-        super().__init__()
-        self.action_space = action_space or gym.spaces.Box(
-            low=torch.tensor([-1.0, 0.0, 0.0]).numpy(),
-            high=torch.tensor([1.0, 1.0, 1.0]).numpy(),
-            dtype=float,
-        )
-
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
-        return torch.from_numpy(self.action_space.sample()).float()
+        return self.action_spec.sample()
 
 
 class CarRacingHeuristicPolicy(CarRacingPolicy):
@@ -76,7 +74,7 @@ class CarRacingNeuralPolicy(CarRacingPolicy):
         c, h, w = image_size
         self.actor = ContinuousActor(
             feat_size=c * h * w,
-            action_size=self.action_dim,
+            action_size=self.action_spec.action_dim,
             hidden_size=hidden_size,
             num_layers=num_layers,
         )

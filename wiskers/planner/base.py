@@ -8,6 +8,8 @@ from typing import Any, Protocol, runtime_checkable
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.action_spec import ActionSpec
+
 
 @runtime_checkable
 class DynamicsModel(Protocol):
@@ -36,40 +38,35 @@ class Planner(ABC):
 
     Args:
         model: Latent dynamics model implementing ``DynamicsModel``.
-        action_dim: Dimensionality of the 1D action tensor.
+        action_spec: Action specification produced by this planner.
         horizon: Planning horizon ``H`` (steps ahead).
         num_samples: Number of candidate action trajectories ``K`` evaluated per step.
-        low: Minimum scalar bound for continuous actions.
-        high: Maximum scalar bound for continuous actions.
     """
 
     def __init__(
         self,
         model: DynamicsModel,
-        action_dim: int,
+        action_spec: ActionSpec,
         horizon: int = 12,
         num_samples: int = 256,
-        low: float = -1.0,
-        high: float = 1.0,
     ) -> None:
-        if action_dim <= 0:
-            raise ValueError(f"action_dim must be positive, got {action_dim}.")
         if horizon <= 0:
             raise ValueError(f"horizon must be positive, got {horizon}.")
         if num_samples <= 0:
             raise ValueError(f"num_samples must be positive, got {num_samples}.")
-        if low >= high:
-            raise ValueError(f"Action bounds must satisfy low < high, got ({low}, {high}).")
 
         self.model = model
-        self.action_dim = action_dim
+        self._action_spec = action_spec
         self.horizon = horizon
         self.num_samples = num_samples
-        self.low = low
-        self.high = high
 
         self._state: Any = None
         self._prev_action: torch.Tensor | None = None
+
+    @property
+    def action_spec(self) -> ActionSpec:
+        """Specification of the actions produced by this planner."""
+        return self._action_spec
 
     def reset(self) -> None:
         """Reset episodic dynamics state at the start of a rollout."""
@@ -78,7 +75,7 @@ class Planner(ABC):
 
     @abstractmethod
     def plan(self, state: Any) -> torch.Tensor:
-        """Select a 1D action tensor of shape ``(action_dim,)`` given the current latent ``state``."""
+        """Select an action tensor conforming to ``self.action_spec`` given the current latent ``state``."""
         ...
 
     @torch.inference_mode()

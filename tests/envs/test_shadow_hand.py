@@ -53,7 +53,7 @@ def test_shadow_hand_env_observation_shape():
         assert obs["state:desired_goal"].shape == (7,)
         assert obs["state:desired_goal"].dtype == torch.float32
 
-        action = env.sample_action()
+        action = env.action_spec.sample()
         assert action.shape == (20,)
         next_obs, reward, terminated, truncated, _ = env.step(action)
         assert isinstance(next_obs, TensorDict)
@@ -107,7 +107,7 @@ def test_shadow_hand_state_dimensions_match_farama_spec(
         else:
             assert "state:obj_qvel" not in obs.keys()
 
-        assert env.sample_action().shape == (20,)
+        assert env.action_spec.sample().shape == (20,)
     finally:
         env.close()
 
@@ -199,7 +199,7 @@ def test_shadow_neural_policy():
 
 
 def test_shadow_policies_share_action_contract(shadow_env):
-    ref_action = shadow_env.sample_action()
+    ref_action = shadow_env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
@@ -209,6 +209,7 @@ def test_shadow_policies_share_action_contract(shadow_env):
     ]
 
     for policy in policies:
+        assert policy.action_spec == shadow_env.action_spec, type(policy).__name__
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

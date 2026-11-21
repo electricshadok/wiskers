@@ -2,26 +2,30 @@
 Base policy interfaces for discrete and continuous environment rollouts.
 """
 
-import gymnasium as gym
 import torch
 import torch.nn as nn
 from tensordict import TensorDict
+
+from wiskers.envs.action_spec import ActionSpec, BoundedActionSpec, DiscreteActionSpec
 
 
 class Policy(nn.Module):
     """
     Base class for all rollout policies (random, heuristic, or learned).
 
-    Attributes:
-        action_dim (int): Dimensionality of the stored action vector in Episode.action
-            (1 for discrete scalar actions, or D for D-dimensional continuous actions).
+    Args:
+        action_spec: Specification of the action tensor produced by this policy.
     """
 
-    action_dim: int
-
-    def __init__(self) -> None:
+    def __init__(self, action_spec: ActionSpec) -> None:
         super().__init__()
+        self._action_spec = action_spec
         self.eval()
+
+    @property
+    def action_spec(self) -> ActionSpec:
+        """Specification of the actions produced by this policy."""
+        return self._action_spec
 
     def reset(self) -> None:
         """Reset any internal recurrent or episodic state at the start of an episode."""
@@ -41,46 +45,49 @@ class Policy(nn.Module):
             step (int): Current step index within the episode.
 
         Returns:
-            torch.Tensor: 1D action tensor of shape ``(action_dim,)``.
-                - Discrete: shape ``(1,)`` with dtype ``torch.int64`` (e.g., ``torch.tensor([2])``).
-                - Continuous: shape ``(action_dim,)`` with dtype ``torch.float32``.
+            torch.Tensor: 1D action tensor conforming to ``self.action_spec``.
+                - Discrete: shape ``(1,)`` with integer dtype (e.g., ``torch.tensor([2])``).
+                - Continuous: shape ``action_spec.shape`` with float/numeric dtype.
         """
         raise NotImplementedError
 
 
 class DiscretePolicy(Policy):
-    """Policy for discrete action spaces returning a 1D ``int64`` ``torch.Tensor`` of shape ``(1,)``."""
+    """Policy for discrete action spaces returning a 1D integer ``torch.Tensor`` of shape ``(1,)``."""
 
-    action_dim: int = 1
+    def __init__(self, action_spec: DiscreteActionSpec) -> None:
+        if not isinstance(action_spec, DiscreteActionSpec):
+            raise TypeError(f"DiscretePolicy requires DiscreteActionSpec, got {type(action_spec).__name__}.")
+        super().__init__(action_spec)
+
+    @property
+    def action_spec(self) -> DiscreteActionSpec:
+        assert isinstance(self._action_spec, DiscreteActionSpec)
+        return self._action_spec
 
 
 class ContinuousPolicy(Policy):
-    """Policy for continuous action spaces returning a ``float32`` ``torch.Tensor`` of shape ``(action_dim,)``."""
+    """Policy for continuous/bounded action spaces returning a ``torch.Tensor`` conforming to ``self.action_spec``."""
 
-    action_dim: int
+    def __init__(self, action_spec: BoundedActionSpec) -> None:
+        if not isinstance(action_spec, BoundedActionSpec):
+            raise TypeError(f"ContinuousPolicy requires BoundedActionSpec, got {type(action_spec).__name__}.")
+        super().__init__(action_spec)
+
+    @property
+    def action_spec(self) -> BoundedActionSpec:
+        assert isinstance(self._action_spec, BoundedActionSpec)
+        return self._action_spec
 
 
 class RandomPolicy(Policy):
-    """Uniform random exploration across a Gymnasium action space (Discrete or Box)."""
-
-    def __init__(self, action_space: gym.Space) -> None:
-        super().__init__()
-        self.action_space = action_space
-        if isinstance(action_space, gym.spaces.Discrete):
-            self.action_dim = 1
-        elif isinstance(action_space, gym.spaces.Box):
-            self.action_dim = int(action_space.shape[0])
-        else:
-            raise ValueError(f"Unsupported action space: {type(action_space)}")
+    """Uniform random exploration across an ``ActionSpec``."""
 
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         """
         Sample an action uniformly at random.
 
         Returns:
-            torch.Tensor: Shape ``(action_dim,)`` (``(1,)`` for discrete, ``(D,)`` for continuous).
+            torch.Tensor: Action conforming to ``self.action_spec``.
         """
-        sample = self.action_space.sample()
-        if isinstance(self.action_space, gym.spaces.Discrete):
-            return torch.tensor([sample], dtype=torch.int64)
-        return torch.from_numpy(sample).float()
+        return self.action_spec.sample()

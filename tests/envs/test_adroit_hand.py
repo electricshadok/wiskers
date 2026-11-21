@@ -45,7 +45,7 @@ def test_adroit_hand_env_observation_shape():
     assert obs["state:obj"].shape == (12,)
     assert obs["state:obj"].dtype == torch.float32
 
-    action = env.sample_action()
+    action = env.action_spec.sample()
     assert action.shape == (28,)
     next_obs, reward, terminated, truncated, info = env.step(action)
     assert isinstance(next_obs, TensorDict)
@@ -93,7 +93,7 @@ def test_adroit_hand_state_dimensions_match_farama_spec(
         assert obs["state:obj"].dtype == torch.float32
         assert hand_dim + obj_dim == raw_dim
         assert torch.equal(torch.cat([obs["state:hand"], obs["state:obj"]], dim=-1), expected_raw)
-        assert env.sample_action().shape == (action_dim,)
+        assert env.action_spec.sample().shape == (action_dim,)
     finally:
         env.close()
 
@@ -189,7 +189,7 @@ def test_adroit_neural_policy():
 
 
 def test_adroit_policies_share_action_contract(adroit_env):
-    ref_action = adroit_env.sample_action()
+    ref_action = adroit_env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
@@ -199,6 +199,7 @@ def test_adroit_policies_share_action_contract(adroit_env):
     ]
 
     for policy in policies:
+        assert policy.action_spec == adroit_env.action_spec, type(policy).__name__
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

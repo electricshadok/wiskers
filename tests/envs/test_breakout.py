@@ -30,7 +30,7 @@ def test_breakout_env_observation_shape_and_ram():
         assert obs["ram"].dtype == torch.uint8
         assert torch.equal(obs["ram"], torch.from_numpy(env._gym_env.unwrapped.ale.getRAM()))
 
-        action = env.sample_action()
+        action = env.action_spec.sample()
         assert action.shape == (1,)
         assert action.dtype == torch.int64
         next_obs, reward, terminated, truncated, _ = env.step(action)
@@ -173,7 +173,7 @@ def test_breakout_random_policy():
     env = BreakoutEnv(image_size=(64, 64))
     policy = BreakoutRandomPolicy(fire_frequency=5)
     obs, _ = env.reset(seed=42)
-    assert policy.action_dim == 1
+    assert policy.action_spec.action_dim == 1
     assert int(policy(obs, step=0).item()) == 1
     assert int(policy(obs, step=1).item()) in {0, 1, 2, 3}
     env.close()
@@ -229,7 +229,7 @@ def test_breakout_neural_policy():
 
 def test_breakout_policies_share_action_contract():
     env = BreakoutEnv(image_size=(64, 64))
-    ref_action = env.sample_action()
+    ref_action = env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
@@ -239,6 +239,7 @@ def test_breakout_policies_share_action_contract():
     ]
 
     for policy in policies:
+        assert policy.action_spec == env.action_spec, type(policy).__name__
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

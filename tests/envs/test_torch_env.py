@@ -53,7 +53,7 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
     assert isinstance(box_env.action_spec, BoundedActionSpec)
     assert box_env.action_spec.shape == (2,)
     assert box_env.action_spec.dtype == torch.float32
-    assert box_env.action_spec.contains(box_env.sample_action())
+    assert box_env.action_spec.contains(box_env.action_spec.sample())
 
     class IntBoxGymEnv(DummyGymEnv):
         def __init__(self):
@@ -64,7 +64,7 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
     assert isinstance(int_box_env.action_spec, BoundedActionSpec)
     assert int_box_env.action_spec.shape == (3,)
     assert int_box_env.action_spec.dtype == torch.int64
-    assert int_box_env.action_spec.contains(int_box_env.sample_action())
+    assert int_box_env.action_spec.contains(int_box_env.action_spec.sample())
 
     class DiscreteGymEnv(DummyGymEnv):
         def __init__(self):
@@ -74,7 +74,7 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
     disc_env = TorchGymEnv(DiscreteGymEnv())
     assert isinstance(disc_env.action_spec, DiscreteActionSpec)
     assert disc_env.action_spec.n == 4
-    assert disc_env.action_spec.contains(disc_env.sample_action())
+    assert disc_env.action_spec.contains(disc_env.action_spec.sample())
 
     class UnsupportedGymEnv(DummyGymEnv):
         def __init__(self):

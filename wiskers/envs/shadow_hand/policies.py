@@ -4,10 +4,10 @@ Policies for Shadow Dexterous Hand manipulation environments.
 
 from typing import Sequence
 
-import gymnasium as gym
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.action_spec import BoundedActionSpec
 from wiskers.nn.heads import ContinuousActor
 from wiskers.policy.base import ContinuousPolicy
 
@@ -15,20 +15,20 @@ from wiskers.policy.base import ContinuousPolicy
 class ShadowHandPolicy(ContinuousPolicy):
     """Base policy for ShadowHand. Continuous 20D action space across all tasks."""
 
-    action_dim: int = 20
+    def __init__(self) -> None:
+        super().__init__(
+            BoundedActionSpec(
+                low=torch.full((20,), -1.0, dtype=torch.float32),
+                high=torch.full((20,), 1.0, dtype=torch.float32),
+            )
+        )
 
 
 class ShadowHandRandomPolicy(ShadowHandPolicy):
     """Uniform random exploration for ShadowHand."""
 
-    def __init__(self, action_space: gym.spaces.Box | None = None) -> None:
-        super().__init__()
-        self.action_space = action_space or gym.spaces.Box(
-            low=-1.0, high=1.0, shape=(self.action_dim,), dtype=float
-        )
-
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
-        return torch.from_numpy(self.action_space.sample()).float()
+        return self.action_spec.sample()
 
 
 class ShadowHandHeuristicPolicy(ShadowHandPolicy):
@@ -50,15 +50,15 @@ class ShadowHandHeuristicPolicy(ShadowHandPolicy):
         super().__init__()
         self.momentum = momentum
         self.noise_scale = noise_scale
-        self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
+        self.current_action = torch.zeros(self.action_spec.shape, dtype=self.action_spec.dtype)
 
     def reset(self) -> None:
-        self.current_action = torch.zeros(self.action_dim, dtype=torch.float32)
+        self.current_action = torch.zeros(self.action_spec.shape, dtype=self.action_spec.dtype)
 
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
-        noise = torch.randn(self.action_dim, dtype=torch.float32) * self.noise_scale
+        noise = torch.randn(self.action_spec.shape, dtype=self.action_spec.dtype) * self.noise_scale
         action = self.momentum * self.current_action + (1.0 - self.momentum) * noise
-        self.current_action = torch.clamp(action, -1.0, 1.0)
+        self.current_action = torch.clamp(action, min=self.action_spec.low, max=self.action_spec.high)
         return self.current_action.clone()
 
 
@@ -84,7 +84,7 @@ class ShadowHandNeuralPolicy(ShadowHandPolicy):
         c, h, w = image_size
         self.actor = ContinuousActor(
             feat_size=c * h * w,
-            action_size=self.action_dim,
+            action_size=self.action_spec.action_dim,
             hidden_size=hidden_size,
             num_layers=num_layers,
         )

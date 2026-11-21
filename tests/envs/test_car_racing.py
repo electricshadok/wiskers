@@ -29,7 +29,7 @@ def test_car_racing_env_observation_shape_and_state():
         assert obs["state:wheels"].shape == (5,)
         assert obs["state:wheels"].dtype == torch.float32
 
-        action = env.sample_action()
+        action = env.action_spec.sample()
         assert action.shape == (3,)
         assert action.dtype == torch.float32
         next_obs, reward, terminated, truncated, _ = env.step(action)
@@ -175,7 +175,7 @@ def test_car_racing_heuristic_policy():
     env = CarRacingEnv(image_size=(64, 64))
     policy = CarRacingHeuristicPolicy()
     obs, _ = env.reset(seed=42)
-    assert policy.action_dim == 3
+    assert policy.action_spec.action_dim == 3
     policy.steering = 0.5
     policy.reset()
     assert policy.steering == 0.0
@@ -247,7 +247,7 @@ def test_car_racing_neural_policy():
 
 def test_car_racing_policies_share_action_contract():
     env = CarRacingEnv(image_size=(64, 64))
-    ref_action = env.sample_action()
+    ref_action = env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
@@ -257,6 +257,7 @@ def test_car_racing_policies_share_action_contract():
     ]
 
     for policy in policies:
+        assert policy.action_spec == env.action_spec, type(policy).__name__
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

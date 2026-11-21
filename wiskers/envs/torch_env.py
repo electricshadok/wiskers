@@ -51,10 +51,6 @@ class TorchGymEnv:
         raw_obs, reward, terminated, truncated, info = self._gym_env.step(gym_action)
         return self._process_obs(raw_obs), float(reward), terminated, truncated, info
 
-    def sample_action(self) -> torch.Tensor:
-        """Sample a random action conforming to ``self.action_spec``."""
-        return self.action_spec.sample()
-
     def _action_spec(self) -> ActionSpec:
         """Translate ``self._gym_env.action_space`` into a PyTorch ``ActionSpec``."""
         space = self._gym_env.action_space

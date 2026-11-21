@@ -48,7 +48,7 @@ def test_franka_kitchen_env_observation_shape():
     assert obs["state:obj_qvel"].shape == (20,)
     assert obs["state:obj_qvel"].dtype == torch.float32
 
-    action = env.sample_action()
+    action = env.action_spec.sample()
     assert action.shape == (9,)
     next_obs, reward, terminated, truncated, info = env.step(action)
     assert isinstance(next_obs, TensorDict)
@@ -113,7 +113,7 @@ def test_franka_kitchen_available_tasks():
 
 def test_franka_random_policy(franka_env):
     policy = FrankaKitchenRandomPolicy()
-    assert policy.action_dim == 9
+    assert policy.action_spec.action_dim == 9
 
     obs, _ = franka_env.reset(seed=42)
     action = policy(obs, step=0)
@@ -125,7 +125,7 @@ def test_franka_random_policy(franka_env):
 
 def test_franka_heuristic_policy(franka_env):
     policy = FrankaKitchenHeuristicPolicy(momentum=0.8, noise_scale=0.2)
-    assert policy.action_dim == 9
+    assert policy.action_spec.action_dim == 9
 
     obs, _ = franka_env.reset(seed=42)
     act1 = policy(obs, step=0)
@@ -197,7 +197,7 @@ def test_franka_neural_policy():
 
 
 def test_franka_policies_share_action_contract(franka_env):
-    ref_action = franka_env.sample_action()
+    ref_action = franka_env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 
     policies = [
@@ -207,6 +207,7 @@ def test_franka_policies_share_action_contract(franka_env):
     ]
 
     for policy in policies:
+        assert policy.action_spec == franka_env.action_spec, type(policy).__name__
         policy.reset()
         for step in range(3):
             action = policy(obs, step=step)

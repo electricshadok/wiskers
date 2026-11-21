@@ -4,6 +4,7 @@ from typing import Sequence
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.action_spec import DiscreteActionSpec
 from wiskers.nn.heads import CategoricalActor
 from wiskers.policy.base import DiscretePolicy
 
@@ -11,22 +12,21 @@ from wiskers.policy.base import DiscretePolicy
 class BreakoutPolicy(DiscretePolicy):
     """Base policy for ALE/Breakout. Discrete action space (0..3)."""
 
-    action_dim: int = 1
-    num_actions: int = 4
+    def __init__(self) -> None:
+        super().__init__(DiscreteActionSpec(n=4))
 
 
 class BreakoutRandomPolicy(BreakoutPolicy):
     """Uniform random exploration for Breakout with periodic FIRE to unstick the ball."""
 
-    def __init__(self, fire_frequency: int = 30, num_actions: int = 4) -> None:
+    def __init__(self, fire_frequency: int = 30) -> None:
         super().__init__()
         self.fire_frequency = fire_frequency
-        self.num_actions = num_actions
 
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         if step % self.fire_frequency == 0:
-            return torch.tensor([1], dtype=torch.long)  # FIRE
-        return torch.tensor([random.randint(0, self.num_actions - 1)], dtype=torch.long)
+            return torch.tensor([1], dtype=self.action_spec.dtype)  # FIRE
+        return self.action_spec.sample()
 
 
 class BreakoutHeuristicPolicy(BreakoutPolicy):
@@ -44,11 +44,11 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
         self.epsilon = epsilon
 
     def _sample_random(self) -> torch.Tensor:
-        return torch.tensor([random.randint(0, self.num_actions - 1)], dtype=torch.long)
+        return self.action_spec.sample()
 
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         if random.random() < self.epsilon or "ram" not in obs.keys():
-            return torch.tensor([1], dtype=torch.long) if step == 0 else self._sample_random()
+            return torch.tensor([1], dtype=self.action_spec.dtype) if step == 0 else self._sample_random()
 
         ram = obs["ram"]
         paddle_x = int(ram[72].item())
@@ -57,14 +57,14 @@ class BreakoutHeuristicPolicy(BreakoutPolicy):
 
         # If ball is waiting to be served or just reset, press FIRE
         if ball_y == 0 or step == 0:
-            return torch.tensor([1], dtype=torch.long)  # FIRE
+            return torch.tensor([1], dtype=self.action_spec.dtype)  # FIRE
 
         # Track the ball with the paddle
         if paddle_x < ball_x - 2:
-            return torch.tensor([2], dtype=torch.long)  # RIGHT
+            return torch.tensor([2], dtype=self.action_spec.dtype)  # RIGHT
         if paddle_x > ball_x + 2:
-            return torch.tensor([3], dtype=torch.long)  # LEFT
-        return torch.tensor([random.choice([0, 2, 3])], dtype=torch.long)
+            return torch.tensor([3], dtype=self.action_spec.dtype)  # LEFT
+        return torch.tensor([random.choice([0, 2, 3])], dtype=self.action_spec.dtype)
 
 
 class BreakoutNeuralPolicy(BreakoutPolicy):
@@ -89,7 +89,7 @@ class BreakoutNeuralPolicy(BreakoutPolicy):
         c, h, w = image_size
         self.actor = CategoricalActor(
             feat_size=c * h * w,
-            num_actions=self.num_actions,
+            num_actions=self.action_spec.n,
             hidden_size=hidden_size,
             num_layers=num_layers,
         )

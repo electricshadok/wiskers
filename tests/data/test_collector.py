@@ -8,18 +8,28 @@ from tensordict import TensorDict
 from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
+from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
 from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.policy.base import ContinuousPolicy, DiscretePolicy
 
 
 class DummyPolicy(DiscretePolicy):
+    def __init__(self) -> None:
+        super().__init__(DiscreteActionSpec(n=4))
+
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         assert isinstance(obs, TensorDict)
         return torch.tensor([0], dtype=torch.long)
 
 
 class DummyContinuousPolicy(ContinuousPolicy):
-    action_dim = 2
+    def __init__(self) -> None:
+        super().__init__(
+            BoundedActionSpec(
+                low=torch.full((2,), -1.0, dtype=torch.float32),
+                high=torch.full((2,), 1.0, dtype=torch.float32),
+            )
+        )
 
     def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
         assert isinstance(obs, TensorDict)
@@ -252,7 +262,13 @@ def test_collector_with_transform():
 
     env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
-    collector = Collector(env=env, controller=InspectingPolicy(), transform=transform, max_steps=10, verbose=False)
+    collector = Collector(
+        env=env,
+        controller=InspectingPolicy(DiscreteActionSpec(n=4)),
+        transform=transform,
+        max_steps=10,
+        verbose=False,
+    )
     ep = collector.collect_one_episode()
 
     assert len(seen_obs) == 4

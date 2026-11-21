@@ -1,4 +1,5 @@
 import gymnasium as gym
+import numpy as np
 import pytest
 import torch
 from tensordict import TensorDict
@@ -6,6 +7,7 @@ from tensordict import TensorDict
 from wiskers.controller import Controller, validate_controller
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
+from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
 from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandomPolicy
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
 from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPolicy
@@ -29,38 +31,49 @@ class _DummyEnv(gym.Env):
 
 
 class _ConcretePolicy(Policy):
-    action_dim = 2
-
-    def forward(self, obs: torch.Tensor, step: int = 0) -> torch.Tensor:
-        return torch.zeros(self.action_dim, dtype=torch.float32)
+    def forward(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
+        return torch.zeros(self.action_spec.shape, dtype=self.action_spec.dtype)
 
 
 def test_policy_interface():
-    pol = _ConcretePolicy()
-    assert pol.action_dim == 2
+    spec = BoundedActionSpec(low=torch.full((2,), -1.0), high=torch.full((2,), 1.0))
+    pol = _ConcretePolicy(spec)
+    assert pol.action_spec == spec
+    assert pol.action_spec.action_dim == 2
     pol.reset()
-    act = pol(torch.zeros(3, 64, 64))
+    act = pol(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
     assert act.shape == (2,)
 
     class IncompletePolicy(Policy):
-        action_dim = 1
+        pass
 
     with pytest.raises(NotImplementedError):
-        IncompletePolicy()(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
+        IncompletePolicy(DiscreteActionSpec(n=4))(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
+
+    with pytest.raises(TypeError, match="DiscretePolicy requires DiscreteActionSpec"):
+        DiscretePolicy(spec)  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError, match="ContinuousPolicy requires BoundedActionSpec"):
+        ContinuousPolicy(DiscreteActionSpec(n=4))  # type: ignore[arg-type]
 
 
 def test_random_policy_discrete():
-    pol = RandomPolicy(gym.spaces.Discrete(4))
-    assert pol.action_dim == 1
+    pol = RandomPolicy(DiscreteActionSpec(n=4))
+    assert pol.action_spec.action_dim == 1
     act = pol(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
     assert isinstance(act, torch.Tensor)
     assert act.shape == (1,) and act.dtype == torch.int64
     assert 0 <= act.item() < 4
 
 
-def test_random_policy_box():
-    pol = RandomPolicy(gym.spaces.Box(-1.0, 1.0, shape=(5,)))
-    assert pol.action_dim == 5
+def test_random_policy_bounded():
+    pol = RandomPolicy(
+        BoundedActionSpec(
+            low=torch.full((5,), -1.0),
+            high=torch.full((5,), 1.0),
+        )
+    )
+    assert pol.action_spec.action_dim == 5
     act = pol(TensorDict({"render": torch.zeros(3, 64, 64)}, batch_size=[]))
     assert isinstance(act, torch.Tensor)
     assert act.shape == (5,)
@@ -102,41 +115,58 @@ def test_env_policies_inherit_from_policy():
 def test_collector_policy_env_validation():
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
-    # Discrete env with Continuous policy -> ValueError
     discrete_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(4)))
-    box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))))
+    discrete_5_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(5)))
+    car_racing_box_env = TorchGymEnv(
+        _DummyEnv(
+            gym.spaces.Box(
+                low=np.array([-1.0, 0.0, 0.0], dtype=np.float32),
+                high=np.array([1.0, 1.0, 1.0], dtype=np.float32),
+            )
+        )
+    )
+    symmetric_box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
 
-    with pytest.raises(ValueError, match="Env has Discrete action spec"):
+    # Discrete env with Continuous policy -> ValueError
+    with pytest.raises(ValueError, match="does not match environment action_spec"):
         Collector(env=discrete_env, controller=CarRacingRandomPolicy(), transform=transform)
 
-    # Bounded env with wrong action_dim -> ValueError
-    with pytest.raises(ValueError, match="Env has Bounded action spec with shape"):
-        Collector(env=box_env, controller=FrankaKitchenRandomPolicy(), transform=transform)
+    # Discrete env with wrong discrete cardinality -> ValueError
+    with pytest.raises(ValueError, match="does not match environment action_spec"):
+        Collector(env=discrete_5_env, controller=BreakoutRandomPolicy(), transform=transform)
 
-    # Direct validate_controller call succeeds when dimensions match
+    # Bounded env with wrong action_dim -> ValueError
+    with pytest.raises(ValueError, match="does not match environment action_spec"):
+        Collector(env=car_racing_box_env, controller=FrankaKitchenRandomPolicy(), transform=transform)
+
+    # Bounded env with matching dim (3,) but mismatched bounds -> ValueError
+    with pytest.raises(ValueError, match="does not match environment action_spec"):
+        Collector(env=symmetric_box_env, controller=CarRacingRandomPolicy(), transform=transform)
+
+    # Direct validate_controller calls succeed when specs match exactly
     validate_controller(BreakoutRandomPolicy(), discrete_env.action_spec)
-    validate_controller(CarRacingRandomPolicy(), box_env.action_spec)
+    validate_controller(CarRacingRandomPolicy(), car_racing_box_env.action_spec)
 
 
 def test_controller_protocol_supports_policy_and_custom_planner():
     class DummyPlanner:
-        action_dim: int = 3
-
-        def __init__(self) -> None:
+        def __init__(self, action_spec: BoundedActionSpec) -> None:
+            self.action_spec = action_spec
             self.resets = 0
 
         def reset(self) -> None:
             self.resets += 1
 
         def __call__(self, obs: TensorDict, step: int = 0) -> torch.Tensor:
-            return torch.zeros(self.action_dim, dtype=torch.float32)
+            return torch.zeros(self.action_spec.shape, dtype=self.action_spec.dtype)
 
-    planner = DummyPlanner()
+    spec = BoundedActionSpec(low=torch.full((3,), -1.0), high=torch.full((3,), 1.0))
+    planner = DummyPlanner(spec)
     assert isinstance(planner, Controller)
     assert isinstance(CarRacingRandomPolicy(), Controller)
 
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
-    env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,))))
+    env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
     collector = Collector(env=env, controller=planner, transform=transform, num_episodes=1, max_steps=3, verbose=False)
     ep = collector.collect_one_episode()
 
