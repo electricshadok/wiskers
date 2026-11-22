@@ -35,13 +35,9 @@ class MDNHead(nn.Module):
 
         # Single linear that produces all MDN parameters at once.
         # Output size: K (pi) + K * latent_size (mu) + K * latent_size (log_sigma)
-        self._fc = nn.Linear(
-            hidden_size, num_gaussians + 2 * num_gaussians * latent_size
-        )
+        self._fc = nn.Linear(hidden_size, num_gaussians + 2 * num_gaussians * latent_size)
 
-    def forward(
-        self, h: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, h: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Args:
             h (torch.Tensor): LSTM output of shape [N, T, hidden_size].
@@ -58,9 +54,9 @@ class MDNHead(nn.Module):
         out = self._fc(h)  # [N, T, K + 2*K*Z]
 
         # Split into (pi_raw, mu, log_sigma) chunks
-        pi_raw = out[..., :K]                    # [N, T, K]
-        mu_raw = out[..., K : K + K * Z]         # [N, T, K*Z]
-        log_sigma_raw = out[..., K + K * Z :]    # [N, T, K*Z]
+        pi_raw = out[..., :K]  # [N, T, K]
+        mu_raw = out[..., K : K + K * Z]  # [N, T, K*Z]
+        log_sigma_raw = out[..., K + K * Z :]  # [N, T, K*Z]
 
         pi = F.softmax(pi_raw, dim=-1)
         mu = mu_raw.view(N, T, K, Z)
@@ -176,9 +172,7 @@ class MDNRNN(nn.Module):
 
         return pi, mu, sigma, done, hidden
 
-    def get_initial_hidden(
-        self, batch_size: int, device: torch.device
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def get_initial_hidden(self, batch_size: int, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Returns zero-initialised (h_0, c_0) LSTM state.
 
@@ -223,7 +217,7 @@ class MDNRNN(nn.Module):
 
         # Step 2 — gather mu and sigma for the chosen component
         k_idx_exp = k_idx.view(N * T, 1, 1).expand(N * T, 1, Z)
-        mu_k = mu.view(N * T, K, Z).gather(1, k_idx_exp).squeeze(1)       # [N*T, Z]
+        mu_k = mu.view(N * T, K, Z).gather(1, k_idx_exp).squeeze(1)  # [N*T, Z]
         sigma_k = sigma.view(N * T, K, Z).gather(1, k_idx_exp).squeeze(1)  # [N*T, Z]
 
         # Step 3 — reparameterization sample with temperature scaling
@@ -267,11 +261,7 @@ class MDNRNN(nn.Module):
         #     directly is exact (up to the clamp) because sigma ≥ 1e-6.
         #   • LOG_2PI is a Python float, so it broadcasts to the correct device/dtype
         #     automatically without allocating any tensor.
-        log_prob = (
-            -0.5 * ((z_target - mu) / sigma) ** 2
-            - sigma.log()
-            - 0.5 * LOG_2PI
-        )
+        log_prob = -0.5 * ((z_target - mu) / sigma) ** 2 - sigma.log() - 0.5 * LOG_2PI
         # Sum log-probs over the latent dimension (independent dims) → [N, T, K]
         log_prob = log_prob.sum(dim=-1)
 

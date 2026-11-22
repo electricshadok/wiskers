@@ -105,10 +105,10 @@ python wiskers/pipeline/train.py --config training/car_racing_world_models datas
 
 ## Prediction & Evaluation
 
-Run evaluation or inference with a configuration:
+Evaluate a trained checkpoint/model in the environment using a configuration:
 
 ```bash
-python wiskers/pipeline/predict.py --config training/car_racing_world_models
+python wiskers/pipeline/predict.py --config training/car_racing_world_models --checkpoint experiments/world_models/version_0/checkpoints/best.ckpt
 ```
 
 ## Inspect Datasets

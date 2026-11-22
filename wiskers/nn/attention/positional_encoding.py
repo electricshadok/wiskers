@@ -19,13 +19,7 @@ class SinusoidalPositionEmbedding(nn.Module):
 
     def forward(self, t: torch.LongTensor):
         t = t.unsqueeze(-1)  # (B, 1)
-        inv_freq = 1.0 / (
-            10000
-            ** (
-                torch.arange(0, self.time_dim, 2, device=t.device).float()
-                / self.time_dim
-            )
-        )
+        inv_freq = 1.0 / (10000 ** (torch.arange(0, self.time_dim, 2, device=t.device).float() / self.time_dim))
         pos_enc_a = torch.sin(t.repeat(1, self.time_dim // 2) * inv_freq)
         pos_enc_b = torch.cos(t.repeat(1, self.time_dim // 2) * inv_freq)
         pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
@@ -59,9 +53,7 @@ class RoPE(nn.Module):
 
         # 1. build frequency spectrum
         half_dim = dim_head // 2
-        inv_freq = 1.0 / (
-            base ** (torch.arange(half_dim, dtype=torch.float32) / half_dim)
-        )
+        inv_freq = 1.0 / (base ** (torch.arange(half_dim, dtype=torch.float32) / half_dim))
 
         # 2. create positional indices [0, 1, 2, ..., max_seq_len - 1]
         t = torch.arange(max_seq_len, dtype=torch.float32)
@@ -73,12 +65,8 @@ class RoPE(nn.Module):
         cos, sin = freqs.cos(), freqs.sin()
 
         # 5. duplicate to full dim_head (real, imaginary halves)
-        self.register_buffer(
-            "cos", torch.stack([cos, cos], dim=-1).reshape(max_seq_len, dim_head)
-        )
-        self.register_buffer(
-            "sin", torch.stack([sin, sin], dim=-1).reshape(max_seq_len, dim_head)
-        )
+        self.register_buffer("cos", torch.stack([cos, cos], dim=-1).reshape(max_seq_len, dim_head))
+        self.register_buffer("sin", torch.stack([sin, sin], dim=-1).reshape(max_seq_len, dim_head))
 
     def forward(self, x: torch.Tensor):
         """

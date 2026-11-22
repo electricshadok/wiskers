@@ -35,6 +35,5 @@ def validate_controller(controller: Controller, action_spec: ActionSpec) -> None
     """Verify that ``controller.action_spec`` matches the environment's ``action_spec``."""
     if controller.action_spec != action_spec:
         raise ValueError(
-            f"Controller action_spec ({controller.action_spec}) does not match "
-            f"environment action_spec ({action_spec})."
+            f"Controller action_spec ({controller.action_spec}) does not match environment action_spec ({action_spec})."
         )

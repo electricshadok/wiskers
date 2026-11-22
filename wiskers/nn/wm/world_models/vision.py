@@ -1,3 +1,5 @@
+from collections.abc import Callable, Sequence
+
 import torch
 import torch.nn as nn
 
@@ -32,11 +34,12 @@ class Vision(nn.Module):
         image_size       (Tuple[int, int]): Input spatial size (H, W). Default: (64, 64).
         in_channels      (int): Number of input channels. Default: 3.
         latent_size      (int): Dimensionality of the flat latent vector z. Default: 32.
-        block_channels   (List[int]): Filter widths per encoder level.
+        block_channels   (Sequence[int]): Filter widths per encoder level.
             The paper uses a simple 4-level CNN; no attention.
-        block_attentions (List[bool]): Attention flags per level. All False = plain CNN.
+        block_attentions (Sequence[bool]): Attention flags per level. All False = plain CNN.
         num_heads        (int): Attention heads (only used when attention is enabled).
-        activation       (nn.Module): Activation function shared by encoder and decoder.
+        activation       (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ReLU``, ``nn.GELU``)
+            for encoder and decoder. Default: ``nn.ReLU``.
 
     Shapes:
         encode(x)               [N, C, H, W] → (z, mu, logvar)  each [N, latent_size]
@@ -51,10 +54,10 @@ class Vision(nn.Module):
         in_channels: int = 3,
         latent_size: int = 32,
         # Paper uses a plain 4-level CNN without attention
-        block_channels: list[int] = [32, 64, 128, 256],
-        block_attentions: list[bool] = [False, False, False, False],
+        block_channels: Sequence[int] = (32, 64, 128, 256),
+        block_attentions: Sequence[bool] = (False, False, False, False),
         num_heads: int = 8,
-        activation: nn.Module = nn.ReLU(),
+        activation: Callable[[], nn.Module] = nn.ReLU,
     ) -> None:
         super().__init__()
         self.image_size = image_size
@@ -107,17 +110,13 @@ class Vision(nn.Module):
     #  Core methods                                                            #
     # ---------------------------------------------------------------------- #
 
-    def _reparameterize(
-        self, mu: torch.Tensor, logvar: torch.Tensor
-    ) -> torch.Tensor:
+    def _reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         """Reparameterization trick: z = mu + eps*std,  eps ~ N(0, I)."""
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
 
-    def encode(
-        self, x: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def encode(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Encode raw observations into the latent distribution.
 
@@ -129,10 +128,10 @@ class Vision(nn.Module):
             mu     (torch.Tensor): Distribution mean   [N, latent_size].
             logvar (torch.Tensor): Log-variance        [N, latent_size].
         """
-        h = self._encoder(x)          # [N, C', H', W']
-        h = self._flatten(h)          # [N, C'*H'*W']
-        mu = self._fc_mu(h)           # [N, latent_size]
-        logvar = self._fc_logvar(h)   # [N, latent_size]
+        h = self._encoder(x)  # [N, C', H', W']
+        h = self._flatten(h)  # [N, C'*H'*W']
+        mu = self._fc_mu(h)  # [N, latent_size]
+        logvar = self._fc_logvar(h)  # [N, latent_size]
         z = self._reparameterize(mu, logvar)
         return z, mu, logvar
 
@@ -164,14 +163,12 @@ class Vision(nn.Module):
         Returns:
             torch.Tensor: Reconstructed frame [N, C, H, W] with values in [0, 1].
         """
-        h = self._fc_decode(z)    # [N, C'*H'*W']
-        h = self._unflatten(h)    # [N, C', H', W']
+        h = self._fc_decode(z)  # [N, C'*H'*W']
+        h = self._unflatten(h)  # [N, C', H', W']
         x_hat = self._decoder(h)  # [N, C, H, W]
         return torch.sigmoid(x_hat)
 
-    def forward(
-        self, x: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Full VAE forward pass. Used during Stage 1 training.
 

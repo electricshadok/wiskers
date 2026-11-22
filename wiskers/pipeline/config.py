@@ -24,9 +24,7 @@ def resolve_config_file(config_name: str, config_path: str = "./configs") -> str
         if os.path.exists(candidate):
             return candidate
 
-    raise FileNotFoundError(
-        f"Could not find config '{config_name}' in config root '{config_path}'"
-    )
+    raise FileNotFoundError(f"Could not find config '{config_name}' in config root '{config_path}'")
 
 
 def resolve_group_path(config_path: str, group: str, name: str) -> str:

@@ -33,4 +33,3 @@ def test_world_models_init():
 
     opt = module.configure_optimizers()
     assert opt is not None
-

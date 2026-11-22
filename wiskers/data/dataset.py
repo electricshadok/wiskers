@@ -53,9 +53,6 @@ class TrajectoryDataset(IterableDataset):
     def __iter__(self):
         while True:
             if self.replay_buffer.is_empty:
-                raise RuntimeError(
-                    "TrajectoryDataset: replay_buffer is empty. "
-                    "Add episodes before starting training."
-                )
+                raise RuntimeError("TrajectoryDataset: replay_buffer is empty. Add episodes before starting training.")
             chunk = self.sampler.sample(self.replay_buffer, batch_size=1)[0]
             yield self.transform(chunk)

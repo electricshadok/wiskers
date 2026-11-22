@@ -10,4 +10,3 @@ def test_planet_init():
     module.dummy = nn.Parameter(nn.Linear(1, 1).weight)
     opt = module.configure_optimizers()
     assert opt is not None
-

@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -14,7 +16,7 @@ def _build_mlp(
     hidden_size: int,
     num_layers: int,
     out_size: int,
-    activation: nn.Module,
+    activation: Callable[[], nn.Module],
 ) -> nn.Sequential:
     """
     Build a simple MLP: Linear → Activation → ... → Linear (no final activation).
@@ -25,7 +27,7 @@ def _build_mlp(
     layers = []
     current = in_size
     for _ in range(num_layers):
-        layers += [nn.Linear(current, hidden_size), activation]
+        layers += [nn.Linear(current, hidden_size), activation()]
         current = hidden_size
     layers.append(nn.Linear(current, out_size))
     return nn.Sequential(*layers)
@@ -59,7 +61,8 @@ class ContinuousActor(nn.Module):
         num_layers  (int): Number of hidden layers. Default: 4.
         min_std     (float): Minimum policy standard deviation. Default: 1e-4.
         max_std     (float): Maximum policy standard deviation. Default: 1.0.
-        activation  (nn.Module): Activation function. Default: ELU.
+        activation  (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ELU``, ``nn.ReLU``).
+            Default: ``nn.ELU``.
 
     Shapes:
         in:  feat  [N, feat_size]
@@ -75,7 +78,7 @@ class ContinuousActor(nn.Module):
         num_layers: int = 4,
         min_std: float = 1e-4,
         max_std: float = 1.0,
-        activation: nn.Module = nn.ELU(),
+        activation: Callable[[], nn.Module] = nn.ELU,
     ) -> None:
         super().__init__()
         self.min_std = min_std
@@ -95,8 +98,8 @@ class ContinuousActor(nn.Module):
             mu  (torch.Tensor): Squashed mean action  [N, action_size]  ∈ (-1, 1).
             std (torch.Tensor): Policy std dev        [N, action_size]  > 0.
         """
-        raw = self._mlp(feat)                               # [N, 2 * action_size]
-        mu_raw, log_std_raw = raw.chunk(2, dim=-1)          # [N, action_size] each
+        raw = self._mlp(feat)  # [N, 2 * action_size]
+        mu_raw, log_std_raw = raw.chunk(2, dim=-1)  # [N, action_size] each
 
         # Squash mean to (-1, 1) — deterministic action used at eval time
         mu = torch.tanh(mu_raw)
@@ -145,7 +148,8 @@ class CategoricalActor(nn.Module):
         num_actions (int): Number of discrete actions.
         hidden_size (int): Hidden layer width. Default: 400.
         num_layers  (int): Number of hidden layers. Default: 4.
-        activation  (nn.Module): Activation function. Default: ELU.
+        activation  (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ELU``, ``nn.ReLU``).
+            Default: ``nn.ELU``.
 
     Shapes:
         in:  feat   [N, feat_size]
@@ -158,7 +162,7 @@ class CategoricalActor(nn.Module):
         num_actions: int,
         hidden_size: int = 400,
         num_layers: int = 4,
-        activation: nn.Module = nn.ELU(),
+        activation: Callable[[], nn.Module] = nn.ELU,
     ) -> None:
         super().__init__()
         self.num_actions = num_actions
@@ -217,7 +221,8 @@ class Critic(nn.Module):
         feat_size   (int): Dimensionality of input feature vector.
         hidden_size (int): Hidden layer width. Default: 400.
         num_layers  (int): Number of hidden layers. Default: 4.
-        activation  (nn.Module): Activation function. Default: ELU.
+        activation  (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ELU``, ``nn.ReLU``).
+            Default: ``nn.ELU``.
 
     Shapes:
         in:  feat  [N, feat_size]
@@ -229,7 +234,7 @@ class Critic(nn.Module):
         feat_size: int,
         hidden_size: int = 400,
         num_layers: int = 4,
-        activation: nn.Module = nn.ELU(),
+        activation: Callable[[], nn.Module] = nn.ELU,
     ) -> None:
         super().__init__()
         self._mlp = _build_mlp(feat_size, hidden_size, num_layers, 1, activation)
@@ -314,7 +319,8 @@ class Reward(nn.Module):
         feat_size   (int): Dimensionality of input feature vector.
         hidden_size (int): Hidden layer width. Default: 400.
         num_layers  (int): Number of hidden layers. Default: 4.
-        activation  (nn.Module): Activation function. Default: ELU.
+        activation  (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ELU``, ``nn.ReLU``).
+            Default: ``nn.ELU``.
 
     Shapes:
         in:  feat   [N, feat_size]
@@ -326,7 +332,7 @@ class Reward(nn.Module):
         feat_size: int,
         hidden_size: int = 400,
         num_layers: int = 4,
-        activation: nn.Module = nn.ELU(),
+        activation: Callable[[], nn.Module] = nn.ELU,
     ) -> None:
         super().__init__()
         self._mlp = _build_mlp(feat_size, hidden_size, num_layers, 1, activation)
@@ -378,7 +384,8 @@ class Done(nn.Module):
         feat_size   (int): Dimensionality of input feature vector.
         hidden_size (int): Hidden layer width. Default: 400.
         num_layers  (int): Number of hidden layers. Default: 4.
-        activation  (nn.Module): Activation function. Default: ELU.
+        activation  (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ELU``, ``nn.ReLU``).
+            Default: ``nn.ELU``.
 
     Shapes:
         in:  feat        [N, feat_size]
@@ -390,7 +397,7 @@ class Done(nn.Module):
         feat_size: int,
         hidden_size: int = 400,
         num_layers: int = 4,
-        activation: nn.Module = nn.ELU(),
+        activation: Callable[[], nn.Module] = nn.ELU,
     ) -> None:
         super().__init__()
         self._mlp = _build_mlp(feat_size, hidden_size, num_layers, 1, activation)
@@ -433,4 +440,3 @@ class Done(nn.Module):
             torch.Tensor: Scalar mean BCE loss.
         """
         return F.binary_cross_entropy_with_logits(done_logits, done_target.to(done_logits.dtype))
-

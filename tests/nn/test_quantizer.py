@@ -4,9 +4,7 @@ import torch
 from wiskers.nn.quantizer import Codebook, EMACodebook, VectorQuantizer
 
 
-@pytest.mark.parametrize(
-    "num_codes, code_dim, num_vectors", [(512, 64, 128), (1024, 128, 64)]
-)
+@pytest.mark.parametrize("num_codes, code_dim, num_vectors", [(512, 64, 128), (1024, 128, 64)])
 def test_codebook_shape(num_codes, code_dim, num_vectors):
     codebook = Codebook(num_codes=num_codes, code_dim=code_dim)
     z = torch.randn(num_vectors, code_dim)
@@ -22,9 +20,7 @@ def test_codebook_shape(num_codes, code_dim, num_vectors):
     ), "Embedding lookup shape mismatch"
 
 
-@pytest.mark.parametrize(
-    "num_codes, code_dim, num_vectors", [(512, 64, 128), (1024, 128, 64)]
-)
+@pytest.mark.parametrize("num_codes, code_dim, num_vectors", [(512, 64, 128), (1024, 128, 64)])
 def test_ema_codebook_shape(num_codes, code_dim, num_vectors):
     codebook = EMACodebook(num_codes=num_codes, code_dim=code_dim)
     z = torch.randn(num_vectors, code_dim)

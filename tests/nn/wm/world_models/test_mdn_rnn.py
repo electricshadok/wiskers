@@ -34,9 +34,7 @@ def test_mdn_head_sigma_positive():
 
 def test_mdnrnn_output_shapes():
     """MDNRNN forward pass should return tensors of the correct shapes, including done."""
-    batch_size, seq_len, latent_size, action_size, hidden_size, num_gaussians, num_layers = (
-        4, 10, 32, 3, 256, 5, 1
-    )
+    batch_size, seq_len, latent_size, action_size, hidden_size, num_gaussians, num_layers = (4, 10, 32, 3, 256, 5, 1)
 
     model = MDNRNN(
         latent_size=latent_size,

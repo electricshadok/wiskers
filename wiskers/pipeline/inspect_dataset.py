@@ -24,9 +24,7 @@ def describe_element(elem: Any, indent: int = 0, max_items: int = 3) -> None:
             print(f"{prefix}  ... ({len(elem) - max_items} more)")
     else:
         shape_info = f", shape={tuple(elem.shape)}" if hasattr(elem, "shape") else ""
-        dtype_info = (
-            f", dtype={getattr(elem, 'dtype', None)}" if hasattr(elem, "dtype") else ""
-        )
+        dtype_info = f", dtype={getattr(elem, 'dtype', None)}" if hasattr(elem, "dtype") else ""
         print(f"{prefix}{type(elem).__name__}{shape_info}{dtype_info}")
 
 
@@ -75,9 +73,7 @@ class InspectDatasetCLI:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Inspect and describe trajectory dataset batches."
-    )
+    parser = argparse.ArgumentParser(description="Inspect and describe trajectory dataset batches.")
     parser.add_argument(
         "--config-path",
         type=str,

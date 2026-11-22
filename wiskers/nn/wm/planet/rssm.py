@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import torch
 import torch.nn as nn
 
@@ -101,7 +103,8 @@ class RSSM(nn.Module):
         action_size (int): Dimensionality of the action vector a.
         embed_size  (int): Dimensionality of the observation embedding e_t
                            produced by an external CNN encoder. Default: 1024.
-        activation  (nn.Module): Activation for prior/posterior MLPs. Default: ELU.
+        activation  (Callable[[], nn.Module]): Activation class/factory (e.g. ``nn.ELU``, ``nn.ReLU``)
+            for prior/posterior MLPs. Default: ``nn.ELU``.
 
     Shapes (all tensors are single-timestep, batch-first):
         obs_embed   [N, embed_size]
@@ -117,7 +120,7 @@ class RSSM(nn.Module):
         hidden_size: int = 256,
         action_size: int = 1,
         embed_size: int = 1024,
-        activation: nn.Module = nn.ELU(),
+        activation: Callable[[], nn.Module] = nn.ELU,
     ) -> None:
         super().__init__()
         self.stoch_size = stoch_size
@@ -136,7 +139,7 @@ class RSSM(nn.Module):
         # Used during imagination/planning — no observation available.
         self._prior_net = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
-            activation,
+            activation(),
             nn.Linear(hidden_size, 2 * stoch_size),  # mu and logvar
         )
 
@@ -144,7 +147,7 @@ class RSSM(nn.Module):
         # Used during training — refines the prior with the observed embedding.
         self._posterior_net = nn.Sequential(
             nn.Linear(hidden_size + embed_size, hidden_size),
-            activation,
+            activation(),
             nn.Linear(hidden_size, 2 * stoch_size),  # mu and logvar
         )
 
@@ -178,7 +181,7 @@ class RSSM(nn.Module):
             torch.Tensor: New deterministic state h_t [N, hidden_size].
         """
         gru_input = torch.cat([prev_state.s, action], dim=-1)  # [N, stoch + action]
-        return self._gru(gru_input, prev_state.h)               # [N, hidden_size]
+        return self._gru(gru_input, prev_state.h)  # [N, hidden_size]
 
     def prior_step(
         self,
@@ -200,8 +203,8 @@ class RSSM(nn.Module):
             mu_p   (torch.Tensor): Prior mean        [N, stoch_size].
             logvar_p (torch.Tensor): Prior log-variance [N, stoch_size].
         """
-        h = self._step_h(prev_state, action)                    # [N, hidden_size]
-        raw = self._prior_net(h)                                 # [N, 2*stoch_size]
+        h = self._step_h(prev_state, action)  # [N, hidden_size]
+        raw = self._prior_net(h)  # [N, 2*stoch_size]
         mu_p, logvar_p = self._split_mu_logvar(raw)
         s = self._reparameterize(mu_p, logvar_p)
         return RSSMState(h, s), mu_p, logvar_p
@@ -230,10 +233,10 @@ class RSSM(nn.Module):
             mu_q     (torch.Tensor): Posterior mean    [N, stoch_size].
             logvar_q (torch.Tensor): Posterior log-variance [N, stoch_size].
         """
-        h = self._step_h(prev_state, action)                      # [N, hidden_size]
+        h = self._step_h(prev_state, action)  # [N, hidden_size]
 
         # Prior — needed for KL loss even during training
-        raw_p = self._prior_net(h)                                # [N, 2*stoch_size]
+        raw_p = self._prior_net(h)  # [N, 2*stoch_size]
         mu_p, logvar_p = self._split_mu_logvar(raw_p)
 
         # Posterior — refined with observation
@@ -287,9 +290,7 @@ class RSSM(nn.Module):
 
         state = init_state
         for t in range(T):
-            state, mu_p, logvar_p, mu_q, logvar_q = self.posterior_step(
-                state, actions[:, t], obs_embeds[:, t]
-            )
+            state, mu_p, logvar_p, mu_q, logvar_q = self.posterior_step(state, actions[:, t], obs_embeds[:, t])
             states.append(state)
             mu_ps.append(mu_p)
             logvar_ps.append(logvar_p)
@@ -371,12 +372,8 @@ class RSSM(nn.Module):
             torch.Tensor: Scalar mean KL loss.
         """
         # KL between two diagonal Gaussians in closed form
-        kl = 0.5 * (
-            logvar_p - logvar_q
-            + (logvar_q.exp() + (mu_q - mu_p).pow(2)) / logvar_p.exp()
-            - 1.0
-        )
+        kl = 0.5 * (logvar_p - logvar_q + (logvar_q.exp() + (mu_q - mu_p).pow(2)) / logvar_p.exp() - 1.0)
         # Free nats: clamp per-dimension KL below the threshold
-        kl = kl.sum(dim=-1)                        # sum over stoch_size → [N, T]
-        kl = kl.clamp(min=free_nats)               # free nats trick
+        kl = kl.sum(dim=-1)  # sum over stoch_size → [N, T]
+        kl = kl.clamp(min=free_nats)  # free nats trick
         return kl.mean()

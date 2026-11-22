@@ -174,4 +174,3 @@ def test_gated_conv_transpose_3d(batch_size, depth, height, width, in_channels):
     )
     assert out_x.dtype == x.dtype
     assert torch.all(out_x >= 0)
-

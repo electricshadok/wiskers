@@ -16,9 +16,7 @@ def test_time_encoding(batch_size, time_dim):
     assert te.dtype == torch.float32
 
 
-@pytest.mark.parametrize(
-    "batch_size, seq_len, num_heads, dim_head", [(2, 16, 8, 128), (4, 32, 4, 64)]
-)
+@pytest.mark.parametrize("batch_size, seq_len, num_heads, dim_head", [(2, 16, 8, 128), (4, 32, 4, 64)])
 def test_rope_encoding(batch_size, seq_len, num_heads, dim_head):
     x = torch.randn(batch_size, seq_len, num_heads, dim_head)
 

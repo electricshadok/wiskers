@@ -1,6 +1,11 @@
 import os
+import pathlib
 import tempfile
+from types import SimpleNamespace
 from unittest.mock import patch
+
+import torch
+from safetensors.torch import load_file
 
 from wiskers.pipeline.config import load_config
 from wiskers.pipeline.train import TrainCLI, TrainPipelineCLI
@@ -109,3 +114,29 @@ def test_load_config_with_custom_config_path():
         cfg = load_config("training/exp", config_path=tmpdir)
         assert cfg.custom_key == "custom_value"
         assert cfg.seed == 456
+
+
+def test_train_pipeline_export_models_reloads_best_checkpoint(tmp_path):
+    cli = TrainPipelineCLI("training/car_racing_world_models")
+    try:
+        best_ckpt_path = tmp_path / "best.ckpt"
+        best_state = {k: v.clone() for k, v in cli.model.state_dict().items()}
+        torch.save({"state_dict": best_state}, best_ckpt_path)
+
+        # Simulate worse last-epoch weights remaining in cli.model after fit()
+        with torch.no_grad():
+            for param in cli.model.parameters():
+                param.fill_(99.0)
+
+        cli.config.export_onnx = False
+        cli.config.export_safetensors = True
+        cli.checkpoint_callback = SimpleNamespace(best_model_path=str(best_ckpt_path))
+        cli._export_models()
+
+        st_path = pathlib.Path(best_ckpt_path).with_suffix(".safetensors")
+        assert st_path.exists()
+        exported = load_file(str(st_path))
+        for key, tensor in exported.items():
+            assert torch.equal(tensor, best_state[key]), f"Mismatch for {key}"
+    finally:
+        cli._close_collector()

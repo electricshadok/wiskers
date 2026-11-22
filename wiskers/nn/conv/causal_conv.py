@@ -133,4 +133,3 @@ class CausalConv3d(nn.Module):
     def forward(self, x):
         x = self.conv3d(x)
         return x[:, :, : -self.pad_d, : -self.pad_h, : -self.pad_w]  # Remove future values
-

@@ -4,6 +4,7 @@ Tests for RSSM — PlaNet (Hafner et al., 2019).
 Kept intentionally simple: shape checks + basic behavioural invariants.
 No trainer, no Lightning — pure nn.Module tests.
 """
+
 import pytest
 import torch
 
@@ -12,12 +13,12 @@ from wiskers.nn.wm.planet.rssm import RSSM, RSSMState
 
 # ── Shared config (small, fast on CPU) ────────────────────────────────────────
 
-N = 4          # batch size
-T = 8          # sequence length
-STOCH = 16     # stochastic state size
-HIDDEN = 64    # deterministic state size
-ACTION = 3     # action dims
-EMBED = 128    # obs embedding dims (from CNN encoder)
+N = 4  # batch size
+T = 8  # sequence length
+STOCH = 16  # stochastic state size
+HIDDEN = 64  # deterministic state size
+ACTION = 3  # action dims
+EMBED = 128  # obs embedding dims (from CNN encoder)
 
 
 @pytest.fixture

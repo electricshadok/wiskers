@@ -61,9 +61,7 @@ class EMACodebook(Codebook):
     Codebook updated with Exponential Moving Average (EMA).
     """
 
-    def __init__(
-        self, num_codes: int, code_dim: int, decay: float = 0.99, eps: float = 1e-5
-    ):
+    def __init__(self, num_codes: int, code_dim: int, decay: float = 0.99, eps: float = 1e-5):
         super().__init__(num_codes, code_dim)
         # with EMA, we are updating the codebook manually
         self.codebook.requires_grad_(False)
@@ -104,16 +102,11 @@ class EMACodebook(Codebook):
 
         # 3. Normalize counts to avoid dead codes and division by zero
         n = self.cluster_size.sum()
-        cluster_size = (
-            (self.cluster_size + self.eps) / (n + self.num_codes * self.eps) * n
-        )
+        cluster_size = (self.cluster_size + self.eps) / (n + self.num_codes * self.eps) * n
 
         # 4. Compute new codebook
         embed_normalized = self.embedding_avg / cluster_size.unsqueeze(1)
         self.codebook.copy_(embed_normalized)
-
-
-
 
 
 class VectorQuantizer(nn.Module):
@@ -166,9 +159,7 @@ class VectorQuantizer(nn.Module):
         else:
             self.codebook = Codebook(num_codes, code_dim)
 
-    def _quantize(
-        self, z: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _quantize(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Replace each latent vector with its nearest codebook vector.
 

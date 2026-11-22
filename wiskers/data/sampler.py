@@ -136,8 +136,7 @@ class RecencyWeightedSampler(TrajectorySampler):
     ) -> list[float]:
         denom = max(1, total_episodes - 1)
         return [
-            (len(ep) - self.num_steps + 1) * math.exp(self.recency_factor * (i / denom))
-            for i, ep in valid_episodes
+            (len(ep) - self.num_steps + 1) * math.exp(self.recency_factor * (i / denom)) for i, ep in valid_episodes
         ]
 
     def __repr__(self) -> str:

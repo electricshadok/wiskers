@@ -42,9 +42,7 @@ class MixedL1L2Loss(nn.Module):
         return self.alpha * l1 + (1.0 - self.alpha) * l2
 
 
-def kl_divergence_standard_normal(
-    mu: torch.Tensor, logvar: torch.Tensor
-) -> torch.Tensor:
+def kl_divergence_standard_normal(mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
     """
     KL divergence between q(z|x) = N(mu, sigma^2) and p(z) = N(0, I).
 
@@ -69,9 +67,7 @@ def ssim_with_loss(
         ssim_value: SSIM in [0, 1], higher is better.
         ssim_loss: (1 - SSIM), suitable for minimization.
     """
-    ssim_value = structural_similarity_index_measure(
-        input, target, data_range=data_range
-    )
+    ssim_value = structural_similarity_index_measure(input, target, data_range=data_range)
     return ssim_value, 1 - ssim_value
 
 
@@ -80,20 +76,18 @@ class VQVAELoss(nn.Module):
 
     def __init__(
         self,
-        reconstruction: nn.Module = MixedL1L2Loss(),
+        reconstruction: nn.Module | None = None,
         vq_weight: float = 1.0,
         reconstruction_weight: float = 1.0,
         ssim_weight: float = 0.0,
     ) -> None:
         super().__init__()
-        self.reconstruction = reconstruction
+        self.reconstruction = reconstruction if reconstruction is not None else MixedL1L2Loss()
         self.vq_weight = vq_weight
         self.reconstruction_weight = reconstruction_weight
         self.ssim_weight = ssim_weight
 
-    def forward(
-        self, images: torch.Tensor, recon_x: torch.Tensor, vq_loss: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
+    def forward(self, images: torch.Tensor, recon_x: torch.Tensor, vq_loss: torch.Tensor) -> dict[str, torch.Tensor]:
         rec_loss = self.reconstruction(images, recon_x)
         if self.ssim_weight > 0.0:
             ssim_val, ssim_loss = ssim_with_loss(recon_x, images, data_range=1.0)
@@ -101,11 +95,7 @@ class VQVAELoss(nn.Module):
             ssim_val = torch.tensor(0.0, device=images.device)
             ssim_loss = torch.tensor(0.0, device=images.device)
 
-        loss = (
-            self.vq_weight * vq_loss
-            + self.reconstruction_weight * rec_loss
-            + self.ssim_weight * ssim_loss
-        )
+        loss = self.vq_weight * vq_loss + self.reconstruction_weight * rec_loss + self.ssim_weight * ssim_loss
         return {
             "loss": loss,
             "vq_loss": vq_loss,

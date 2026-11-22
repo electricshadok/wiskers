@@ -1,6 +1,7 @@
 """
 Tests for Vision model (V) — World Models 2018 (Ha & Schmidhuber).
 """
+
 import pytest
 import torch
 

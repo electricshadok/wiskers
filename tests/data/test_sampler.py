@@ -75,10 +75,12 @@ def test_recency_weighted_sampler():
 
 
 def test_hydra_sampler_instantiation():
-    cfg = OmegaConf.create({
-        "_target_": "wiskers.data.sampler.UniformChunkSampler",
-        "num_steps": 35,
-    })
+    cfg = OmegaConf.create(
+        {
+            "_target_": "wiskers.data.sampler.UniformChunkSampler",
+            "num_steps": 35,
+        }
+    )
     sampler = instantiate(cfg)
     assert isinstance(sampler, UniformChunkSampler)
     assert sampler.num_steps == 35
@@ -113,4 +115,3 @@ def test_datamodule_with_explicit_sampler():
 def test_replay_buffer_capacity_episodes():
     buf = ReplayBuffer(capacity_episodes=50)
     assert buf.capacity_episodes == 50
-

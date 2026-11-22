@@ -41,12 +41,12 @@ def get_sweep_cache_path(config_path: str) -> Path:
 
 
 def apply_ui_overrides(config: Any) -> Any:
-    """Apply fast WebUI preview overrides (10 episodes, 10 max steps, 5 min steps, native image_size)."""
+    """Apply fast WebUI preview overrides (10 episodes, 10 max steps, <= 5 min steps, native image_size)."""
     config.data_module.collector.num_episodes = NUM_EPISODES
     config.data_module.collector.max_steps = MAX_STEPS
-    config.data_module.collector.min_steps = MIN_STEPS
+    config.data_module.collector.min_steps = min(MIN_STEPS, int(config.data_module.collector.min_steps))
     config.data_module.collector.env.image_size = IMAGE_SIZE
-    config.data_module.sampler.num_steps = SAMPLER_NUM_STEPS
+    config.data_module.sampler.num_steps = min(SAMPLER_NUM_STEPS, int(config.data_module.sampler.num_steps))
     config.data_module.num_workers = 0
     return config
 

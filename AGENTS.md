@@ -27,6 +27,14 @@
   - `tests/`: Unit/integration tests mirroring the `wiskers/` directory layout.
   - `webui/`: Streamlit interactive visualization app for inspecting datasets and rollouts.
 
+## Coding Best Practices
+- **Avoid mutable default arguments**: Never use mutable objects (`list`, `dict`, or instantiated `nn.Module` objects like `nn.ReLU()`) as default argument values — Python evaluates defaults once at import time and shares them across instances.
+  - Use immutable defaults for sequence parameters (e.g., `block_channels: Sequence[int] = (32, 64, 128)`).
+  - For configurable activations or repeated submodules, pass a class/factory (`activation: Callable[[], nn.Module] = nn.ReLU`) and call `activation()` inside `__init__` so every layer owns a fresh instance; show class examples without `()` in docstrings (e.g., `nn.ReLU`, `nn.GELU`).
+  - When a single optional module instance is expected, default to `None` and instantiate inside `__init__` (e.g., `reconstruction: nn.Module | None = None`).
+- **No backward-compatibility shims**: Prefer clean, direct refactors over keeping legacy aliases, unused wrappers, or fallback paths.
+- **Close environments explicitly**: Release Gymnasium/MuJoCo environments via `with env:` or `try ... finally: collector.close()`, and monkeypatch `MujocoRenderer.render` in headless MuJoCo unit tests.
+
 ## Tooling & Verification
 - Environment & dependencies are managed with `uv` (Python 3.13).
 - Formatting/linting follows `pyproject.toml` (Ruff: line length 120, double quotes, 2 blank lines after imports) and static typing follows `pyrefly.toml` (`Pyrefly`).

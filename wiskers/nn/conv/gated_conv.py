@@ -35,12 +35,8 @@ class GatedConv1d(nn.Module):
     ):
         super().__init__()
         self.activation = activation
-        self.feature_conv = nn.Conv1d(
-            in_channels, out_channels, kernel_size, stride, padding, dilation
-        )
-        self.gate_conv = nn.Conv1d(
-            in_channels, out_channels, kernel_size, stride, padding, dilation
-        )
+        self.feature_conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding, dilation)
+        self.gate_conv = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding, dilation)
         nn.init.constant_(self.gate_conv.bias, 0.0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -130,12 +126,8 @@ class GatedConv2d(nn.Module):
     ):
         super().__init__()
         self.activation = activation
-        self.feature_conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size, stride, padding, dilation
-        )
-        self.gate_conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size, stride, padding, dilation
-        )
+        self.feature_conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation)
+        self.gate_conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation)
         nn.init.constant_(self.gate_conv.bias, 0.0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -227,12 +219,8 @@ class GatedConv3d(nn.Module):
     ):
         super().__init__()
         self.activation = activation
-        self.feature_conv = nn.Conv3d(
-            in_channels, out_channels, kernel_size, stride, padding, dilation
-        )
-        self.gate_conv = nn.Conv3d(
-            in_channels, out_channels, kernel_size, stride, padding, dilation
-        )
+        self.feature_conv = nn.Conv3d(in_channels, out_channels, kernel_size, stride, padding, dilation)
+        self.gate_conv = nn.Conv3d(in_channels, out_channels, kernel_size, stride, padding, dilation)
         nn.init.constant_(self.gate_conv.bias, 0.0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -291,4 +279,3 @@ class GatedConvTranspose3d(nn.Module):
         feature_map = self.activation(self.feature_conv(x))
         gate = torch.sigmoid(self.gate_conv(x))
         return feature_map * gate
-

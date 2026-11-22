@@ -4,6 +4,7 @@ import pathlib
 import shutil
 
 import lightning as L
+import torch
 from hydra.utils import instantiate
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
@@ -40,6 +41,11 @@ class TrainCLI:
         self.model = instantiate(self.config.module, _convert_="all")
         self.datamodule = instantiate(self.config.data_module, _convert_="all")
 
+    def _close_collector(self) -> None:
+        collector = getattr(self.datamodule, "collector", None)
+        if collector is not None:
+            collector.close()
+
     def run(self, fast_dev_run: bool = True) -> L.Trainer:
         """
         Runs model training fit without pipeline overhead.
@@ -59,7 +65,10 @@ class TrainCLI:
             fast_dev_run=fast_dev_run,
             **trainer_args,
         )
-        trainer.fit(model=self.model, datamodule=self.datamodule)
+        try:
+            trainer.fit(model=self.model, datamodule=self.datamodule)
+        finally:
+            self._close_collector()
         return trainer
 
 
@@ -118,16 +127,22 @@ class TrainPipelineCLI(TrainCLI):
 
     def _export_models(self) -> None:
         """Exports best model checkpoints to ONNX and safetensors if configured."""
+        if not (self.config.export_onnx or self.config.export_safetensors):
+            return
+        assert self.checkpoint_callback is not None
+        best_model_path = self.checkpoint_callback.best_model_path
+        if not best_model_path:
+            return
+
+        best_ckpt = torch.load(best_model_path, map_location="cpu", weights_only=False)
+        self.model.load_state_dict(best_ckpt["state_dict"])
+
         if self.config.export_onnx:
-            assert self.checkpoint_callback is not None
-            best_model_path = self.checkpoint_callback.best_model_path
             onnx_path = pathlib.Path(best_model_path).with_suffix(".onnx")
             self.model.to_onnx(onnx_path, export_params=True)
             print(f"Saved {onnx_path}")
 
         if self.config.export_safetensors:
-            assert self.checkpoint_callback is not None
-            best_model_path = self.checkpoint_callback.best_model_path
             st_path = pathlib.Path(best_model_path).with_suffix(".safetensors")
             save_model(self.model, st_path)
             print(f"Saved {st_path}")
@@ -162,9 +177,12 @@ class TrainPipelineCLI(TrainCLI):
             fast_dev_run=False,
             **trainer_args,
         )
-        trainer.fit(model=self.model, datamodule=self.datamodule)
-        trainer.test(datamodule=self.datamodule)
-        self._export_models()
+        try:
+            trainer.fit(model=self.model, datamodule=self.datamodule)
+            trainer.test(datamodule=self.datamodule)
+            self._export_models()
+        finally:
+            self._close_collector()
         return trainer
 
 

@@ -242,7 +242,5 @@ def test_shadow_hand_dataset_config():
     assert cfg.data_module.collector.env._target_ == "wiskers.envs.shadow_hand.env.ShadowHandEnv"
     assert cfg.data_module.collector.env.show_target is False
     assert (
-        cfg.data_module.collector.controller._target_
-        == "wiskers.envs.shadow_hand.policies.ShadowHandHeuristicPolicy"
+        cfg.data_module.collector.controller._target_ == "wiskers.envs.shadow_hand.policies.ShadowHandHeuristicPolicy"
     )
-
