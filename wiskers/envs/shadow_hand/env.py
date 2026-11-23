@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
 
 
@@ -22,7 +22,7 @@ AVAILABLE_TASKS: dict[str, str] = {
 }
 
 
-class ShadowHandEnv(TorchGymEnv):
+class ShadowHandEnv(GymEnv):
     """
     Shadow Dexterous Hand environment emitting multi-modal TensorDict observations.
 

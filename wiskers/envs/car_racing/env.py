@@ -7,7 +7,7 @@ import torch
 from gymnasium.envs.box2d.car_racing import CarRacing
 from tensordict import TensorDict
 
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.utils import render_to_tensor
 
 
@@ -42,7 +42,7 @@ class NoZoomCarRacing(CarRacing):
         return obs, info
 
 
-class CarRacingEnv(TorchGymEnv):
+class CarRacingEnv(GymEnv):
     """
     CarRacing-v3 environment (with locked gameplay zoom) emitting multi-modal TensorDict observations.
 

@@ -5,7 +5,7 @@ import torch
 from tensordict import TensorDict
 
 from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
 
 
@@ -22,25 +22,25 @@ class DummyGymEnv(gym.Env):
         return np.ones(self.observation_space.shape, dtype=np.uint8) * 200, 1.0, False, False, {}
 
 
-def test_torch_gym_env_render_to_tensor_resize():
+def test_gym_env_render_to_tensor_resize():
     frame = np.ones((120, 160, 3), dtype=np.uint8) * 100
     resized = render_to_tensor(frame, image_size=(64, 64))
     assert resized.shape == (64, 64, 3)
     assert resized.dtype == torch.uint8
 
 
-def test_torch_gym_env_reset_and_step():
+def test_gym_env_reset_and_step():
     env = DummyGymEnv(shape=(120, 160, 3))
-    torch_env = TorchGymEnv(env)
+    gym_env = GymEnv(env)
 
-    obs, info = torch_env.reset(seed=0)
+    obs, info = gym_env.reset(seed=0)
     assert isinstance(obs, TensorDict)
     assert obs.batch_size == torch.Size([])
     assert obs["render"].shape == (120, 160, 3)
     assert obs["render"].dtype == torch.uint8
 
     action = torch.tensor([0.5, -0.5], dtype=torch.float32)
-    next_obs, reward, term, trunc, info = torch_env.step(action)
+    next_obs, reward, term, trunc, info = gym_env.step(action)
     assert isinstance(next_obs, TensorDict)
     assert next_obs.batch_size == torch.Size([])
     assert next_obs["render"].shape == (120, 160, 3)
@@ -48,8 +48,8 @@ def test_torch_gym_env_reset_and_step():
     assert reward == 1.0
 
 
-def test_torch_gym_env_builds_action_spec_from_gym_spaces():
-    box_env = TorchGymEnv(DummyGymEnv())
+def test_gym_env_builds_action_spec_from_gym_spaces():
+    box_env = GymEnv(DummyGymEnv())
     assert isinstance(box_env.action_spec, BoundedActionSpec)
     assert box_env.action_spec.shape == (2,)
     assert box_env.action_spec.dtype == torch.float32
@@ -61,14 +61,14 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
             self.action_space = gym.spaces.Box(low=0, high=5, shape=(3,), dtype=np.int64)
 
     with pytest.raises(ValueError, match="Unsupported Box action dtype"):
-        TorchGymEnv(IntBoxGymEnv())
+        GymEnv(IntBoxGymEnv())
 
     class DiscreteGymEnv(DummyGymEnv):
         def __init__(self):
             super().__init__()
             self.action_space = gym.spaces.Discrete(4)
 
-    disc_env = TorchGymEnv(DiscreteGymEnv())
+    disc_env = GymEnv(DiscreteGymEnv())
     assert isinstance(disc_env.action_spec, DiscreteActionSpec)
     assert disc_env.action_spec.n == 4
     assert disc_env.action_spec.contains(disc_env.action_spec.sample())
@@ -79,7 +79,7 @@ def test_torch_gym_env_builds_action_spec_from_gym_spaces():
             self.action_space = gym.spaces.MultiDiscrete([2, 3])
 
     with pytest.raises(ValueError, match="Unsupported action space"):
-        TorchGymEnv(UnsupportedGymEnv())
+        GymEnv(UnsupportedGymEnv())
 
 
 def test_patch_mujoco_joint_eq():
@@ -90,7 +90,7 @@ def test_patch_mujoco_joint_eq():
     assert mujoco.mjtJoint.mjJNT_FREE == np.int32(int(mujoco.mjtJoint.mjJNT_FREE))
 
 
-def test_torch_gym_env_context_manager():
+def test_gym_env_context_manager():
     closed = False
 
     class TrackingEnv(DummyGymEnv):
@@ -98,7 +98,7 @@ def test_torch_gym_env_context_manager():
             nonlocal closed
             closed = True
 
-    with TorchGymEnv(TrackingEnv()) as wrapped:
-        assert isinstance(wrapped, TorchGymEnv)
+    with GymEnv(TrackingEnv()) as wrapped:
+        assert isinstance(wrapped, GymEnv)
         assert not closed
     assert closed

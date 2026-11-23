@@ -7,11 +7,11 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.utils import render_to_tensor
 
 
-class InvertedPendulumEnv(TorchGymEnv):
+class InvertedPendulumEnv(GymEnv):
     """
     InvertedPendulum-v5 environment emitting multi-modal TensorDict observations.
 

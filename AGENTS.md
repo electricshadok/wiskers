@@ -6,7 +6,7 @@
 
 ## Repository & `wiskers/` Architecture
 - **`wiskers/controller.py` & `wiskers/metrics.py`**: Core protocols and standalone utilities — `Controller` protocol (`action_spec: ActionSpec`, `obs: TensorDict, step -> action Tensor`) + `validate_controller(controller, action_spec)` for policies/planners, and VQ metrics (`codebook_usage_metrics`).
-- **`wiskers/envs/`**: Torch-first Gymnasium environment wrappers (`TorchGymEnv` in `torch_env.py`, `ActionSpec` in `action_spec.py`, `render_to_tensor` in `utils.py`) and per-environment packages (`adroit_hand/`, `breakout/`, `car_racing/`, `franka_kitchen/`, `inverted_pendulum/`, `shadow_hand/`) with env implementations + env-specific policies. Environments emit flat `TensorDict` observations (e.g., `"render"`, `"ram"`, `"state:*"`).
+- **`wiskers/envs/`**: Torch-first Gymnasium environment wrappers (`GymEnv` in `gym_env.py`, `ActionSpec` in `action_spec.py`, `render_to_tensor` in `utils.py`) and per-environment packages (`adroit_hand/`, `breakout/`, `car_racing/`, `franka_kitchen/`, `inverted_pendulum/`, `shadow_hand/`) with env implementations + env-specific policies. Environments emit flat `TensorDict` observations (e.g., `"render"`, `"ram"`, `"state:*"`).
 - **`wiskers/policy/`**: Base rollout policies (`Policy`, `DiscretePolicy`, `ContinuousPolicy`, `RandomPolicy` in `base.py`) parameterized by `action_spec: ActionSpec`, mapping `obs: TensorDict` to 1D action `torch.Tensor`s and conforming to `Controller`.
 - **`wiskers/planner/`**: Model-based receding-horizon planners (`Planner`, `DynamicsModel` in `base.py`, `RandomShootingPlanner` in `random_shooting.py`) conforming to `Controller` for MPC planning in imagination.
 - **`wiskers/data/`**: Trajectory storage and dataloading pipeline:
@@ -14,7 +14,7 @@
   - `buffer.py`: `Buffer`, `ReplayBuffer`, `RolloutBuffer`.
   - `sampler.py`: Chunk sampling strategies (`TrajectorySampler`, `UniformChunkSampler`, `RecencyWeightedSampler`).
   - `transforms.py`: Episode preprocessing (`EpisodeTransform`, `EpisodeToTensor`).
-  - `collector.py`: `Collector` rolling out a `TorchGymEnv` + `Controller` into a `Buffer`.
+  - `collector.py`: `Collector` rolling out a `GymEnv` + `Controller` into a `Buffer`.
   - `dataset.py` & `datamodule.py`: PyTorch `TrajectoryDataset` (`IterableDataset`) and Lightning `TrajectoryDataModule`.
 - **`wiskers/nn/` (Pure PyTorch only)**:
   - Composable `torch.nn.Module` building blocks (`attention/`, `conv/`, `heads.py`, `losses.py`, `norm.py`, `quantizer.py`) and paper-specific world-model modules (`wm/planet/`, `wm/world_models/`).

@@ -8,7 +8,7 @@ from wiskers.controller import Controller
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.action_spec import BoundedActionSpec
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.planner.base import DynamicsModel, Planner
 
 
@@ -103,7 +103,7 @@ def test_planner_conforms_to_controller_and_tracks_state():
 
 
 def test_planner_works_with_collector():
-    env = TorchGymEnv(_DummyBoxEnv(action_dim=2))
+    env = GymEnv(_DummyBoxEnv(action_dim=2))
     assert isinstance(env.action_spec, BoundedActionSpec)
     planner = ZeroPlanner(model=DummyDynamicsModel(), action_spec=env.action_spec, horizon=4, num_samples=8)
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))

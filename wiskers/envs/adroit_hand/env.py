@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.utils import render_to_tensor
 
 
@@ -27,7 +27,7 @@ HAND_DIM: dict[str, int] = {
 }
 
 
-class AdroitHandEnv(TorchGymEnv):
+class AdroitHandEnv(GymEnv):
     """
     AdroitHand-v1 environment emitting multi-modal TensorDict observations.
 

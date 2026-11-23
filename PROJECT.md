@@ -14,7 +14,7 @@ The Wiskers pipeline operates as a closed-loop system connecting simulation envi
 flowchart TD
     subgraph Environment & Collection ["Data Collection Loop"]
         Env["Gym Environment\n(CarRacing, Breakout, Franka Kitchen, Adroit)"]
-        TorchEnv["TorchGymEnv\n(Tensor Action & Obs Wrapper)"]
+        TorchEnv["GymEnv\n(Tensor Action & Obs Wrapper)"]
         Policy["Policy / Heuristic\n(Policy: Random, Heuristic, Neural)"]
         Collector["Collector\n(Rollout Engine)"]
         Buffer["ReplayBuffer\n(Stores Full Episode Trajectories)"]
@@ -58,7 +58,7 @@ flowchart TD
 
 ### 2.1 Environments (`wiskers.envs`)
 - **Role**: Wraps underlying simulators (Gymnasium, MuJoCo, Atari, Gymnasium-Robotics) into a unified PyTorch contract.
-- **Key Abstraction — `TorchGymEnv`**:
+- **Key Abstraction — `GymEnv`**:
   - Automatically manages device tensors, observation normalization, and action conversion.
   - Supports continuous vector actions (e.g. 3-DoF for CarRacing, 9-DoF for Franka Kitchen, 24-DoF for Adroit Hand) and discrete actions (e.g. Atari Breakout).
   - Provides a single step/reset API:

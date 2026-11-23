@@ -354,7 +354,7 @@ def test_collector_with_rollout_buffer():
     from wiskers.data.collector import Collector
     from wiskers.data.transforms import EpisodeToTensor
     from wiskers.envs.action_spec import DiscreteActionSpec
-    from wiskers.envs.torch_env import TorchGymEnv
+    from wiskers.envs.gym_env import GymEnv
     from wiskers.policy.base import DiscretePolicy
 
     class DummyPolicy(DiscretePolicy):
@@ -377,7 +377,7 @@ def test_collector_with_rollout_buffer():
             return np.zeros((4, 4, 3), dtype=np.uint8), 1.0, self.step_count >= 5, False, {}
 
     collector = Collector(
-        env=TorchGymEnv(DummyEnv()),
+        env=GymEnv(DummyEnv()),
         controller=DummyPolicy(DiscreteActionSpec(n=2)),
         transform=EpisodeToTensor(image_size=(3, 4, 4), obs_range=(0.0, 1.0)),
         num_episodes=2,

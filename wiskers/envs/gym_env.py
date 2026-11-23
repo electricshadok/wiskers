@@ -13,7 +13,7 @@ from wiskers.envs.action_spec import ActionSpec, BoundedActionSpec, DiscreteActi
 from wiskers.envs.utils import render_to_tensor
 
 
-class TorchGymEnv:
+class GymEnv:
     """
     Adapter between Gymnasium and PyTorch.
 

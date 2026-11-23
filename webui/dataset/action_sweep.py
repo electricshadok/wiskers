@@ -7,14 +7,14 @@ from tensordict import TensorDict
 
 from wiskers.data.episode import Episode
 from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 
 
 SWEEP_NUM_STEPS = 10
 
 
 def _rollout_actions(
-    env: TorchGymEnv,
+    env: GymEnv,
     actions: list[torch.Tensor],
     seed: int,
 ) -> Episode:
@@ -46,7 +46,7 @@ def _rollout_actions(
 
 
 def collect_action_sweep(
-    env: TorchGymEnv,
+    env: GymEnv,
     num_steps: int = SWEEP_NUM_STEPS,
     seed: int = 0,
 ) -> list[Episode]:

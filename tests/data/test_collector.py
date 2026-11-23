@@ -9,7 +9,7 @@ from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.policy.base import ContinuousPolicy, DiscretePolicy
 
 
@@ -82,7 +82,7 @@ class DummyContinuousEnv(gym.Env):
 
 def test_collector_collect_one_episode_no_args():
     """collect_one_episode takes no parameters and uses self.env, self.policy, self.max_steps."""
-    env = TorchGymEnv(DummyDiscreteEnv(step_limit=8))
+    env = GymEnv(DummyDiscreteEnv(step_limit=8))
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
@@ -130,7 +130,7 @@ def test_collector_terminated_and_truncated_distinction():
             truncated = self.step_count >= 5
             return np.ones((16, 16, 3), dtype=np.uint8), 1.0, terminated, truncated, {}
 
-    env = TorchGymEnv(TruncatedEnv())
+    env = GymEnv(TruncatedEnv())
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
@@ -145,7 +145,7 @@ def test_collector_terminated_and_truncated_distinction():
 
 def test_collector_max_steps_clamping():
     """Collector clamps rollouts at max_steps if environment does not terminate earlier."""
-    env = TorchGymEnv(DummyDiscreteEnv(step_limit=50))
+    env = GymEnv(DummyDiscreteEnv(step_limit=50))
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=12, verbose=False)
     episode = collector.collect_one_episode()
@@ -167,7 +167,7 @@ def test_collector_min_steps_filtering():
             self.step_limit = 3 if self.resets % 2 == 1 else 15
             return super().reset(seed=seed)
 
-    env = TorchGymEnv(FlakyEnv())
+    env = GymEnv(FlakyEnv())
     buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(
@@ -189,7 +189,7 @@ def test_collector_min_steps_filtering():
 
 def test_collector_continuous_actions():
     """Collector properly formats continuous array actions."""
-    env = TorchGymEnv(DummyContinuousEnv(step_limit=6))
+    env = GymEnv(DummyContinuousEnv(step_limit=6))
     buffer = ReplayBuffer(capacity_episodes=5)
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(
@@ -209,7 +209,7 @@ def test_collector_continuous_actions():
 
 def test_collector_collect_one_episode_with_idx():
     """collect_one_episode accepts an explicit episode_idx parameter."""
-    env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
+    env = GymEnv(DummyDiscreteEnv(step_limit=4))
     transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, seed=10, max_steps=20, verbose=False)
     ep0 = collector.collect_one_episode(episode_idx=0)
@@ -224,7 +224,7 @@ def test_collector_hydra_instantiation():
         {
             "_target_": "wiskers.data.collector.Collector",
             "env": {
-                "_target_": "wiskers.envs.torch_env.TorchGymEnv",
+                "_target_": "wiskers.envs.gym_env.GymEnv",
                 "env": {
                     "_target_": "tests.data.test_collector.DummyDiscreteEnv",
                     "step_limit": 20,
@@ -245,7 +245,7 @@ def test_collector_hydra_instantiation():
     )
     collector = instantiate(cfg)
     assert isinstance(collector, Collector)
-    assert isinstance(collector.env, TorchGymEnv)
+    assert isinstance(collector.env, GymEnv)
     assert collector.num_episodes == 25
     assert collector.min_steps == 50
     assert collector.max_steps == 500
@@ -260,7 +260,7 @@ def test_collector_with_transform():
             seen_obs.append(obs)
             return torch.tensor([0], dtype=torch.long)
 
-    env = TorchGymEnv(DummyDiscreteEnv(step_limit=4))
+    env = GymEnv(DummyDiscreteEnv(step_limit=4))
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
     collector = Collector(
         env=env,
@@ -282,8 +282,8 @@ def test_collector_with_transform():
     assert ep["next", "obs", "render"].shape == (4, 16, 16, 3)
 
 
-def test_torch_gym_env_handles_negative_stride_observations():
-    """TorchGymEnv converts negative-stride observations (e.g., MuJoCo flipped OpenGL views) cleanly."""
+def test_gym_env_handles_negative_stride_observations():
+    """GymEnv converts negative-stride observations (e.g., MuJoCo flipped OpenGL views) cleanly."""
 
     class FlippedObsEnv(DummyDiscreteEnv):
         def reset(self, *, seed=None, options=None):
@@ -294,7 +294,7 @@ def test_torch_gym_env_handles_negative_stride_observations():
             obs, reward, terminated, truncated, info = super().step(action)
             return obs[::-1, :, :], reward, terminated, truncated, info
 
-    env = TorchGymEnv(FlippedObsEnv(step_limit=3))
+    env = GymEnv(FlippedObsEnv(step_limit=3))
     obs, _ = env.reset(seed=0)
     assert isinstance(obs, TensorDict)
     assert obs["render"].dtype == torch.uint8

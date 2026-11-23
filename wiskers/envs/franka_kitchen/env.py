@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
 
 
@@ -25,7 +25,7 @@ AVAILABLE_TASKS: tuple[str, ...] = (
 )
 
 
-class FrankaKitchenEnv(TorchGymEnv):
+class FrankaKitchenEnv(GymEnv):
     """
     FrankaKitchen-v1 environment emitting multi-modal TensorDict observations.
 

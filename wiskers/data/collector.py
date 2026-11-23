@@ -9,12 +9,12 @@ from wiskers.controller import Controller, validate_controller
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
 from wiskers.data.transforms import EpisodeTransform
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 
 
 class Collector:
     """
-    Rollout collector that gathers episodes from a TorchGymEnv using a Controller
+    Rollout collector that gathers episodes from a GymEnv using a Controller
     (e.g. a Policy or Planner) and stores them in a Buffer as CPU PyTorch tensors.
 
     Guarantees:
@@ -25,7 +25,7 @@ class Collector:
           PyTorch tensors to the controller.
 
     Args:
-        env (TorchGymEnv): The PyTorch-wrapped Gymnasium environment instance.
+        env (GymEnv): The PyTorch-wrapped Gymnasium environment instance.
         controller (Controller): Controller instance implementing ``Controller`` (``Policy`` or ``Planner``).
         transform (EpisodeTransform): Transform used to convert raw ``uint8``
             observations into normalized ``torch.Tensor`` before passing them to ``controller``.
@@ -38,7 +38,7 @@ class Collector:
 
     def __init__(
         self,
-        env: TorchGymEnv,
+        env: GymEnv,
         controller: Controller,
         transform: EpisodeTransform,
         num_episodes: int = 10,

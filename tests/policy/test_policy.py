@@ -12,9 +12,9 @@ from wiskers.envs.adroit_hand.policies import AdroitHandPolicy, AdroitHandRandom
 from wiskers.envs.breakout.policies import BreakoutPolicy, BreakoutRandomPolicy
 from wiskers.envs.car_racing.policies import CarRacingPolicy, CarRacingRandomPolicy
 from wiskers.envs.franka_kitchen.policies import FrankaKitchenPolicy, FrankaKitchenRandomPolicy
+from wiskers.envs.gym_env import GymEnv
 from wiskers.envs.inverted_pendulum.policies import InvertedPendulumNeuralPolicy, InvertedPendulumPolicy
 from wiskers.envs.shadow_hand.policies import ShadowHandPolicy, ShadowHandRandomPolicy
-from wiskers.envs.torch_env import TorchGymEnv
 from wiskers.policy.base import ContinuousPolicy, DiscretePolicy, Policy, RandomPolicy
 
 
@@ -120,9 +120,9 @@ def test_env_policies_inherit_from_policy():
 def test_collector_policy_env_validation():
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
-    discrete_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(4)))
-    discrete_5_env = TorchGymEnv(_DummyEnv(gym.spaces.Discrete(5)))
-    car_racing_box_env = TorchGymEnv(
+    discrete_env = GymEnv(_DummyEnv(gym.spaces.Discrete(4)))
+    discrete_5_env = GymEnv(_DummyEnv(gym.spaces.Discrete(5)))
+    car_racing_box_env = GymEnv(
         _DummyEnv(
             gym.spaces.Box(
                 low=np.array([-1.0, 0.0, 0.0], dtype=np.float32),
@@ -130,7 +130,7 @@ def test_collector_policy_env_validation():
             )
         )
     )
-    symmetric_box_env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
+    symmetric_box_env = GymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
 
     # Discrete env with Continuous policy -> ValueError
     with pytest.raises(ValueError, match="does not match environment action_spec"):
@@ -171,7 +171,7 @@ def test_controller_protocol_supports_policy_and_custom_planner():
     assert isinstance(CarRacingRandomPolicy(), Controller)
 
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
-    env = TorchGymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
+    env = GymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
     collector = Collector(env=env, controller=planner, transform=transform, num_episodes=1, max_steps=3, verbose=False)
     ep = collector.collect_one_episode()
 

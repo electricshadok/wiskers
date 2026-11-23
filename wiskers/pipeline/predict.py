@@ -8,7 +8,7 @@ from wiskers.controller import Controller
 from wiskers.data.buffer import RolloutBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeTransform
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.pipeline.backends import InferenceBackend
 from wiskers.pipeline.config import load_config
 
@@ -58,7 +58,7 @@ class PredictCLI:
         model = self.load_model(checkpoint_path)
         controller = self._resolve_controller(model)
 
-        env: TorchGymEnv = instantiate(self.config.data_module.collector.env, _convert_="all")
+        env: GymEnv = instantiate(self.config.data_module.collector.env, _convert_="all")
         transform: EpisodeTransform = instantiate(self.config.transform, _convert_="all")
         episodes = num_episodes if num_episodes is not None else int(self.config.get("eval_episodes", 5))
         steps = max_steps if max_steps is not None else int(self.config.data_module.collector.max_steps)

@@ -9,7 +9,7 @@ import torch
 from hydra.utils import instantiate
 
 from webui.dataset.action_sweep import SWEEP_NUM_STEPS, collect_action_sweep
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.pipeline.config import load_config
 
 
@@ -51,7 +51,7 @@ def apply_ui_overrides(config: Any) -> Any:
     return config
 
 
-def _save_action_sweep(env: TorchGymEnv, config_path: str, sweep_path: Path, seed: int) -> None:
+def _save_action_sweep(env: GymEnv, config_path: str, sweep_path: Path, seed: int) -> None:
     """Collect single-action sweep episodes for ``env`` and persist them to ``sweep_path``."""
     print(f"[prepare_ui] Collecting action sweep for {Path(config_path).name}...")
     episodes = collect_action_sweep(env, num_steps=SWEEP_NUM_STEPS, seed=seed)

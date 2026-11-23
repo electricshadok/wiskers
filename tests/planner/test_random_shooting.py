@@ -8,7 +8,7 @@ from wiskers.controller import Controller
 from wiskers.data.collector import Collector
 from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
-from wiskers.envs.torch_env import TorchGymEnv
+from wiskers.envs.gym_env import GymEnv
 from wiskers.planner.random_shooting import RandomShootingPlanner
 
 
@@ -98,7 +98,7 @@ def test_random_shooting_invalid_action_spec():
 
 def test_random_shooting_collector_integration():
     torch.manual_seed(0)
-    env = TorchGymEnv(_DummyBoxEnv(action_dim=2))
+    env = GymEnv(_DummyBoxEnv(action_dim=2))
     assert isinstance(env.action_spec, BoundedActionSpec)
     planner = RandomShootingPlanner(
         model=TargetDynamicsModel(torch.tensor([0.5, -0.5])),
