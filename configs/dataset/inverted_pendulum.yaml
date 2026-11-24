@@ -16,6 +16,7 @@ data_module:
       _target_: wiskers.envs.inverted_pendulum.env.InvertedPendulumEnv
       image_size: [64, 64]
       reset_noise_scale: 0.01
+      gravity: null
     controller:
       _target_: wiskers.envs.inverted_pendulum.policies.InvertedPendulumNeuralPolicy
       image_size: ${transform.image_size}

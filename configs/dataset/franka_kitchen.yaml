@@ -17,6 +17,7 @@ data_module:
       image_size: [64, 64]
       tasks_to_complete:
         - microwave
+      gravity: null
     controller:
       _target_: wiskers.envs.franka_kitchen.policies.FrankaKitchenHeuristicPolicy
       momentum: 0.85

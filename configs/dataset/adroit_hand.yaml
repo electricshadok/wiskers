@@ -16,6 +16,7 @@ data_module:
       _target_: wiskers.envs.adroit_hand.env.AdroitHandEnv
       image_size: [64, 64]
       task: door
+      gravity: null
     controller:
       _target_: wiskers.envs.adroit_hand.policies.AdroitHandHeuristicPolicy
       momentum: 0.85

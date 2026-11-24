@@ -2,16 +2,17 @@
 InvertedPendulum-v5 MuJoCo environment with visual camera observations.
 """
 
+from collections.abc import Sequence
+
 import gymnasium as gym
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.mujoco_env import MujocoEnv
 
 
-class InvertedPendulumEnv(GymEnv):
+class InvertedPendulumEnv(MujocoEnv):
     """
     InvertedPendulum-v5 environment emitting multi-modal TensorDict observations.
 
@@ -28,33 +29,31 @@ class InvertedPendulumEnv(GymEnv):
             preserves the native ``(480, 480)`` resolution.
         reset_noise_scale: Scale of uniform random perturbations added to initial
             positions and velocities on reset. Must be non-negative. Defaults to ``0.01``.
+        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
     """
 
     def __init__(
         self,
         image_size: tuple[int, int] | None = None,
         reset_noise_scale: float = 0.01,
+        gravity: Sequence[float] | None = None,
     ) -> None:
         if reset_noise_scale < 0:
             raise ValueError(f"reset_noise_scale must be non-negative, got {reset_noise_scale}.")
 
-        self.image_size = tuple(image_size) if image_size is not None else None
         self.reset_noise_scale = reset_noise_scale
         env = gym.make(
             "InvertedPendulum-v5",
             render_mode="rgb_array",
             reset_noise_scale=reset_noise_scale,
         )
-        super().__init__(env)
+        super().__init__(env, image_size=image_size, gravity=gravity)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        frame = self._gym_env.render()
-        if frame is None:
-            raise RuntimeError("InvertedPendulum render() returned None. Ensure render_mode='rgb_array'.")
         state = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
         return TensorDict(
             {
-                "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
+                "render": self._render_frame(),
                 "state:qpos": state[0:2],
                 "state:qvel": state[2:4],
             },

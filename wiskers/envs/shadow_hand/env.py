@@ -2,6 +2,7 @@
 Shadow Dexterous Hand environments with visual camera observations.
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 import gymnasium as gym
@@ -10,8 +11,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
+from wiskers.envs.mujoco_env import MujocoEnv
+from wiskers.envs.utils import patch_mujoco_joint_eq
 
 
 AVAILABLE_TASKS: dict[str, str] = {
@@ -22,7 +23,7 @@ AVAILABLE_TASKS: dict[str, str] = {
 }
 
 
-class ShadowHandEnv(GymEnv):
+class ShadowHandEnv(MujocoEnv):
     """
     Shadow Dexterous Hand environment emitting multi-modal TensorDict observations.
 
@@ -43,6 +44,7 @@ class ShadowHandEnv(GymEnv):
             preserves the native ``(480, 480)`` resolution.
         show_target: Whether to render the translucent goal/target overlay in camera frames.
             Defaults to ``False``.
+        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
     """
 
     def __init__(
@@ -50,6 +52,7 @@ class ShadowHandEnv(GymEnv):
         task: str = "block",
         image_size: tuple[int, int] | None = None,
         show_target: bool = False,
+        gravity: Sequence[float] | None = None,
     ) -> None:
         patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
@@ -58,7 +61,6 @@ class ShadowHandEnv(GymEnv):
         if task_key not in AVAILABLE_TASKS:
             raise ValueError(f"Unknown task '{task}'. Available tasks: {list(AVAILABLE_TASKS.keys())}")
 
-        self.image_size = tuple(image_size) if image_size is not None else None
         self.task = task_key
         self.show_target = show_target
 
@@ -66,16 +68,14 @@ class ShadowHandEnv(GymEnv):
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
         )
-        super().__init__(env)
+        super().__init__(env, image_size=image_size, gravity=gravity)
 
         if not show_target:
             self._hide_target_visuals()
 
     def _hide_target_visuals(self) -> None:
         """Set alpha=0 on target geoms, materials, and sites so goal markers are hidden in renders."""
-        model: Any = getattr(self._gym_env.unwrapped, "model", None)
-        if model is None:
-            return
+        model = self.model
         for i in range(model.ngeom):
             if "target" in model.geom(i).name:
                 model.geom_rgba[i, 3] = 0.0
@@ -87,15 +87,12 @@ class ShadowHandEnv(GymEnv):
                 model.site_rgba[i, 3] = 0.0
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
-        frame = self._gym_env.render()
-        if frame is None:
-            raise RuntimeError("ShadowHand render() returned None. Ensure render_mode='rgb_array'.")
         obs_vec = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
         achieved = torch.from_numpy(np.ascontiguousarray(raw_obs["achieved_goal"], dtype=np.float32))
         desired = torch.from_numpy(np.ascontiguousarray(raw_obs["desired_goal"], dtype=np.float32))
 
         data: dict[str, torch.Tensor] = {
-            "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
+            "render": self._render_frame(),
             "state:hand_qpos": obs_vec[0:24],
             "state:hand_qvel": obs_vec[24:48],
             "state:achieved_goal": achieved,

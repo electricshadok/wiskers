@@ -2,14 +2,15 @@
 AdroitHand-v1 environment with visual camera observations.
 """
 
+from collections.abc import Sequence
+
 import gymnasium as gym
 import gymnasium_robotics
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.mujoco_env import MujocoEnv
 
 
 AVAILABLE_TASKS: dict[str, str] = {
@@ -27,7 +28,7 @@ HAND_DIM: dict[str, int] = {
 }
 
 
-class AdroitHandEnv(GymEnv):
+class AdroitHandEnv(MujocoEnv):
     """
     AdroitHand-v1 environment emitting multi-modal TensorDict observations.
 
@@ -45,12 +46,14 @@ class AdroitHandEnv(GymEnv):
         task: Manipulation task ('door', 'hammer', 'pen', 'relocate'). Defaults to 'door'.
         image_size: Target ``(height, width)`` to resize frames to. If ``None``,
             preserves the native ``(480, 480)`` resolution.
+        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
     """
 
     def __init__(
         self,
         task: str = "door",
         image_size: tuple[int, int] | None = None,
+        gravity: Sequence[float] | None = None,
     ) -> None:
         gym.register_envs(gymnasium_robotics)
 
@@ -58,7 +61,6 @@ class AdroitHandEnv(GymEnv):
         if task_key not in AVAILABLE_TASKS:
             raise ValueError(f"Unknown task '{task}'. Available tasks: {list(AVAILABLE_TASKS.keys())}")
 
-        self.image_size = tuple(image_size) if image_size is not None else None
         self.task = task_key
         self._hand_dim = HAND_DIM[task_key]
 
@@ -66,17 +68,14 @@ class AdroitHandEnv(GymEnv):
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
         )
-        super().__init__(env)
+        super().__init__(env, image_size=image_size, gravity=gravity)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
-        frame = self._gym_env.render()
-        if frame is None:
-            raise RuntimeError("AdroitHand render() returned None. Ensure render_mode='rgb_array'.")
         state = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
         n = self._hand_dim
         return TensorDict(
             {
-                "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
+                "render": self._render_frame(),
                 "state:hand": state[:n],
                 "state:obj": state[n:],
             },

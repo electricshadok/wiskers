@@ -2,7 +2,8 @@
 FrankaKitchen-v1 environment with visual camera observations.
 """
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import gymnasium as gym
 import gymnasium_robotics
@@ -10,8 +11,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
+from wiskers.envs.mujoco_env import MujocoEnv
+from wiskers.envs.utils import patch_mujoco_joint_eq
 
 
 AVAILABLE_TASKS: tuple[str, ...] = (
@@ -25,7 +26,7 @@ AVAILABLE_TASKS: tuple[str, ...] = (
 )
 
 
-class FrankaKitchenEnv(GymEnv):
+class FrankaKitchenEnv(MujocoEnv):
     """
     FrankaKitchen-v1 environment emitting multi-modal TensorDict observations.
 
@@ -51,12 +52,14 @@ class FrankaKitchenEnv(GymEnv):
         image_size: Target ``(height, width)`` to resize frames to. If ``None``,
             preserves the native ``(480, 480)`` resolution.
         tasks_to_complete: Subtasks for the robot to complete. Defaults to ``('microwave',)``.
+        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
     """
 
     def __init__(
         self,
         image_size: tuple[int, int] | None = None,
         tasks_to_complete: Sequence[str] | None = ("microwave",),
+        gravity: Sequence[float] | None = None,
     ) -> None:
         patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
@@ -66,22 +69,18 @@ class FrankaKitchenEnv(GymEnv):
             if task not in AVAILABLE_TASKS:
                 raise ValueError(f"Unknown task '{task}'. Available tasks: {list(AVAILABLE_TASKS)}")
 
-        self.image_size = tuple(image_size) if image_size is not None else None
         env = gym.make(
             "FrankaKitchen-v1",
             tasks_to_complete=tasks,
             render_mode="rgb_array",
         )
-        super().__init__(env)
+        super().__init__(env, image_size=image_size, gravity=gravity)
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
-        frame = self._gym_env.render()
-        if frame is None:
-            raise RuntimeError("FrankaKitchen render() returned None. Ensure render_mode='rgb_array'.")
         state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
         return TensorDict(
             {
-                "render": render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size),
+                "render": self._render_frame(),
                 "state:robot_qpos": state[0:9],
                 "state:robot_qvel": state[9:18],
                 "state:obj_qpos": state[18:39],
