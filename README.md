@@ -27,17 +27,12 @@ For an in-depth component diagram and paper walkthroughs (World Models, DIAMOND)
 
 Wiskers uses [uv](https://github.com/astral-sh/uv) for fast and reproducible environment.
 
-1. Install `uv` if not already installed:
-```bash
-brew install uv
-```
-
-2. Create the virtual environment and install all dependencies:
+1. Create the virtual environment and install all dependencies:
 ```bash
 uv sync --all-extras
 ```
 
-3. Activate the virtual environment:
+2. Activate the virtual environment:
 ```bash
 source .venv/bin/activate
 ```

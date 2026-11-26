@@ -83,6 +83,8 @@ class ReplayBuffer(Buffer):
     Backed by a collections.deque(maxlen=capacity_episodes). Adding a new
     episode to a full buffer automatically evicts the oldest one (FIFO, O(1)).
 
+    Intended for off-policy algorithms (online: DQN, SAC, TD3, Dreamer; offline: CQL, IQL, BC).
+
     Args:
         capacity_episodes (int): Max number of complete episodes to store before evicting.
         device (torch.device | str): Device on which stored episodes are kept. Defaults to ``"cpu"``.
@@ -106,6 +108,8 @@ class RolloutBuffer(Buffer):
 
     Stores episodes in a list. Typically cleared via reset() after processing
     each rollout batch or epoch.
+
+    Intended for on-policy algorithms (inherently online: PPO, A2C, TRPO, REINFORCE).
 
     Args:
         device (torch.device | str): Device on which stored episodes are kept. Defaults to ``"cpu"``.
