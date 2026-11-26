@@ -16,7 +16,13 @@ data_module:
       _target_: wiskers.envs.adroit_hand.env.AdroitHandEnv
       image_size: [64, 64]
       task: door
-      gravity: null
+      physics:
+        _target_: wiskers.envs.mujoco_env.MujocoPhysics
+        gravity: [0.0, 0.0, 0.0]
+        timestep: null
+        friction_scale: null
+        mass_scale: null
+        damping_scale: null
     controller:
       _target_: wiskers.envs.adroit_hand.policies.AdroitHandHeuristicPolicy
       momentum: 0.85

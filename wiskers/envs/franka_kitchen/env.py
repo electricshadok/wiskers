@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.mujoco_env import MujocoEnv
+from wiskers.envs.mujoco_env import MujocoEnv, MujocoPhysics
 from wiskers.envs.utils import patch_mujoco_joint_eq
 
 
@@ -52,14 +52,14 @@ class FrankaKitchenEnv(MujocoEnv):
         image_size: Target ``(height, width)`` to resize frames to. If ``None``,
             preserves the native ``(480, 480)`` resolution.
         tasks_to_complete: Subtasks for the robot to complete. Defaults to ``('microwave',)``.
-        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
+        physics: Optional :class:`MujocoPhysics` configuration override. Defaults to ``None``.
     """
 
     def __init__(
         self,
         image_size: tuple[int, int] | None = None,
         tasks_to_complete: Sequence[str] | None = ("microwave",),
-        gravity: Sequence[float] | None = None,
+        physics: MujocoPhysics | None = None,
     ) -> None:
         patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
@@ -74,7 +74,7 @@ class FrankaKitchenEnv(MujocoEnv):
             tasks_to_complete=tasks,
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size, gravity=gravity)
+        super().__init__(env, image_size=image_size, physics=physics)
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
         state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))

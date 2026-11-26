@@ -2,7 +2,6 @@
 Shadow Dexterous Hand environments with visual camera observations.
 """
 
-from collections.abc import Sequence
 from typing import Any
 
 import gymnasium as gym
@@ -11,7 +10,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.mujoco_env import MujocoEnv
+from wiskers.envs.mujoco_env import MujocoEnv, MujocoPhysics
 from wiskers.envs.utils import patch_mujoco_joint_eq
 
 
@@ -44,7 +43,7 @@ class ShadowHandEnv(MujocoEnv):
             preserves the native ``(480, 480)`` resolution.
         show_target: Whether to render the translucent goal/target overlay in camera frames.
             Defaults to ``False``.
-        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
+        physics: Optional :class:`MujocoPhysics` configuration override. Defaults to ``None``.
     """
 
     def __init__(
@@ -52,7 +51,7 @@ class ShadowHandEnv(MujocoEnv):
         task: str = "block",
         image_size: tuple[int, int] | None = None,
         show_target: bool = False,
-        gravity: Sequence[float] | None = None,
+        physics: MujocoPhysics | None = None,
     ) -> None:
         patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
@@ -68,7 +67,7 @@ class ShadowHandEnv(MujocoEnv):
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size, gravity=gravity)
+        super().__init__(env, image_size=image_size, physics=physics)
 
         if not show_target:
             self._hide_target_visuals()

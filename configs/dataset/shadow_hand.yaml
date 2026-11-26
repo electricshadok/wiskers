@@ -17,7 +17,13 @@ data_module:
       image_size: [64, 64]
       task: block
       show_target: false
-      gravity: null
+      physics:
+        _target_: wiskers.envs.mujoco_env.MujocoPhysics
+        gravity: null
+        timestep: null
+        friction_scale: null
+        mass_scale: null
+        damping_scale: null
     controller:
       _target_: wiskers.envs.shadow_hand.policies.ShadowHandHeuristicPolicy
       momentum: 0.85

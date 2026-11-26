@@ -17,7 +17,13 @@ data_module:
       image_size: [64, 64]
       tasks_to_complete:
         - microwave
-      gravity: null
+      physics:
+        _target_: wiskers.envs.mujoco_env.MujocoPhysics
+        gravity: null
+        timestep: null
+        friction_scale: null
+        mass_scale: null
+        damping_scale: null
     controller:
       _target_: wiskers.envs.franka_kitchen.policies.FrankaKitchenHeuristicPolicy
       momentum: 0.85

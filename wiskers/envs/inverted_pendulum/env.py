@@ -2,14 +2,12 @@
 InvertedPendulum-v5 MuJoCo environment with visual camera observations.
 """
 
-from collections.abc import Sequence
-
 import gymnasium as gym
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.mujoco_env import MujocoEnv
+from wiskers.envs.mujoco_env import MujocoEnv, MujocoPhysics
 
 
 class InvertedPendulumEnv(MujocoEnv):
@@ -29,14 +27,14 @@ class InvertedPendulumEnv(MujocoEnv):
             preserves the native ``(480, 480)`` resolution.
         reset_noise_scale: Scale of uniform random perturbations added to initial
             positions and velocities on reset. Must be non-negative. Defaults to ``0.01``.
-        gravity: Optional ``(gx, gy, gz)`` gravity vector override in m/s². Defaults to ``None``.
+        physics: Optional :class:`MujocoPhysics` configuration override. Defaults to ``None``.
     """
 
     def __init__(
         self,
         image_size: tuple[int, int] | None = None,
         reset_noise_scale: float = 0.01,
-        gravity: Sequence[float] | None = None,
+        physics: MujocoPhysics | None = None,
     ) -> None:
         if reset_noise_scale < 0:
             raise ValueError(f"reset_noise_scale must be non-negative, got {reset_noise_scale}.")
@@ -47,7 +45,7 @@ class InvertedPendulumEnv(MujocoEnv):
             render_mode="rgb_array",
             reset_noise_scale=reset_noise_scale,
         )
-        super().__init__(env, image_size=image_size, gravity=gravity)
+        super().__init__(env, image_size=image_size, physics=physics)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         state = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))
