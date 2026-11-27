@@ -14,7 +14,6 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.inverted_pendulum.env.InvertedPendulumEnv
-      image_size: [64, 64]
       reset_noise_scale: 0.01
       physics:
         _target_: wiskers.envs.mujoco_env.MujocoPhysics
@@ -23,6 +22,13 @@ data_module:
         friction_scale: null
         mass_scale: null
         damping_scale: null
+      # Optional per-field observation transforms (null = keep raw contiguous torch.Tensor)
+      obs_fields:
+        render:
+          _target_: wiskers.envs.utils.ResizeUint8
+          size: [64, 64]
+        "state:qpos": null
+        "state:qvel": null
     controller:
       _target_: wiskers.envs.inverted_pendulum.policies.InvertedPendulumNeuralPolicy
       image_size: ${transform.image_size}

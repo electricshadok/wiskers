@@ -13,6 +13,7 @@ from wiskers.envs.franka_kitchen.policies import (
     FrankaKitchenNeuralPolicy,
     FrankaKitchenRandomPolicy,
 )
+from wiskers.envs.utils import ResizeUint8
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +28,7 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def franka_env():
-    env = FrankaKitchenEnv(image_size=(64, 64), tasks_to_complete=["microwave"])
+    env = FrankaKitchenEnv(tasks_to_complete=["microwave"], obs_fields={"render": ResizeUint8((64, 64))})
     yield env
     env.close()
 

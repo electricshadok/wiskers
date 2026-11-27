@@ -14,7 +14,6 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.franka_kitchen.env.FrankaKitchenEnv
-      image_size: [64, 64]
       tasks_to_complete:
         - microwave
       physics:
@@ -24,6 +23,15 @@ data_module:
         friction_scale: null
         mass_scale: null
         damping_scale: null
+      # Optional per-field observation transforms (null = keep raw contiguous torch.Tensor)
+      obs_fields:
+        render:
+          _target_: wiskers.envs.utils.ResizeUint8
+          size: [64, 64]
+        "state:robot_qpos": null
+        "state:robot_qvel": null
+        "state:obj_qpos": null
+        "state:obj_qvel": null
     controller:
       _target_: wiskers.envs.franka_kitchen.policies.FrankaKitchenHeuristicPolicy
       momentum: 0.85

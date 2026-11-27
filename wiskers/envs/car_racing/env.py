@@ -2,13 +2,14 @@
 CarRacing-v3 environment.
 """
 
+from collections.abc import Mapping
+
 import numpy as np
 import torch
 from gymnasium.envs.box2d.car_racing import CarRacing
 from tensordict import TensorDict
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.gym_env import GymEnv, ObsFieldTransform
 
 
 class NoZoomCarRacing(CarRacing):
@@ -57,19 +58,20 @@ class CarRacingEnv(GymEnv):
         https://gymnasium.farama.org/environments/box2d/car_racing/
 
     Args:
-        image_size: Target ``(height, width)`` to resize frames to. If ``None``,
-            preserves the native ``(96, 96)`` resolution.
         show_indicators: Whether to render the bottom black HUD bar and score text.
+        obs_fields: Optional mapping from observation field name to per-field transform
+            callable (or ``None`` to keep unchanged). Defaults to ``None``.
     """
+
+    obs_keys: tuple[str, ...] = ("render", "state:car", "state:wheels")
 
     def __init__(
         self,
-        image_size: tuple[int, int] | None = None,
         show_indicators: bool = False,
+        obs_fields: Mapping[str, ObsFieldTransform | None] | None = None,
     ) -> None:
-        self.image_size = tuple(image_size) if image_size is not None else None
         env = NoZoomCarRacing(render_mode="rgb_array", show_indicators=show_indicators)
-        super().__init__(env)
+        super().__init__(env, obs_fields=obs_fields)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         car = self._gym_env.car
@@ -77,7 +79,7 @@ class CarRacingEnv(GymEnv):
         hull = car.hull
         return TensorDict(
             {
-                "render": render_to_tensor(raw_obs, self.image_size),
+                "render": torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.uint8)),
                 "state:car": torch.tensor(
                     [
                         hull.position[0],

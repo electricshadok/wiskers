@@ -24,7 +24,7 @@ class TargetDynamicsModel:
         prev_action: torch.Tensor | None = None,
         state: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        return obs["render"]
+        return torch.zeros(1)
 
     def imagine_returns(self, state: torch.Tensor, actions: torch.Tensor) -> torch.Tensor:
         return -((actions - self.target) ** 2).sum(dim=(-1, -2))

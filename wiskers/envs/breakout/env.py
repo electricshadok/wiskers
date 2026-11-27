@@ -2,14 +2,15 @@
 ALE/Breakout environment.
 """
 
+from collections.abc import Mapping
+
 import ale_py
 import gymnasium as gym
 import numpy as np
 import torch
 from tensordict import TensorDict
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.gym_env import GymEnv, ObsFieldTransform
 
 
 class BreakoutEnv(GymEnv):
@@ -24,21 +25,25 @@ class BreakoutEnv(GymEnv):
         https://ale.farama.org/environments/breakout/
 
     Args:
-        image_size: Target ``(height, width)`` to resize frames to. If ``None``,
-            preserves the native ``(210, 160)`` resolution.
+        obs_fields: Optional mapping from observation field name to per-field transform
+            callable (or ``None`` to keep unchanged). Defaults to ``None``.
     """
 
-    def __init__(self, image_size: tuple[int, int] | None = None) -> None:
-        self.image_size = tuple(image_size) if image_size is not None else None
+    obs_keys: tuple[str, ...] = ("render", "ram")
+
+    def __init__(
+        self,
+        obs_fields: Mapping[str, ObsFieldTransform | None] | None = None,
+    ) -> None:
         gym.register_envs(ale_py)
         env = gym.make("ALE/Breakout-v5", render_mode="rgb_array")
-        super().__init__(env)
+        super().__init__(env, obs_fields=obs_fields)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         ram = self._gym_env.unwrapped.ale.getRAM()
         return TensorDict(
             {
-                "render": render_to_tensor(raw_obs, self.image_size),
+                "render": torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.uint8)),
                 "ram": torch.from_numpy(np.ascontiguousarray(ram, dtype=np.uint8)),
             },
             batch_size=[],

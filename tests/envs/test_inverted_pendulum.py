@@ -12,6 +12,7 @@ from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.action_spec import BoundedActionSpec
 from wiskers.envs.inverted_pendulum.env import InvertedPendulumEnv
 from wiskers.envs.inverted_pendulum.policies import InvertedPendulumNeuralPolicy
+from wiskers.envs.utils import ResizeUint8
 from wiskers.pipeline.config import load_config
 
 
@@ -27,7 +28,7 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def inverted_pendulum_env():
-    env = InvertedPendulumEnv(image_size=(64, 64))
+    env = InvertedPendulumEnv(obs_fields={"render": ResizeUint8((64, 64))})
     yield env
     env.close()
 
@@ -92,7 +93,7 @@ def test_inverted_pendulum_state_dimensions_match_gymnasium_spec(inverted_pendul
 
 
 def test_inverted_pendulum_reset_noise_scale():
-    env = InvertedPendulumEnv(image_size=(64, 64), reset_noise_scale=0.0)
+    env = InvertedPendulumEnv(reset_noise_scale=0.0)
     try:
         obs, _ = env.reset(seed=42)
         assert torch.all(obs["state:qpos"] == 0.0)

@@ -14,7 +14,6 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.shadow_hand.env.ShadowHandEnv
-      image_size: [64, 64]
       task: block
       show_target: false
       physics:
@@ -24,6 +23,16 @@ data_module:
         friction_scale: null
         mass_scale: null
         damping_scale: null
+      # Optional per-field observation transforms (null = keep raw contiguous torch.Tensor)
+      obs_fields:
+        render:
+          _target_: wiskers.envs.utils.ResizeUint8
+          size: [64, 64]
+        "state:hand_qpos": null
+        "state:hand_qvel": null
+        "state:obj_qvel": null
+        "state:achieved_goal": null
+        "state:desired_goal": null
     controller:
       _target_: wiskers.envs.shadow_hand.policies.ShadowHandHeuristicPolicy
       momentum: 0.85

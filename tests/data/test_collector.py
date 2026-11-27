@@ -89,12 +89,8 @@ def test_collector_collect_one_episode_no_args():
 
     assert len(episode) == 8
     assert episode.is_valid()
-    assert episode.obs["render"].dtype == torch.uint8
-    assert episode.obs["render"].shape == (8, 16, 16, 3)
-    assert episode["next", "obs", "render"].shape == (8, 16, 16, 3)
-    # Initial observation o_0 is zeros, terminal observation o_8 is 8s
-    assert torch.all(episode.obs["render"][0] == 0)
-    assert torch.all(episode["next", "obs", "render"][-1] == 8)
+    assert episode.obs.batch_size == torch.Size([8])
+    assert episode["next", "obs"].batch_size == torch.Size([8])
     assert episode.action.shape == (8, 1)
     assert episode.action.dtype == torch.int64
     assert episode.reward.shape == (8, 1)
@@ -251,7 +247,7 @@ def test_collector_hydra_instantiation():
     assert collector.max_steps == 500
 
 
-def test_collector_with_transform():
+def test_collector_with_transform(monkeypatch):
     """Collector passes transformed TensorDict obs to controller while storing uint8 tensor in Episode."""
     seen_obs: list[TensorDict] = []
 
@@ -261,6 +257,11 @@ def test_collector_with_transform():
             return torch.tensor([0], dtype=torch.long)
 
     env = GymEnv(DummyDiscreteEnv(step_limit=4))
+    monkeypatch.setattr(
+        env,
+        "_process_obs",
+        lambda raw_obs: TensorDict({"render": torch.from_numpy(np.ascontiguousarray(raw_obs))}, batch_size=[]),
+    )
     transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
     collector = Collector(
         env=env,
@@ -280,27 +281,3 @@ def test_collector_with_transform():
     assert ep.obs["render"].dtype == torch.uint8
     assert ep.obs["render"].shape == (4, 16, 16, 3)
     assert ep["next", "obs", "render"].shape == (4, 16, 16, 3)
-
-
-def test_gym_env_handles_negative_stride_observations():
-    """GymEnv converts negative-stride observations (e.g., MuJoCo flipped OpenGL views) cleanly."""
-
-    class FlippedObsEnv(DummyDiscreteEnv):
-        def reset(self, *, seed=None, options=None):
-            obs, info = super().reset(seed=seed, options=options)
-            return obs[::-1, :, :], info
-
-        def step(self, action):
-            obs, reward, terminated, truncated, info = super().step(action)
-            return obs[::-1, :, :], reward, terminated, truncated, info
-
-    env = GymEnv(FlippedObsEnv(step_limit=3))
-    obs, _ = env.reset(seed=0)
-    assert isinstance(obs, TensorDict)
-    assert obs["render"].dtype == torch.uint8
-    assert obs["render"].shape == (16, 16, 3)
-
-    next_obs, _, _, _, _ = env.step(torch.tensor(0))
-    assert isinstance(next_obs, TensorDict)
-    assert next_obs["render"].dtype == torch.uint8
-    assert next_obs["render"].shape == (16, 16, 3)

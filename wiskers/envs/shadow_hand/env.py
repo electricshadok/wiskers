@@ -2,6 +2,7 @@
 Shadow Dexterous Hand environments with visual camera observations.
 """
 
+from collections.abc import Mapping
 from typing import Any
 
 import gymnasium as gym
@@ -10,6 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.gym_env import ObsFieldTransform
 from wiskers.envs.mujoco_env import MujocoEnv, MujocoPhysics
 from wiskers.envs.utils import patch_mujoco_joint_eq
 
@@ -39,19 +41,19 @@ class ShadowHandEnv(MujocoEnv):
 
     Args:
         task: Shadow Hand task ('reach', 'block', 'egg', 'pen'). Defaults to 'block'.
-        image_size: Target ``(height, width)`` to resize frames to. If ``None``,
-            preserves the native ``(480, 480)`` resolution.
         show_target: Whether to render the translucent goal/target overlay in camera frames.
             Defaults to ``False``.
         physics: Optional :class:`MujocoPhysics` configuration override. Defaults to ``None``.
+        obs_fields: Optional mapping from observation field name to per-field transform
+            callable (or ``None`` to keep unchanged). Defaults to ``None``.
     """
 
     def __init__(
         self,
         task: str = "block",
-        image_size: tuple[int, int] | None = None,
         show_target: bool = False,
         physics: MujocoPhysics | None = None,
+        obs_fields: Mapping[str, ObsFieldTransform | None] | None = None,
     ) -> None:
         patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
@@ -62,12 +64,29 @@ class ShadowHandEnv(MujocoEnv):
 
         self.task = task_key
         self.show_target = show_target
+        if task_key == "reach":
+            self.obs_keys: tuple[str, ...] = (
+                "render",
+                "state:hand_qpos",
+                "state:hand_qvel",
+                "state:achieved_goal",
+                "state:desired_goal",
+            )
+        else:
+            self.obs_keys = (
+                "render",
+                "state:hand_qpos",
+                "state:hand_qvel",
+                "state:obj_qvel",
+                "state:achieved_goal",
+                "state:desired_goal",
+            )
 
         env = gym.make(
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size, physics=physics)
+        super().__init__(env, physics=physics, obs_fields=obs_fields)
 
         if not show_target:
             self._hide_target_visuals()

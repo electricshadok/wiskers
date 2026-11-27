@@ -2,7 +2,7 @@
 Shared base wrapper for MuJoCo Gymnasium environments.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,8 +11,7 @@ import mujoco
 import numpy as np
 import torch
 
-from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import render_to_tensor
+from wiskers.envs.gym_env import GymEnv, ObsFieldTransform
 
 
 @dataclass(frozen=True)
@@ -58,25 +57,24 @@ class MujocoEnv(GymEnv):
     """
     Base adapter for MuJoCo-backed Gymnasium environments.
 
-    Centralizes visual frame resizing via ``_render_frame()`` and exposes
+    Centralizes visual frame rendering via ``_render_frame()`` and exposes
     deterministic YAML-configurable physics overrides via :class:`MujocoPhysics`.
 
     Args:
         env: Underlying MuJoCo Gymnasium environment.
-        image_size: Optional target ``(height, width)`` for rendered RGB frames.
-            If ``None``, preserves the environment's native resolution.
         physics: Optional :class:`MujocoPhysics` configuration applied on top of
             the environment's nominal XML physics. Defaults to ``None``.
+        obs_fields: Optional mapping from observation field name to per-field transform
+            callable (or ``None`` to keep unchanged). Defaults to ``None``.
     """
 
     def __init__(
         self,
         env: gym.Env,
-        image_size: tuple[int, int] | None = None,
         physics: MujocoPhysics | None = None,
+        obs_fields: Mapping[str, ObsFieldTransform | None] | None = None,
     ) -> None:
-        super().__init__(env)
-        self.image_size: tuple[int, int] | None = (image_size[0], image_size[1]) if image_size is not None else None
+        super().__init__(env, obs_fields=obs_fields)
 
         mj_model = self.model
         self._nominal_gravity: np.ndarray = mj_model.opt.gravity.copy()
@@ -144,4 +142,4 @@ class MujocoEnv(GymEnv):
         frame = self._gym_env.render()
         if frame is None:
             raise RuntimeError(f"{type(self).__name__} render() returned None. Ensure render_mode='rgb_array'.")
-        return render_to_tensor(np.asarray(frame, dtype=np.uint8), self.image_size)
+        return torch.from_numpy(np.ascontiguousarray(frame, dtype=np.uint8))

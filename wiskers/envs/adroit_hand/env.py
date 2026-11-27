@@ -2,12 +2,15 @@
 AdroitHand-v1 environment with visual camera observations.
 """
 
+from collections.abc import Mapping
+
 import gymnasium as gym
 import gymnasium_robotics
 import numpy as np
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.gym_env import ObsFieldTransform
 from wiskers.envs.mujoco_env import MujocoEnv, MujocoPhysics
 
 
@@ -42,16 +45,18 @@ class AdroitHandEnv(MujocoEnv):
 
     Args:
         task: Manipulation task ('door', 'hammer', 'pen', 'relocate'). Defaults to 'door'.
-        image_size: Target ``(height, width)`` to resize frames to. If ``None``,
-            preserves the native ``(480, 480)`` resolution.
         physics: Optional :class:`MujocoPhysics` configuration override. Defaults to ``None``.
+        obs_fields: Optional mapping from observation field name to per-field transform
+            callable (or ``None`` to keep unchanged). Defaults to ``None``.
     """
+
+    obs_keys: tuple[str, ...] = ("render", "state:hand", "state:obj")
 
     def __init__(
         self,
         task: str = "door",
-        image_size: tuple[int, int] | None = None,
         physics: MujocoPhysics | None = None,
+        obs_fields: Mapping[str, ObsFieldTransform | None] | None = None,
     ) -> None:
         gym.register_envs(gymnasium_robotics)
 
@@ -66,7 +71,7 @@ class AdroitHandEnv(MujocoEnv):
             AVAILABLE_TASKS[task_key],
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size, physics=physics)
+        super().__init__(env, physics=physics, obs_fields=obs_fields)
 
     def _process_obs(self, raw_obs: np.ndarray) -> TensorDict:
         state = torch.from_numpy(np.ascontiguousarray(raw_obs, dtype=np.float32))

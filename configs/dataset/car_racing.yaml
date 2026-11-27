@@ -14,8 +14,14 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.car_racing.env.CarRacingEnv
-      image_size: [64, 64]
       show_indicators: false
+      # Optional per-field observation transforms (null = keep raw contiguous torch.Tensor)
+      obs_fields:
+        render:
+          _target_: wiskers.envs.utils.ResizeUint8
+          size: [64, 64]
+        "state:car": null
+        "state:wheels": null
     controller:
       _target_: wiskers.envs.car_racing.policies.CarRacingHeuristicPolicy
     transform: ${transform}

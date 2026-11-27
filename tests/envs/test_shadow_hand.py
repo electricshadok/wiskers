@@ -14,6 +14,7 @@ from wiskers.envs.shadow_hand.policies import (
     ShadowHandPolicy,
     ShadowHandRandomPolicy,
 )
+from wiskers.envs.utils import ResizeUint8
 from wiskers.pipeline.config import load_config
 
 
@@ -29,7 +30,7 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def shadow_env():
-    env = ShadowHandEnv(task="block", image_size=(64, 64))
+    env = ShadowHandEnv(task="block", obs_fields={"render": ResizeUint8((64, 64))})
     yield env
     env.close()
 
@@ -83,7 +84,7 @@ def test_shadow_hand_state_dimensions_match_farama_spec(
     goal_dim: int,
     has_obj_qvel: bool,
 ):
-    env = ShadowHandEnv(task=task, image_size=(64, 64))
+    env = ShadowHandEnv(task=task)
     try:
         raw_obs, _ = env._gym_env.reset(seed=42)
         expected_obs = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))
@@ -221,8 +222,8 @@ def test_shadow_policies_share_action_contract(shadow_env):
 
 
 def test_shadow_hand_show_target_option():
-    env_hidden = ShadowHandEnv(task="block", image_size=(64, 64), show_target=False)
-    env_shown = ShadowHandEnv(task="block", image_size=(64, 64), show_target=True)
+    env_hidden = ShadowHandEnv(task="block", show_target=False)
+    env_shown = ShadowHandEnv(task="block", show_target=True)
     try:
         m_hidden = env_hidden._gym_env.unwrapped.model
         m_shown = env_shown._gym_env.unwrapped.model

@@ -2,7 +2,7 @@
 FrankaKitchen-v1 environment with visual camera observations.
 """
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import gymnasium as gym
@@ -11,6 +11,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from wiskers.envs.gym_env import ObsFieldTransform
 from wiskers.envs.mujoco_env import MujocoEnv, MujocoPhysics
 from wiskers.envs.utils import patch_mujoco_joint_eq
 
@@ -49,17 +50,19 @@ class FrankaKitchenEnv(MujocoEnv):
         https://robotics.farama.org/envs/franka_kitchen/franka_kitchen/
 
     Args:
-        image_size: Target ``(height, width)`` to resize frames to. If ``None``,
-            preserves the native ``(480, 480)`` resolution.
         tasks_to_complete: Subtasks for the robot to complete. Defaults to ``('microwave',)``.
         physics: Optional :class:`MujocoPhysics` configuration override. Defaults to ``None``.
+        obs_fields: Optional mapping from observation field name to per-field transform
+            callable (or ``None`` to keep unchanged). Defaults to ``None``.
     """
+
+    obs_keys: tuple[str, ...] = ("render", "state:robot_qpos", "state:robot_qvel", "state:obj_qpos", "state:obj_qvel")
 
     def __init__(
         self,
-        image_size: tuple[int, int] | None = None,
         tasks_to_complete: Sequence[str] | None = ("microwave",),
         physics: MujocoPhysics | None = None,
+        obs_fields: Mapping[str, ObsFieldTransform | None] | None = None,
     ) -> None:
         patch_mujoco_joint_eq()
         gym.register_envs(gymnasium_robotics)
@@ -74,7 +77,7 @@ class FrankaKitchenEnv(MujocoEnv):
             tasks_to_complete=tasks,
             render_mode="rgb_array",
         )
-        super().__init__(env, image_size=image_size, physics=physics)
+        super().__init__(env, physics=physics, obs_fields=obs_fields)
 
     def _process_obs(self, raw_obs: dict[str, Any]) -> TensorDict:
         state = torch.from_numpy(np.ascontiguousarray(raw_obs["observation"], dtype=np.float32))

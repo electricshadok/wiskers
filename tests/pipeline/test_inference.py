@@ -120,7 +120,6 @@ def test_predict_cli_rolls_out_controller(tmp_path, monkeypatch):
                 "  collector:",
                 "    env:",
                 "      _target_: wiskers.envs.inverted_pendulum.env.InvertedPendulumEnv",
-                "      image_size: [64, 64]",
                 "    max_steps: 5",
                 "backend:",
                 "  _target_: wiskers.pipeline.backends.SafeTensorInference",

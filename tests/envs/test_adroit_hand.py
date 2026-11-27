@@ -14,6 +14,7 @@ from wiskers.envs.adroit_hand.policies import (
     AdroitHandPolicy,
     AdroitHandRandomPolicy,
 )
+from wiskers.envs.utils import ResizeUint8
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +29,7 @@ def mock_mujoco_renderer(monkeypatch):
 
 @pytest.fixture
 def adroit_env():
-    env = AdroitHandEnv(task="door", image_size=(64, 64))
+    env = AdroitHandEnv(task="door", obs_fields={"render": ResizeUint8((64, 64))})
     yield env
     env.close()
 
@@ -78,7 +79,7 @@ def test_adroit_hand_state_dimensions_match_farama_spec(
     obj_dim: int,
     action_dim: int,
 ):
-    env = AdroitHandEnv(task=task, image_size=(64, 64))
+    env = AdroitHandEnv(task=task)
     try:
         assert env._gym_env.observation_space.shape == (raw_dim,)
 

@@ -6,7 +6,7 @@ from tensordict import TensorDict
 
 from wiskers.envs.action_spec import BoundedActionSpec, DiscreteActionSpec
 from wiskers.envs.gym_env import GymEnv
-from wiskers.envs.utils import patch_mujoco_joint_eq, render_to_tensor
+from wiskers.envs.utils import ResizeUint8, patch_mujoco_joint_eq
 
 
 class DummyGymEnv(gym.Env):
@@ -22,29 +22,19 @@ class DummyGymEnv(gym.Env):
         return np.ones(self.observation_space.shape, dtype=np.uint8) * 200, 1.0, False, False, {}
 
 
-def test_gym_env_render_to_tensor_resize():
-    frame = np.ones((120, 160, 3), dtype=np.uint8) * 100
-    resized = render_to_tensor(frame, image_size=(64, 64))
-    assert resized.shape == (64, 64, 3)
-    assert resized.dtype == torch.uint8
-
-
 def test_gym_env_reset_and_step():
-    env = DummyGymEnv(shape=(120, 160, 3))
-    gym_env = GymEnv(env)
+    gym_env = GymEnv(DummyGymEnv(shape=(120, 160, 3)))
 
     obs, info = gym_env.reset(seed=0)
     assert isinstance(obs, TensorDict)
     assert obs.batch_size == torch.Size([])
-    assert obs["render"].shape == (120, 160, 3)
-    assert obs["render"].dtype == torch.uint8
+    assert list(obs.keys()) == []
 
     action = torch.tensor([0.5, -0.5], dtype=torch.float32)
     next_obs, reward, term, trunc, info = gym_env.step(action)
     assert isinstance(next_obs, TensorDict)
     assert next_obs.batch_size == torch.Size([])
-    assert next_obs["render"].shape == (120, 160, 3)
-    assert next_obs["render"].dtype == torch.uint8
+    assert list(next_obs.keys()) == []
     assert reward == 1.0
 
 
@@ -102,3 +92,33 @@ def test_gym_env_context_manager():
         assert isinstance(wrapped, GymEnv)
         assert not closed
     assert closed
+
+
+def test_gym_env_obs_fields_validation():
+    empty_env = GymEnv(DummyGymEnv(), obs_fields={})
+    assert empty_env._obs_transforms == {}
+
+    with pytest.raises(KeyError, match="unknown"):
+        GymEnv(DummyGymEnv(), obs_fields={"unknown": None})
+
+
+def test_resize_uint8():
+    transform = ResizeUint8((64, 64))
+
+    resized_3d = transform(torch.full((120, 160, 3), 150.0, dtype=torch.float32))
+    assert resized_3d.shape == (64, 64, 3)
+    assert resized_3d.dtype == torch.uint8
+    assert torch.all(resized_3d == 150)
+
+    resized_2d = transform(torch.full((120, 160), 200, dtype=torch.uint8))
+    assert resized_2d.shape == (64, 64)
+    assert resized_2d.dtype == torch.uint8
+
+    same_size = transform(torch.full((64, 64, 3), 42.0, dtype=torch.float32))
+    assert same_size.shape == (64, 64, 3)
+    assert same_size.dtype == torch.uint8
+    assert torch.all(same_size == 42)
+
+    for bad_size in ((64,), (0, 64), (-1, 64)):
+        with pytest.raises(ValueError, match="2-element sequence of positive ints"):
+            ResizeUint8(bad_size)

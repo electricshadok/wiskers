@@ -50,7 +50,7 @@ def test_breakout_env_observation_shape_and_ram():
 
 def test_breakout_datamodule_init():
     policy = BreakoutHeuristicPolicy()
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=100)
     sampler = UniformChunkSampler(num_steps=20)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -71,7 +71,7 @@ def test_breakout_datamodule_init():
 
 def test_breakout_datamodule_validation():
     policy = BreakoutHeuristicPolicy()
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
@@ -109,7 +109,7 @@ def test_breakout_datamodule_validation():
 
 def test_breakout_datamodule_setup_and_dataloader():
     policy = BreakoutHeuristicPolicy(epsilon=0.0)
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -151,7 +151,7 @@ def test_breakout_datamodule_custom_policy():
             return torch.tensor([1], dtype=torch.long)
 
     policy = ConstantFirePolicy()
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -170,7 +170,7 @@ def test_breakout_datamodule_custom_policy():
 
 
 def test_breakout_random_policy():
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     policy = BreakoutRandomPolicy(fire_frequency=5)
     obs, _ = env.reset(seed=42)
     assert policy.action_spec.action_dim == 1
@@ -181,7 +181,7 @@ def test_breakout_random_policy():
 
 def test_breakout_datamodule_with_sampler():
     policy = BreakoutHeuristicPolicy(epsilon=0.0)
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     sampler = UniformChunkSampler(num_steps=5)
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -228,7 +228,7 @@ def test_breakout_neural_policy():
 
 
 def test_breakout_policies_share_action_contract():
-    env = BreakoutEnv(image_size=(64, 64))
+    env = BreakoutEnv()
     ref_action = env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 

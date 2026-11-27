@@ -14,7 +14,12 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.breakout.env.BreakoutEnv
-      image_size: [64, 64]
+      # Optional per-field observation transforms (null = keep raw contiguous torch.Tensor)
+      obs_fields:
+        render:
+          _target_: wiskers.envs.utils.ResizeUint8
+          size: [64, 64]
+        ram: null
     controller:
       _target_: wiskers.envs.breakout.policies.BreakoutHeuristicPolicy
       epsilon: 0.1

@@ -14,7 +14,6 @@ data_module:
     _target_: wiskers.data.collector.Collector
     env:
       _target_: wiskers.envs.adroit_hand.env.AdroitHandEnv
-      image_size: [64, 64]
       task: door
       physics:
         _target_: wiskers.envs.mujoco_env.MujocoPhysics
@@ -23,6 +22,13 @@ data_module:
         friction_scale: null
         mass_scale: null
         damping_scale: null
+      # Optional per-field observation transforms (null = keep raw contiguous torch.Tensor)
+      obs_fields:
+        render:
+          _target_: wiskers.envs.utils.ResizeUint8
+          size: [64, 64]
+        "state:hand": null
+        "state:obj": null
     controller:
       _target_: wiskers.envs.adroit_hand.policies.AdroitHandHeuristicPolicy
       momentum: 0.85

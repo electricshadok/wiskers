@@ -2,41 +2,38 @@
 Shared utilities for environment adapters.
 """
 
+from collections.abc import Sequence
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
 
-def render_to_tensor(
-    frame: np.ndarray,
-    image_size: tuple[int, int] | None = None,
-) -> torch.Tensor:
+class ResizeUint8:
     """
-    Convert a raw NumPy image frame into a contiguous ``torch.uint8`` tensor.
+    Resize an image tensor ``(H, W, C)`` or ``(H, W)`` to ``size`` ``(height, width)``
+    via area interpolation and convert to ``torch.uint8``.
 
     Args:
-        frame (np.ndarray): Input image array with shape ``(H, W, C)`` (e.g. RGB)
-            or ``(H, W)`` (grayscale). Non-contiguous strides (such as flipped
-            OpenGL views) are copied cleanly.
-        image_size (tuple[int, int] | None): Optional target ``(height, width)`` to
-            downsample/resize frames to via area interpolation. If ``None``,
-            preserves the native resolution.
-
-    Returns:
-        torch.Tensor: ``uint8`` tensor with shape ``(H, W, C)`` or ``(H, W)``
-        (or ``(image_size[0], image_size[1], C)`` / ``image_size`` when resized).
+        size: Target ``(height, width)`` spatial resolution.
     """
-    obs = torch.from_numpy(np.ascontiguousarray(frame))
-    if image_size is not None and obs.ndim >= 2 and obs.shape[:2] != image_size:
-        if obs.ndim == 3:
-            t = obs.permute(2, 0, 1).unsqueeze(0).float()
-            resized = F.interpolate(t, size=image_size, mode="area")
-            obs = resized.squeeze(0).permute(1, 2, 0).to(torch.uint8)
-        elif obs.ndim == 2:
-            t = obs.unsqueeze(0).unsqueeze(0).float()
-            resized = F.interpolate(t, size=image_size, mode="area")
-            obs = resized.squeeze(0).squeeze(0).to(torch.uint8)
-    return obs
+
+    def __init__(self, size: Sequence[int]) -> None:
+        if len(size) != 2 or size[0] <= 0 or size[1] <= 0:
+            raise ValueError(f"size must be a 2-element sequence of positive ints (H, W), got {size}.")
+        self.size: tuple[int, int] = (int(size[0]), int(size[1]))
+
+    def __call__(self, image: torch.Tensor) -> torch.Tensor:
+        if image.ndim >= 2 and image.shape[:2] != self.size:
+            if image.ndim == 3:
+                t = image.permute(2, 0, 1).unsqueeze(0).float()
+                resized = F.interpolate(t, size=self.size, mode="area")
+                return resized.squeeze(0).permute(1, 2, 0).to(torch.uint8)
+            if image.ndim == 2:
+                t = image.unsqueeze(0).unsqueeze(0).float()
+                resized = F.interpolate(t, size=self.size, mode="area")
+                return resized.squeeze(0).squeeze(0).to(torch.uint8)
+        return image.to(torch.uint8)
 
 
 def patch_mujoco_joint_eq() -> None:

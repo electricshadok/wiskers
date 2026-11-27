@@ -50,7 +50,7 @@ def test_car_racing_env_observation_shape_and_state():
 
 def test_car_racing_datamodule_init():
     policy = CarRacingHeuristicPolicy()
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=100)
     sampler = UniformChunkSampler(num_steps=20)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -71,7 +71,7 @@ def test_car_racing_datamodule_init():
 
 def test_car_racing_datamodule_validation():
     policy = CarRacingHeuristicPolicy()
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
 
@@ -109,7 +109,7 @@ def test_car_racing_datamodule_validation():
 
 def test_car_racing_datamodule_setup_and_dataloader():
     policy = CarRacingHeuristicPolicy()
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -153,7 +153,7 @@ def test_car_racing_datamodule_custom_policy():
             return torch.tensor([0.0, 0.5, 0.0], dtype=torch.float32)
 
     policy = StraightLinePolicy()
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
     transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
@@ -172,7 +172,7 @@ def test_car_racing_datamodule_custom_policy():
 
 
 def test_car_racing_heuristic_policy():
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     policy = CarRacingHeuristicPolicy()
     obs, _ = env.reset(seed=42)
     assert policy.action_spec.action_dim == 3
@@ -186,7 +186,7 @@ def test_car_racing_heuristic_policy():
 
 
 def test_car_racing_random_policy():
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     policy = CarRacingRandomPolicy()
     obs, _ = env.reset(seed=42)
     action = policy(obs, step=0)
@@ -197,7 +197,7 @@ def test_car_racing_random_policy():
 
 def test_car_racing_datamodule_native_resolution():
     policy = CarRacingHeuristicPolicy()
-    env = CarRacingEnv(image_size=None)
+    env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=4)
     transform = EpisodeToTensor(image_size=(3, 96, 96), obs_range=(0.0, 1.0))
@@ -246,7 +246,7 @@ def test_car_racing_neural_policy():
 
 
 def test_car_racing_policies_share_action_contract():
-    env = CarRacingEnv(image_size=(64, 64))
+    env = CarRacingEnv()
     ref_action = env.action_spec.sample()
     obs = TensorDict({"render": torch.rand(3, 64, 64)}, batch_size=[])
 

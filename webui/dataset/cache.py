@@ -20,7 +20,6 @@ NUM_EPISODES = 10
 MAX_STEPS = 10
 MIN_STEPS = 5
 SAMPLER_NUM_STEPS = 5
-IMAGE_SIZE = None
 
 
 def get_config_files() -> list[str]:
@@ -41,11 +40,12 @@ def get_sweep_cache_path(config_path: str) -> Path:
 
 
 def apply_ui_overrides(config: Any) -> Any:
-    """Apply fast WebUI preview overrides (10 episodes, 10 max steps, <= 5 min steps, native image_size)."""
+    """Apply fast WebUI preview overrides (10 episodes, 10 max steps, <= 5 min steps, native render resolution)."""
     config.data_module.collector.num_episodes = NUM_EPISODES
     config.data_module.collector.max_steps = MAX_STEPS
     config.data_module.collector.min_steps = min(MIN_STEPS, int(config.data_module.collector.min_steps))
-    config.data_module.collector.env.image_size = IMAGE_SIZE
+    if "obs_fields" in config.data_module.collector.env and "render" in config.data_module.collector.env.obs_fields:
+        config.data_module.collector.env.obs_fields.render = None
     config.data_module.sampler.num_steps = min(SAMPLER_NUM_STEPS, int(config.data_module.sampler.num_steps))
     config.data_module.num_workers = 0
     return config

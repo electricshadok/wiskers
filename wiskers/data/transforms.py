@@ -82,10 +82,13 @@ class EpisodeToTensor(EpisodeTransform):
         """
         Convert raw uint8 image observations under ``self.obs_key`` into normalized
         ``float32`` tensors in ``obs_range`` while preserving all other observation keys.
+        If ``self.obs_key`` is absent from ``obs``, returns ``obs`` unchanged.
 
         Supports both a single observation ``batch_size=[]`` (``(H, W, C) -> (C, H, W)``)
         and a sequence ``batch_size=[T]`` (``(T, H, W, C) -> (T, C, H, W)``).
         """
+        if self.obs_key not in obs.keys():
+            return obs
         img = obs[self.obs_key]
         single_frame = img.ndim == 3
         obs_tensor = img.unsqueeze(0) if single_frame else img
