@@ -8,7 +8,7 @@ from tensordict import TensorDict
 from wiskers.controller import Controller, validate_controller
 from wiskers.data.buffer import Buffer
 from wiskers.data.episode import Episode
-from wiskers.data.transforms import EpisodeTransform
+from wiskers.data.transforms import EpisodeToTensor
 from wiskers.envs.gym_env import GymEnv
 
 
@@ -27,7 +27,7 @@ class Collector:
     Args:
         env (GymEnv): The PyTorch-wrapped Gymnasium environment instance.
         controller (Controller): Controller instance implementing ``Controller`` (``Policy`` or ``Planner``).
-        transform (EpisodeTransform): Transform used to convert raw ``uint8``
+        transform (EpisodeToTensor): Transform used to convert raw ``uint8``
             observations into normalized ``torch.Tensor`` before passing them to ``controller``.
         num_episodes (int): Target number of valid episodes to collect.
         min_steps (int): Minimum step cutoff; episodes with fewer steps are rejected.
@@ -40,7 +40,7 @@ class Collector:
         self,
         env: GymEnv,
         controller: Controller,
-        transform: EpisodeTransform,
+        transform: EpisodeToTensor,
         num_episodes: int = 10,
         min_steps: int = 0,
         max_steps: int = 500,

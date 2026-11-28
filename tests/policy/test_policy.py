@@ -118,7 +118,7 @@ def test_env_policies_inherit_from_policy():
 
 
 def test_collector_policy_env_validation():
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
 
     discrete_env = GymEnv(_DummyEnv(gym.spaces.Discrete(4)))
     discrete_5_env = GymEnv(_DummyEnv(gym.spaces.Discrete(5)))
@@ -170,7 +170,7 @@ def test_controller_protocol_supports_policy_and_custom_planner():
     assert isinstance(planner, Controller)
     assert isinstance(CarRacingRandomPolicy(), Controller)
 
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     env = GymEnv(_DummyEnv(gym.spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32)))
     collector = Collector(env=env, controller=planner, transform=transform, num_episodes=1, max_steps=3, verbose=False)
     ep = collector.collect_one_episode()

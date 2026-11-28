@@ -13,7 +13,7 @@
   - `episode.py`: `Episode(TensorDict)` schema (`obs`, `action`, `reward`, `done`).
   - `buffer.py`: `Buffer`, `ReplayBuffer`, `RolloutBuffer`.
   - `sampler.py`: Chunk sampling strategies (`TrajectorySampler`, `UniformChunkSampler`, `RecencyWeightedSampler`).
-  - `transforms.py`: Episode preprocessing (`EpisodeTransform`, `EpisodeToTensor`).
+  - `transforms.py`: Episode preprocessing (`EpisodeToTensor`).
   - `collector.py`: `Collector` rolling out a `GymEnv` + `Controller` into a `Buffer`.
   - `dataset.py` & `datamodule.py`: PyTorch `TrajectoryDataset` (`IterableDataset`) and Lightning `TrajectoryDataModule`.
 - **`wiskers/nn/` (Pure PyTorch only)**:

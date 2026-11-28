@@ -114,8 +114,8 @@ def test_play_cli_rolls_out_controller(tmp_path, monkeypatch):
                 "eval_episodes: 2",
                 "transform:",
                 "  _target_: wiskers.data.transforms.EpisodeToTensor",
-                "  image_size: [3, 64, 64]",
-                "  obs_range: [0.0, 1.0]",
+                "  render_shape: [3, 64, 64]",
+                "  render_range: [0.0, 1.0]",
                 "data_module:",
                 "  collector:",
                 "    env:",
@@ -125,7 +125,7 @@ def test_play_cli_rolls_out_controller(tmp_path, monkeypatch):
                 "  _target_: wiskers.pipeline.backends.SafeTensorInference",
                 "  model:",
                 "    _target_: wiskers.envs.inverted_pendulum.policies.InvertedPendulumNeuralPolicy",
-                "    image_size: ${transform.image_size}",
+                "    image_size: ${transform.render_shape}",
             ]
         )
     )

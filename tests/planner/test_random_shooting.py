@@ -106,7 +106,7 @@ def test_random_shooting_collector_integration():
         horizon=4,
         num_samples=64,
     )
-    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 8, 8), render_range=(0.0, 1.0))
 
     collector = Collector(env=env, controller=planner, transform=transform, num_episodes=1, max_steps=6, verbose=False)
     ep = collector.collect_one_episode()

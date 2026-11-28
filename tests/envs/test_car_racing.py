@@ -53,7 +53,7 @@ def test_car_racing_datamodule_init():
     env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=100)
     sampler = UniformChunkSampler(num_steps=20)
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(env=env, controller=policy, transform=transform, num_episodes=0, min_steps=20)
     dm = TrajectoryDataModule(
         replay_buffer=replay_buffer,
@@ -73,7 +73,7 @@ def test_car_racing_datamodule_validation():
     policy = CarRacingHeuristicPolicy()
     env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
 
     # sampler.num_steps > collector.max_steps raises ValueError
     with pytest.raises(ValueError, match="sampler.num_steps .* cannot be greater than collector.max_steps"):
@@ -112,7 +112,7 @@ def test_car_racing_datamodule_setup_and_dataloader():
     env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(
         env=env, controller=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=8, verbose=False
     )
@@ -156,7 +156,7 @@ def test_car_racing_datamodule_custom_policy():
     env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=5)
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(
         env=env, controller=policy, transform=transform, num_episodes=1, min_steps=5, max_steps=6, verbose=False
     )
@@ -200,7 +200,7 @@ def test_car_racing_datamodule_native_resolution():
     env = CarRacingEnv()
     replay_buffer = ReplayBuffer(capacity_episodes=10)
     sampler = UniformChunkSampler(num_steps=4)
-    transform = EpisodeToTensor(image_size=(3, 96, 96), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 96, 96), render_range=(0.0, 1.0))
     collector = Collector(
         env=env, controller=policy, transform=transform, num_episodes=1, min_steps=4, max_steps=6, verbose=False
     )

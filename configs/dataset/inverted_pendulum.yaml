@@ -3,8 +3,9 @@ seed: 0
 # Shared transform for both Collector (policy input) and TrajectoryDataModule (training batches)
 transform:
   _target_: wiskers.data.transforms.EpisodeToTensor
-  image_size: [3, 64, 64]  # [C, H, W] (C = 1 for grayscale or 3 for RGB)
-  obs_range: [0.0, 1.0]    # [low, high] normalization range for observations
+  render_key: render         # field converted uint8 (H, W, C) -> float32 (C, H, W); other fields pass through unchanged
+  render_shape: [3, 64, 64]  # [C, H, W] (C = 1 for grayscale or 3 for RGB; null = keep native)
+  render_range: [0.0, 1.0]   # [low, high] float32 normalization range for render
 
 data_module:
   _target_: wiskers.data.datamodule.TrajectoryDataModule
@@ -31,7 +32,7 @@ data_module:
         "state:qvel": null
     controller:
       _target_: wiskers.envs.inverted_pendulum.policies.InvertedPendulumNeuralPolicy
-      image_size: ${transform.image_size}
+      image_size: ${transform.render_shape}
     transform: ${transform}
     num_episodes: 20
     min_steps: ${data_module.sampler.num_steps}

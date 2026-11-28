@@ -9,7 +9,7 @@ Usage:
 
     replay_buffer = ReplayBuffer(capacity_episodes=1000)
     sampler = UniformChunkSampler(num_steps=50)
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     # ... populate replay_buffer with seed episodes ...
 
     dm = TrajectoryDataModule(
@@ -36,7 +36,7 @@ from wiskers.data.buffer import ReplayBuffer
 from wiskers.data.collector import Collector
 from wiskers.data.dataset import TrajectoryDataset
 from wiskers.data.sampler import TrajectorySampler
-from wiskers.data.transforms import EpisodeTransform
+from wiskers.data.transforms import EpisodeToTensor
 
 
 def _collate_batch(samples: list[dict[str, Any]]) -> dict[str, Any]:
@@ -56,7 +56,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         collector (Collector): Collector to seed the buffer during setup().
         replay_buffer (ReplayBuffer): Buffer to store collected episodes.
         sampler (TrajectorySampler): Sampling strategy to draw chunks.
-        transform (EpisodeTransform): Transform converting sampled Episode chunks into tensors.
+        transform (EpisodeToTensor): Transform converting sampled Episode chunks into tensors.
         batch_size (int): Number of chunks per training batch (default: 32).
         num_workers (int): DataLoader workers (default: 0).
     """
@@ -66,7 +66,7 @@ class TrajectoryDataModule(L.LightningDataModule):
         collector: Collector,
         replay_buffer: ReplayBuffer,
         sampler: TrajectorySampler,
-        transform: EpisodeTransform,
+        transform: EpisodeToTensor,
         batch_size: int = 32,
         num_workers: int = 0,
     ) -> None:

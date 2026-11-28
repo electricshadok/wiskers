@@ -142,7 +142,7 @@ def test_franka_heuristic_policy(franka_env):
 
 def test_franka_kitchen_collector_integration(franka_env):
     policy = FrankaKitchenHeuristicPolicy()
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(
         env=franka_env,
         controller=policy,

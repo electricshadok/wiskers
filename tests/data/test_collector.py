@@ -83,7 +83,7 @@ class DummyContinuousEnv(gym.Env):
 def test_collector_collect_one_episode_no_args():
     """collect_one_episode takes no parameters and uses self.env, self.policy, self.max_steps."""
     env = GymEnv(DummyDiscreteEnv(step_limit=8))
-    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 16, 16), render_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
 
@@ -127,7 +127,7 @@ def test_collector_terminated_and_truncated_distinction():
             return np.ones((16, 16, 3), dtype=np.uint8), 1.0, terminated, truncated, {}
 
     env = GymEnv(TruncatedEnv())
-    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 16, 16), render_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=20, verbose=False)
     episode = collector.collect_one_episode()
 
@@ -142,7 +142,7 @@ def test_collector_terminated_and_truncated_distinction():
 def test_collector_max_steps_clamping():
     """Collector clamps rollouts at max_steps if environment does not terminate earlier."""
     env = GymEnv(DummyDiscreteEnv(step_limit=50))
-    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 16, 16), render_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, max_steps=12, verbose=False)
     episode = collector.collect_one_episode()
 
@@ -165,7 +165,7 @@ def test_collector_min_steps_filtering():
 
     env = GymEnv(FlakyEnv())
     buffer = ReplayBuffer(capacity_episodes=10)
-    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 16, 16), render_range=(0.0, 1.0))
     collector = Collector(
         env=env,
         controller=DummyPolicy(),
@@ -187,7 +187,7 @@ def test_collector_continuous_actions():
     """Collector properly formats continuous array actions."""
     env = GymEnv(DummyContinuousEnv(step_limit=6))
     buffer = ReplayBuffer(capacity_episodes=5)
-    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 16, 16), render_range=(0.0, 1.0))
     collector = Collector(
         env=env,
         controller=DummyContinuousPolicy(),
@@ -206,7 +206,7 @@ def test_collector_continuous_actions():
 def test_collector_collect_one_episode_with_idx():
     """collect_one_episode accepts an explicit episode_idx parameter."""
     env = GymEnv(DummyDiscreteEnv(step_limit=4))
-    transform = EpisodeToTensor(image_size=(3, 16, 16), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 16, 16), render_range=(0.0, 1.0))
     collector = Collector(env=env, controller=DummyPolicy(), transform=transform, seed=10, max_steps=20, verbose=False)
     ep0 = collector.collect_one_episode(episode_idx=0)
     ep5 = collector.collect_one_episode(episode_idx=5)
@@ -231,8 +231,8 @@ def test_collector_hydra_instantiation():
             },
             "transform": {
                 "_target_": "wiskers.data.transforms.EpisodeToTensor",
-                "image_size": [3, 16, 16],
-                "obs_range": [0.0, 1.0],
+                "render_shape": [3, 16, 16],
+                "render_range": [0.0, 1.0],
             },
             "num_episodes": 25,
             "min_steps": 50,
@@ -262,7 +262,7 @@ def test_collector_with_transform(monkeypatch):
         "_process_obs",
         lambda raw_obs: TensorDict({"render": torch.from_numpy(np.ascontiguousarray(raw_obs))}, batch_size=[]),
     )
-    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(-1.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 8, 8), render_range=(-1.0, 1.0))
     collector = Collector(
         env=env,
         controller=InspectingPolicy(DiscreteActionSpec(n=4)),

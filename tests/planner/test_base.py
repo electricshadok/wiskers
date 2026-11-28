@@ -106,7 +106,7 @@ def test_planner_works_with_collector():
     env = GymEnv(_DummyBoxEnv(action_dim=2))
     assert isinstance(env.action_spec, BoundedActionSpec)
     planner = ZeroPlanner(model=DummyDynamicsModel(), action_spec=env.action_spec, horizon=4, num_samples=8)
-    transform = EpisodeToTensor(image_size=(3, 8, 8), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 8, 8), render_range=(0.0, 1.0))
 
     collector = Collector(env=env, controller=planner, transform=transform, num_episodes=1, max_steps=5, verbose=False)
     ep = collector.collect_one_episode()

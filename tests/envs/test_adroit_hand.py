@@ -137,7 +137,7 @@ def test_adroit_heuristic_policy(adroit_env):
 
 def test_adroit_hand_collector_integration(adroit_env):
     policy = AdroitHandHeuristicPolicy()
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(
         env=adroit_env,
         controller=policy,

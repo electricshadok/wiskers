@@ -148,7 +148,7 @@ def test_shadow_heuristic_policy(shadow_env):
 
 def test_shadow_hand_collector_integration(shadow_env):
     policy = ShadowHandHeuristicPolicy()
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(
         env=shadow_env,
         controller=policy,

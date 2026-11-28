@@ -24,9 +24,9 @@ _STATUS_RENDERERS = {
 
 
 def _extract_render_config(data_module: TrajectoryDataModule) -> tuple[str, tuple[float, float]]:
-    """Return ``(obs_key, obs_range)`` from ``data_module.transform``."""
-    if isinstance(data_module.transform, EpisodeToTensor):
-        return data_module.transform.obs_key, data_module.transform.obs_range
+    """Return ``(render_key, render_range)`` from ``data_module.transform``."""
+    if isinstance(data_module.transform, EpisodeToTensor) and data_module.transform.render_key is not None:
+        return data_module.transform.render_key, data_module.transform.render_range
     return "render", (0.0, 1.0)
 
 

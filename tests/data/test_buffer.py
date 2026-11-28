@@ -379,7 +379,7 @@ def test_collector_with_rollout_buffer():
     collector = Collector(
         env=GymEnv(DummyEnv()),
         controller=DummyPolicy(DiscreteActionSpec(n=2)),
-        transform=EpisodeToTensor(image_size=(3, 4, 4), obs_range=(0.0, 1.0)),
+        transform=EpisodeToTensor(render_shape=(3, 4, 4), render_range=(0.0, 1.0)),
         num_episodes=2,
         min_steps=5,
         max_steps=10,

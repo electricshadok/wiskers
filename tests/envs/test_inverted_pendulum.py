@@ -159,7 +159,7 @@ def test_inverted_pendulum_policies_share_action_contract(inverted_pendulum_env)
 
 def test_inverted_pendulum_collector_integration(inverted_pendulum_env):
     policy = InvertedPendulumNeuralPolicy(image_size=(3, 64, 64))
-    transform = EpisodeToTensor(image_size=(3, 64, 64), obs_range=(0.0, 1.0))
+    transform = EpisodeToTensor(render_shape=(3, 64, 64), render_range=(0.0, 1.0))
     collector = Collector(
         env=inverted_pendulum_env,
         controller=policy,
