@@ -13,9 +13,9 @@ from wiskers.pipeline.backends import InferenceBackend
 from wiskers.pipeline.config import load_config
 
 
-class PredictCLI:
+class PlayCLI:
     """
-    Command-line interface for evaluating a trained model checkpoint in an environment.
+    Command-line interface for playing a trained policy or model checkpoint in an environment.
 
     Args:
         config_name: Configuration name (e.g. ``'training/car_racing_world_models'``) or YAML path.
@@ -82,14 +82,14 @@ class PredictCLI:
         avg_len = buffer.num_steps / buffer.num_episodes if buffer.num_episodes else 0.0
         avg_return = sum(ep.reward.sum().item() for ep in buffer) / buffer.num_episodes if buffer.num_episodes else 0.0
         print(
-            f"[Predict] episodes={buffer.num_episodes} | total_steps={buffer.num_steps} | "
+            f"[Play] episodes={buffer.num_episodes} | total_steps={buffer.num_steps} | "
             f"avg_len={avg_len:.1f} | avg_return={avg_return:.2f}"
         )
         return buffer
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate a trained model checkpoint in the environment.")
+    parser = argparse.ArgumentParser(description="Play a trained model checkpoint in the environment.")
     parser.add_argument(
         "--config-path",
         type=str,
@@ -109,5 +109,5 @@ if __name__ == "__main__":
         help="Optional model artifact path overriding config.checkpoint_path",
     )
     args, extra_args = parser.parse_known_args()
-    cmd = PredictCLI(args.config, config_path=args.config_path, overrides=extra_args)
+    cmd = PlayCLI(args.config, config_path=args.config_path, overrides=extra_args)
     cmd.run(checkpoint_path=args.checkpoint)

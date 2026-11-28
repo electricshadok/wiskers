@@ -98,12 +98,12 @@ python wiskers/pipeline/train.py --config training/car_racing_world_models train
 python wiskers/pipeline/train.py --config training/car_racing_world_models dataset=breakout --fast_dev_run
 ```
 
-## Prediction & Evaluation
+## Play
 
-Evaluate a trained checkpoint/model in the environment using a configuration:
+Play a trained checkpoint/model in the environment using a configuration:
 
 ```bash
-python wiskers/pipeline/predict.py --config training/car_racing_world_models --checkpoint experiments/world_models/version_0/checkpoints/best.ckpt
+python wiskers/pipeline/play.py --config training/car_racing_world_models --checkpoint experiments/world_models/version_0/checkpoints/best.ckpt
 ```
 
 ## Inspect Datasets

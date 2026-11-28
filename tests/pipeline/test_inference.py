@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from wiskers.data.buffer import RolloutBuffer
 from wiskers.envs.inverted_pendulum.policies import InvertedPendulumNeuralPolicy
 from wiskers.pipeline.backends import CheckpointInference, ONNXInference, SafeTensorInference
-from wiskers.pipeline.predict import PredictCLI
+from wiskers.pipeline.play import PlayCLI
 
 
 class _DummyLightningModule(L.LightningModule):
@@ -94,7 +94,7 @@ def test_onnx_inference_loads_session(tmp_path):
     assert np.allclose(out, np.maximum(x, 0.0))
 
 
-def test_predict_cli_rolls_out_controller(tmp_path, monkeypatch):
+def test_play_cli_rolls_out_controller(tmp_path, monkeypatch):
     monkeypatch.setattr(
         MujocoRenderer,
         "render",
@@ -105,7 +105,7 @@ def test_predict_cli_rolls_out_controller(tmp_path, monkeypatch):
     st_path = tmp_path / "pendulum_policy.safetensors"
     save_model(policy, str(st_path))
 
-    cfg_path = tmp_path / "predict.yaml"
+    cfg_path = tmp_path / "play.yaml"
     cfg_path.write_text(
         "\n".join(
             [
@@ -130,7 +130,7 @@ def test_predict_cli_rolls_out_controller(tmp_path, monkeypatch):
         )
     )
 
-    cli = PredictCLI(str(cfg_path))
+    cli = PlayCLI(str(cfg_path))
     buffer = cli.run()
 
     assert isinstance(buffer, RolloutBuffer)
@@ -139,9 +139,9 @@ def test_predict_cli_rolls_out_controller(tmp_path, monkeypatch):
     assert buffer[0].action.shape[1:] == (1,)
 
     # Controller resolution supports both direct Controller and `.controller` attribute
-    assert PredictCLI._resolve_controller(policy) is policy
+    assert PlayCLI._resolve_controller(policy) is policy
     wrapper = SimpleNamespace(controller=policy)
-    assert PredictCLI._resolve_controller(wrapper) is policy
+    assert PlayCLI._resolve_controller(wrapper) is policy
 
     with pytest.raises(TypeError, match="must implement Controller or expose a .controller attribute"):
-        PredictCLI._resolve_controller(nn.Linear(2, 2))
+        PlayCLI._resolve_controller(nn.Linear(2, 2))

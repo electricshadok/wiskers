@@ -21,7 +21,7 @@
   - Never import `lightning`, optimizers, or training-loop logic inside `wiskers/nn/`.
 - **`wiskers/systems/` (PyTorch Lightning)**:
   - `lightning.LightningModule` training systems (`planet.py`, `world_models.py`) that assemble components from `wiskers/nn/`.
-- **`wiskers/pipeline/`**: Hydra/OmegaConf config loading (`config.py`), training/evaluation/dataset CLIs (`train.py`, `predict.py`, `inspect_dataset.py`), and export/inference backends (`backends.py`: ONNX, SafeTensors, Checkpoint).
+- **`wiskers/pipeline/`**: Hydra/OmegaConf config loading (`config.py`), training/evaluation/dataset CLIs (`train.py`, `play.py`, `inspect_dataset.py`), and export/inference backends (`backends.py`: ONNX, SafeTensors, Checkpoint).
 - **Supporting root folders**:
   - `configs/`: Hydra/OmegaConf YAML configs (`dataset/`, `module/`, `training/`).
   - `tests/`: Unit/integration tests mirroring the `wiskers/` directory layout.
