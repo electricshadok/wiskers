@@ -1,18 +1,34 @@
 # Wiskers: World Models & Policy Learning Playground
 
+![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.13-ee4c2c.svg)
+![Lightning](https://img.shields.io/badge/Lightning-2.4%2B-792ee5.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
 ![Wiskers Logo](https://raw.githubusercontent.com/electricshadok/wiskers/refs/heads/main/docs/wiskers_logo.png)
 
-Wiskers is a modular framework to build, train, and evaluate world models and policies in simulation. Starting with core world model and policy training, Wiskers is designed to progressively support diverse architectures for reinforcement learning and generative dynamics—including latent world models, diffusion policies, Vision-Language-Action models (VLAs), behavior cloning, and actor-critic RL—providing an experimental playground to train policies and benchmark agent intelligence from imagination to simulated execution.
+Wiskers is a modular PyTorch framework to build, train, and play world models and policies in simulation. It decouples Torch-first environments, trajectory collection, replay buffers, neural blocks, and Lightning training systems so you can iterate cleanly from imagination to simulated execution.
 
-> 📘 For the full architecture, component breakdown, and system blueprint, see [PROJECT.md](PROJECT.md)
+> For the full architecture, component breakdown, and paper walkthroughs, see [PROJECT.md](PROJECT.md).
 
-## Architecture & Modular Configs
+## Table of Contents
 
-Wiskers decouples environments, trajectory collection, buffers, and neural architectures into plug-and-play components configured via Hydra:
+- [Architecture](#architecture)
+- [Environments](#environments)
+- [Installation](#installation)
+- [Training](#training)
+- [Play](#play)
+- [Inspection](#inspection)
+- [Development](#development)
+- [License](#license)
 
-- **`configs/dataset/`**: Simulation environments, policies, collectors, replay buffers, and chunk samplers.
-- **`configs/module/`**: Neural world models, perception encoders/decoders, dynamics, and controllers.
-- **`configs/training/`**: Composes a dataset and module via Hydra config groups in `defaults:`, specifying training loops and environment-specific overrides:
+## Architecture
+
+Wiskers composes environments, collectors, buffers, and neural models via Hydra config groups:
+
+- **`configs/dataset/`**: Environment adapters, rollout policies, collectors, replay buffers, and chunk samplers.
+- **`configs/module/`**: Lightning systems assembling pure-PyTorch blocks (`wiskers/nn/`).
+- **`configs/training/`**: Experiment entrypoints composing a dataset and module group in `defaults:`:
 
 ```yaml
 defaults:
@@ -21,118 +37,99 @@ defaults:
   - _self_
 ```
 
-For an in-depth component diagram and paper walkthroughs (World Models, DIAMOND), read [PROJECT.md](PROJECT.md).
+```text
+wiskers/
+├── envs/        # Torch-first Gymnasium & MuJoCo adapters + env policies
+├── policy/      # Discrete, continuous, and random Controller policies
+├── planner/     # Model-based receding-horizon MPC planners
+├── data/        # Episode TensorDicts, buffers, samplers, Collector, DataModule
+├── nn/          # Pure PyTorch blocks, losses, quantizers, WM components
+├── systems/     # PyTorch Lightning training systems (WorldModels, PlaNet)
+└── pipeline/    # Hydra config loader, CLI scripts (train, play, inspect_dataset), backends
+```
+
+## Environments
+
+All environments emit multi-modal flat `TensorDict` observations (`"render"` as `uint8`, plus optional `"ram"` / `"state:*"` tensors):
+
+| Environment | Backend | Action Space | Observation Fields | Config |
+| --- | --- | --- | --- | --- |
+| Breakout | ALE | `Discrete(4)` | `render`, `ram` | `dataset/breakout` |
+| CarRacing | Box2D | `Continuous(3)` | `render`, `state:car`, `state:wheels` | `dataset/car_racing` |
+| InvertedPendulum | MuJoCo | `Continuous(1)` | `render`, `state:qpos`, `state:qvel` | `dataset/inverted_pendulum` |
+| FrankaKitchen | MuJoCo | `Continuous(9)` | `render`, `state:robot_qpos`, `state:robot_qvel`, `state:obj_qpos`, `state:obj_qvel` | `dataset/franka_kitchen` |
+| AdroitHand | MuJoCo | `Continuous(28)` | `render`, `state:hand`, `state:obj` | `dataset/adroit_hand` |
+| ShadowHand | MuJoCo | `Continuous(20)` | `render`, `state:hand_qpos`, `state:hand_qvel`, `state:obj_qvel`, `state:achieved_goal`, `state:desired_goal` | `dataset/shadow_hand` |
 
 ## Installation
 
-Wiskers uses [uv](https://github.com/astral-sh/uv) for fast and reproducible environment.
+Wiskers uses [uv](https://github.com/astral-sh/uv) for dependency management. Sync the environment once, then run all commands with `uv run` (no manual virtualenv activation needed):
 
-1. Create the virtual environment and install all dependencies:
 ```bash
 uv sync --all-extras
 ```
 
-2. Activate the virtual environment:
-```bash
-source .venv/bin/activate
-```
-
-## Tests
-
-Run unit tests:
-
-```bash
-pytest tests
-```
-
-### Development Runs
-
-`--fast_dev_run`
-
-Use this for the fastest sanity check that everything compiles and runs without executing the full training pipeline:
-
-```bash
-python wiskers/pipeline/train.py --config training/car_racing_world_models --fast_dev_run
-```
-
-`--quick_run`
-
-Use this to simulate a short training run and catch bugs across the full pipeline (checkpointing, logging, etc.):
-
-```bash
-python wiskers/pipeline/train.py --config training/car_racing_world_models --quick_run
-```
-
 ## Training
 
-Launch training with a chosen experiment configuration (`--config`):
+Launch training with any configuration under `configs/training/`:
 
 ```bash
-# Shorthand name (resolves to ./configs/training/car_racing_world_models.yaml)
-python wiskers/pipeline/train.py --config training/car_racing_world_models
+# Run with a config group name
+uv run python wiskers/pipeline/train.py --config <training_config>
 
-# Direct path to a YAML file
-python wiskers/pipeline/train.py --config ./configs/training/car_racing_world_models.yaml
+# Example: train World Models on CarRacing (resolves ./configs/training/car_racing_world_models.yaml)
+uv run python wiskers/pipeline/train.py --config training/car_racing_world_models
 
-# Reproduce an exact previous run using its saved config snapshot
-python wiskers/pipeline/train.py --config experiments/world_models/version_0/config.yaml
+# Or pass a direct YAML path (including saved snapshots for reproducibility)
+uv run python wiskers/pipeline/train.py --config experiments/world_models/version_0/config.yaml
 
-# Custom config root directory (--config-path)
-python wiskers/pipeline/train.py --config-path ./configs --config training/car_racing_world_models
+# Optional custom config root directory
+uv run python wiskers/pipeline/train.py --config-path ./configs --config training/car_racing_world_models
 ```
 
-> 💡 **Experiment Reproducibility**: Every full training run saves a self-contained snapshot of the complete, resolved configuration to `experiments/<name>/<version>/config.yaml`. You can re-run or evaluate that exact run at any time by passing that YAML file directly to `--config`.
+> **Experiment Reproducibility**: Every full training run saves a resolved configuration snapshot to `experiments/<name>/<version>/config.yaml`, so any run can be reproduced or played directly via `--config`.
 
 ### CLI Overrides
 
-You can override config groups (`dataset`, `module`) or any nested parameter directly from the command line:
+Override config groups or nested hyperparameters directly from the command line:
 
 ```bash
-# Swap dataset group (e.g. train World Models on Breakout instead of CarRacing)
-python wiskers/pipeline/train.py --config training/car_racing_world_models dataset=breakout
+# Swap dataset group (e.g., train World Models on Breakout)
+uv run python wiskers/pipeline/train.py --config training/car_racing_world_models dataset=breakout
 
-# Override trainer hyperparameters or module architectures
-python wiskers/pipeline/train.py --config training/car_racing_world_models trainer.max_epochs=20 module.vae.latent_dim=64
-
-# Combine group selection with fast development run
-python wiskers/pipeline/train.py --config training/car_racing_world_models dataset=breakout --fast_dev_run
+# Override trainer or module parameters
+uv run python wiskers/pipeline/train.py --config training/car_racing_world_models trainer.max_epochs=20 module.vae.latent_dim=64
 ```
 
 ## Play
 
-Play a trained checkpoint/model in the environment using a configuration:
+Play a trained checkpoint or exported artifact (`.ckpt`, `.safetensors`, `.onnx`) in the environment:
 
 ```bash
-python wiskers/pipeline/play.py --config training/car_racing_world_models --checkpoint experiments/world_models/version_0/checkpoints/best.ckpt
+# Generic command
+uv run python wiskers/pipeline/play.py --config <training_config> --checkpoint <artifact_path>
+
+# Example
+uv run python wiskers/pipeline/play.py --config training/car_racing_world_models --checkpoint experiments/world_models/version_0/checkpoints/best.ckpt
 ```
 
-## Inspect Datasets
+## Inspection
 
-Inspect and verify trajectory dataloaders and rollout replay buffers:
+### Dataset CLI
+
+Verify trajectory collection, replay buffer shapes, and DataModule batches for any environment in [Environments](#environments):
 
 ```bash
-# Atari Breakout trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/breakout
+# Generic command
+uv run python wiskers/pipeline/inspect_dataset.py --config dataset/<env>
 
-# CarRacing-v3 trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/car_racing
-
-# Franka Kitchen robotics manipulator trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/franka_kitchen
-
-# InvertedPendulum-v5 MuJoCo cart-pole trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/inverted_pendulum
-
-# Adroit Hand dexterous manipulation trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/adroit_hand
-
-# Shadow Dexterous Hand trajectory dataloader
-python wiskers/pipeline/inspect_dataset.py --config dataset/shadow_hand
+# Example
+uv run python wiskers/pipeline/inspect_dataset.py --config dataset/franka_kitchen
 ```
 
-## WebUI
+### WebUI
 
-Launch the interactive WebUI to visualize datasets, rollout trajectories, and transitions:
+Launch the interactive Streamlit WebUI to inspect collected episodes, DataModule chunks, and single-action sweeps:
 
 ```bash
 ./webui/run.sh
@@ -143,34 +140,51 @@ Launch the interactive WebUI to visualize datasets, rollout trajectories, and tr
 <p align="center"><img src="docs/app.png?raw=true"></p>
 </details>
 
-## Tensorboard
+## Development
 
-Track ML experiments and training metrics:
+### Tests
 
 ```bash
-tensorboard --logdir=experiments/ --port=6006
+uv run pytest
 ```
 
-## Docker
+### Dev Runs
+
+Use `--fast_dev_run` for a single-batch sanity check or `--quick_run` for a short end-to-end training run with checkpointing and logging:
 
 ```bash
-# Build Docker container
+uv run python wiskers/pipeline/train.py --config training/car_racing_world_models --fast_dev_run
+uv run python wiskers/pipeline/train.py --config training/car_racing_world_models --quick_run
+```
+
+### Code Quality
+
+Format, lint, and type-check with Ruff and Pyrefly (configured in `pyproject.toml` and `pyrefly.toml`):
+
+```bash
+uv run ruff format .
+uv run ruff check --fix .
+uv run pyrefly check
+```
+
+### TensorBoard
+
+```bash
+uv run tensorboard --logdir=experiments/ --port=6006
+```
+
+### Docker
+
+The [Dockerfile](Dockerfile) builds on NVIDIA CUDA 12.4 (`MUJOCO_GL=egl`) with `uv` and locked dependencies pre-installed:
+
+```bash
+# Build Docker image
 ./build_docker.sh
 
-# Start Docker container
+# Start container
 docker run --rm -it wiskers:latest
-```
-
-## Code Formatter & Type Checking
-
-```bash
-# Check and format code with ruff (configured in pyproject.toml)
-ruff check --fix
-
-# Check static types with Pyrefly (configured in pyrefly.toml)
-pyrefly check
 ```
 
 ## License
 
-Wiskers is licensed under the MIT License — see the [LICENSE](https://github.com/electricshadok/wiskers/blob/main/LICENSE) file for details.
+Wiskers is licensed under the MIT License — see [LICENSE](LICENSE) for details.
